@@ -41,7 +41,7 @@ const DetailItem = ({ label, value, icon }: { label: string, value: React.ReactN
 );
 
 
-export function PropertyDetailsSheet({ open, onOpenChange, property, matchInfo, variant = 'default' }: { open: boolean, onOpenChange: (open: boolean) => void, property: Property, matchInfo: PropertyMatchScoreOutput | null, variant?: 'reels' | 'default' }) {
+export function PropertyDetailsSheet({ open, onOpenChange, property, matchInfo, variant = 'default' }: { open: boolean, onOpenChange: (open: boolean) => void, property: Property, matchInfo: PropertyMatchScoreOutput | null | undefined, variant?: 'reels' | 'default' }) {
   if (!property) return null;
   
   const priceDisplay = property.price.type === 'rent'

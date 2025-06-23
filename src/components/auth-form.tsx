@@ -142,7 +142,7 @@ export function AuthForm() {
 
 
     return (
-        <Card className="w-full max-w-sm shadow-2xl border-0">
+        <Card className="w-full max-w-sm shadow-2xl border-white/20 bg-card/10 backdrop-blur-lg">
             <CardHeader className="text-center space-y-2">
                 <h1 className="text-4xl font-black text-white tracking-tighter mx-auto">LOKALITY</h1>
             </CardHeader>
@@ -152,23 +152,20 @@ export function AuthForm() {
                     {isGoogleLoading ? 'Signing in...' : 'Continue with Google'}
                 </Button>
                 
-                <div className="relative my-1">
-                    <div className="absolute inset-0 flex items-center">
-                        <span className="w-full border-t" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-card px-2 text-muted-foreground">or</span>
-                    </div>
+                <div className="flex items-center gap-4 my-1">
+                    <div className="flex-grow border-t border-border/50" />
+                    <span className="text-xs uppercase text-muted-foreground">or</span>
+                    <div className="flex-grow border-t border-border/50" />
                 </div>
 
                 <form onSubmit={handleEmailAuth} className="grid gap-4">
                     <div className="grid gap-2">
                         <Label htmlFor="email">Email</Label>
-                        <Input id="email" type="email" placeholder="Enter your email" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading || isGoogleLoading} />
+                        <Input id="email" type="email" placeholder="Enter your email" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading || isGoogleLoading} className="bg-background/50" />
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="password">Password</Label>
-                        <Input id="password" type="password" placeholder="Enter your password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading || isGoogleLoading} />
+                        <Input id="password" type="password" placeholder="Enter your password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading || isGoogleLoading} className="bg-background/50" />
                     </div>
                     
                     {isLogin && (
@@ -194,7 +191,7 @@ export function AuthForm() {
                     <p className="text-muted-foreground">
                         {isLogin ? "Don't have an account?" : "Already have an account?"}{' '}
                         <button onClick={() => setIsLogin(!isLogin)} className="underline hover:text-primary font-semibold">
-                            {isLogin ? "Sign Up" : "Sign In"}
+                            {isLogin ? "Sign Up" : "Sign Up"}
                         </button>
                     </p>
                 </div>

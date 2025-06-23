@@ -13,6 +13,7 @@ import { db } from '@/lib/firebase';
 import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
 import { dateToJSON } from '@/lib/utils';
 import { ChatButton } from '@/components/chat-button';
+import Image from 'next/image';
 
 
 const DetailItem = ({ label, value, icon }: { label: string, value: React.ReactNode, icon?: React.ElementType }) => (
@@ -65,8 +66,12 @@ export default async function ViewProfilePage({ params }: { params: { id: string
           
           <Card>
             <CardHeader className="text-center">
-              <div className="w-24 h-24 bg-secondary rounded-full mx-auto flex items-center justify-center mb-4">
-                  <User className="w-12 h-12 text-primary" />
+              <div className="w-24 h-24 bg-secondary rounded-full mx-auto flex items-center justify-center mb-4 overflow-hidden">
+                  {user.avatar ? (
+                      <Image src={user.avatar} alt={user.name} width={96} height={96} className="object-cover w-full h-full" data-ai-hint="person portrait" />
+                  ) : (
+                      <User className="w-12 h-12 text-primary" />
+                  )}
               </div>
               <CardTitle className="text-3xl">{user.name}</CardTitle>
               <CardDescription>

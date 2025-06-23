@@ -157,7 +157,8 @@ export default function ProfilePage() {
                         phone: user.phoneNumber || '',
                         bio: 'Welcome to LOKALITY!',
                         type: 'seeker',
-                        searchCriteria: 'I am looking for a new property.'
+                        searchCriteria: 'I am looking for a new property.',
+                        avatar: `https://placehold.co/100x100.png`,
                     };
                     setDoc(userDocRef, defaultProfile).then(() => {
                         setUserProfile(defaultProfile);
@@ -187,6 +188,7 @@ export default function ProfilePage() {
             email: userProfile.email,
             phone: userProfile.phone,
             bio: userProfile.bio,
+            avatar: userProfile.avatar,
         };
 
         let newProfile: UserProfile;

@@ -39,7 +39,8 @@ export function AuthForm() {
             phone: user.phoneNumber || '',
             bio: 'Welcome to LOKALITY!',
             type: 'seeker',
-            searchCriteria: 'I am looking for a new property.'
+            searchCriteria: 'I am looking for a new property.',
+            avatar: user.photoURL || `https://placehold.co/100x100.png`
         };
         await setDoc(doc(db, "users", user.uid), newUserProfile);
     };

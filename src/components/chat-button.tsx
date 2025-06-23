@@ -3,7 +3,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { db } from "@/lib/firebase";
 import type { UserProfile } from "@/lib/types";
-import { addDoc, collection, getDocs, query, where, serverTimestamp, doc } from "firebase/firestore";
+import { addDoc, collection, getDocs, query, where, serverTimestamp, doc, getDoc } from "firebase/firestore";
 import { Loader2, MessageCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
@@ -57,11 +57,11 @@ export function ChatButton({ targetUser }: { targetUser: UserProfile }) {
                     participants: {
                         [user.uid]: {
                             name: currentUserProfile.name,
-                            avatar: 'https://placehold.co/100x100.png' // Placeholder
+                            avatar: currentUserProfile.avatar || 'https://placehold.co/100x100.png'
                         },
                         [targetUser.id]: {
                             name: targetUser.name,
-                            avatar: 'https://placehold.co/100x100.png' // Placeholder
+                            avatar: targetUser.avatar || 'https://placehold.co/100x100.png'
                         }
                     },
                     messages: [],

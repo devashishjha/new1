@@ -10,6 +10,7 @@ export type Property = {
     id: string;
     name: string;
     type: 'owner' | 'developer' | 'dealer';
+    avatar?: string;
   };
   price: {
     type: 'rent' | 'sale';
@@ -72,6 +73,7 @@ type BaseProfile = {
   email: string;
   phone: string;
   bio: string;
+  avatar?: string;
 };
 
 export type SeekerProfile = BaseProfile & {
@@ -108,7 +110,7 @@ export type ChatMessage = {
 };
 
 export type ChatConversation = {
-  id: string;
+  id:string;
   participantIds: string[];
   participants: {
     [key: string]: {

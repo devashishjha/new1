@@ -51,8 +51,10 @@ const searchSchema = z.object({
     hasGasPipeline: z.boolean().optional(),
 });
 
+const defaultValues = searchSchema.parse({});
+
 export function SearchClient({ initialProperties }: { initialProperties: Property[] }) {
-    const [filters, setFilters] = useState<z.infer<typeof searchSchema>>(searchSchema.parse({}));
+    const [filters, setFilters] = useState<z.infer<typeof searchSchema>>(defaultValues);
     const [priceSort, setPriceSort] = useState<'asc' | 'desc' | 'none'>('none');
     const [dateSort, setDateSort] = useState<'asc' | 'desc'>('desc');
 
@@ -109,22 +111,21 @@ export function SearchClient({ initialProperties }: { initialProperties: Propert
             properties.sort((a, b) => {
                 const dateA = new Date(a.postedOn).getTime();
                 const dateB = new Date(b.postedOn).getTime();
-                return dateSort === 'asc' ? dateA - dateB : dateB - dateA;
+                return dateSort === 'asc' ? dateA - dateB : dateB - a.postedOn.getTime();
             });
         }
         return properties;
     }, [initialProperties, filters, priceSort, dateSort]);
 
     function onSubmit(values: z.infer<typeof searchSchema>) {
-        const activeFilters: Partial<z.infer<typeof searchSchema>> = {};
-        for (const key in values) {
-            const K = key as keyof typeof values;
-            if(Array.isArray(values[K]) && (values[K] as any[]).length === 0) continue;
-            if(values[K] !== undefined && values[K] !== '' && values[K] !== false) {
-                 (activeFilters as any)[K] = values[K];
-            }
-        }
         setFilters(searchSchema.parse(values));
+    }
+
+    function handleReset() {
+        form.reset(defaultValues);
+        setFilters(defaultValues);
+        setPriceSort('none');
+        setDateSort('desc');
     }
     
     const renderCheckboxGroup = (name: "propertyType" | "configuration" | "mainDoorDirection" | "openSides", items: readonly string[]) => (
@@ -296,7 +297,10 @@ export function SearchClient({ initialProperties }: { initialProperties: Propert
                             </Accordion>
                         </CardContent>
                     </Card>
-                    <Button type="submit" size="lg" className="w-full">Search Properties</Button>
+                    <div className="flex gap-4">
+                        <Button type="submit" size="lg" className="w-full">Search Properties</Button>
+                        <Button type="button" size="lg" variant="outline" className="w-full" onClick={handleReset}>Reset Filters</Button>
+                    </div>
                 </form>
             </Form>
 

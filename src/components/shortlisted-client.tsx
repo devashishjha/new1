@@ -7,6 +7,7 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { dateToJSON } from '@/lib/utils';
+import { useAuth } from '@/hooks/use-auth';
 
 const CardSkeleton = () => (
     <div className="space-y-2">
@@ -17,6 +18,7 @@ const CardSkeleton = () => (
 )
 
 export function ShortlistedClient() {
+    const { user, loading: authLoading } = useAuth();
     const [shortlisted, setShortlisted] = useState<Property[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -48,19 +50,20 @@ export function ShortlistedClient() {
     }, []);
 
     useEffect(() => {
+        if (authLoading) return; // Wait for auth to resolve
         updateShortlistedProperties();
         window.addEventListener('shortlist-updated', updateShortlistedProperties);
         return () => {
             window.removeEventListener('shortlist-updated', updateShortlistedProperties);
         };
-    }, [updateShortlistedProperties]);
+    }, [authLoading, updateShortlistedProperties]);
 
     return (
         <>
-            <h1 className="text-4xl font-bold tracking-tight mb-2 text-white">Shortlisted Properties</h1>
+            <h1 className="text-4xl font-bold tracking-tight mb-2">Shortlisted Properties</h1>
             <p className="text-muted-foreground mb-8">Properties you have saved for later viewing.</p>
 
-            {isLoading ? (
+            {isLoading || authLoading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {[...Array(3)].map((_, i) => (
                        <CardSkeleton key={i} />
@@ -74,7 +77,7 @@ export function ShortlistedClient() {
                 </div>
             ) : (
                 <div className="text-center py-20 border border-dashed rounded-lg mt-10">
-                    <h2 className="text-xl font-semibold text-white">No Shortlisted Properties</h2>
+                    <h2 className="text-xl font-semibold">No Shortlisted Properties</h2>
                     <p className="text-muted-foreground mt-2">You haven't shortlisted any properties yet. Start exploring!</p>
                 </div>
             )}

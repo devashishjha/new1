@@ -17,6 +17,7 @@ import { dateToJSON } from '@/lib/utils';
 import { ChatButton } from '@/components/chat-button';
 import Image from 'next/image';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/hooks/use-auth';
 
 const DetailItem = ({ label, value, icon }: { label: string, value: React.ReactNode, icon?: React.ElementType }) => (
   <div className="flex items-start gap-4">
@@ -31,47 +32,51 @@ const DetailItem = ({ label, value, icon }: { label: string, value: React.ReactN
 export function ViewProfileClient() {
   const params = useParams();
   const userId = params.id as string;
+  const { loading: authLoading } = useAuth();
   
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [userProperties, setUserProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!userId) {
-        setIsLoading(false);
+    if (!userId || authLoading) {
         return;
     };
 
     const fetchData = async () => {
       setIsLoading(true);
 
-      // Fetch user profile
-      const docRef = doc(db, 'users', userId);
-      const docSnap = await getDoc(docRef);
-      
-      if (!docSnap.exists()) {
+      try {
+        // Fetch user profile
+        const docRef = doc(db, 'users', userId);
+        const docSnap = await getDoc(docRef);
+        
+        if (!docSnap.exists()) {
+          setIsLoading(false);
+          return notFound();
+        }
+
+        const userProfile = { id: docSnap.id, ...docSnap.data() } as UserProfile;
+        setProfile(userProfile);
+
+        // Fetch user properties if applicable
+        if (userProfile.type === 'owner' || userProfile.type === 'developer' || userProfile.type === 'dealer') {
+          const q = query(collection(db, "properties"), where("lister.id", "==", userId));
+          const querySnapshot = await getDocs(q);
+          const properties = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Property));
+          setUserProperties(properties.map(p => dateToJSON(p)) as Property[]);
+        }
+      } catch (error) {
+        console.error("Error fetching profile data: ", error);
+      } finally {
         setIsLoading(false);
-        return notFound();
       }
-
-      const userProfile = { id: docSnap.id, ...docSnap.data() } as UserProfile;
-      setUser(userProfile);
-
-      // Fetch user properties if applicable
-      if (userProfile.type === 'owner' || userProfile.type === 'developer' || userProfile.type === 'dealer') {
-        const q = query(collection(db, "properties"), where("lister.id", "==", userId));
-        const querySnapshot = await getDocs(q);
-        const properties = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Property));
-        setUserProperties(properties.map(p => dateToJSON(p)) as Property[]);
-      }
-      
-      setIsLoading(false);
     };
 
     fetchData();
-  }, [userId]);
+  }, [userId, authLoading]);
 
-  if (isLoading) {
+  if (isLoading || authLoading) {
     return (
       <>
         <Header />
@@ -102,7 +107,7 @@ export function ViewProfileClient() {
     )
   }
 
-  if (!user) {
+  if (!profile) {
     return notFound();
   }
 
@@ -121,38 +126,38 @@ export function ViewProfileClient() {
           <Card>
             <CardHeader className="text-center">
               <div className="w-24 h-24 bg-secondary rounded-full mx-auto flex items-center justify-center mb-4 overflow-hidden">
-                  {user.avatar ? (
-                      <Image src={user.avatar} alt={user.name} width={96} height={96} className="object-cover w-full h-full" data-ai-hint="person portrait" />
+                  {profile.avatar ? (
+                      <Image src={profile.avatar} alt={profile.name} width={96} height={96} className="object-cover w-full h-full" data-ai-hint="person portrait" />
                   ) : (
                       <User className="w-12 h-12 text-primary" />
                   )}
               </div>
-              <CardTitle className="text-3xl">{user.name}</CardTitle>
+              <CardTitle className="text-3xl">{profile.name}</CardTitle>
               <CardDescription>
-                <Badge variant="outline" className="capitalize text-lg py-1 px-3 mt-2">{user.type}</Badge>
+                <Badge variant="outline" className="capitalize text-lg py-1 px-3 mt-2">{profile.type}</Badge>
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                <p className="text-center text-muted-foreground italic px-4">&quot;{user.bio}&quot;</p>
+                <p className="text-center text-muted-foreground italic px-4">&quot;{profile.bio}&quot;</p>
                 <div className="space-y-6 pt-4 border-t">
-                    <DetailItem label="Email" value={user.email} icon={AtSign} />
-                    <DetailItem label="Phone" value={user.phone} icon={Phone} />
-                    {(user.type === 'dealer' || user.type === 'developer') && user.companyName && <DetailItem label="Company Name" value={user.companyName} icon={Building} />}
-                    {(user.type === 'dealer' || user.type === 'developer') && user.reraId && <DetailItem label="RERA ID" value={user.reraId} icon={ChevronsRight} />}
+                    <DetailItem label="Email" value={profile.email} icon={AtSign} />
+                    <DetailItem label="Phone" value={profile.phone || 'Not provided'} icon={Phone} />
+                    {(profile.type === 'dealer' || profile.type === 'developer') && profile.companyName && <DetailItem label="Company Name" value={profile.companyName} icon={Building} />}
+                    {(profile.type === 'dealer' || profile.type === 'developer') && profile.reraId && <DetailItem label="RERA ID" value={profile.reraId} icon={ChevronsRight} />}
                 </div>
-                {user.type === 'seeker' && user.searchCriteria && (
+                {profile.type === 'seeker' && profile.searchCriteria && (
                     <div className="space-y-2 pt-4 border-t">
                         <h3 className="text-sm text-muted-foreground">Search Criteria</h3>
-                        <p className="font-mono text-sm bg-secondary p-4 rounded-md">{user.searchCriteria}</p>
+                        <p className="font-mono text-sm bg-secondary p-4 rounded-md">{profile.searchCriteria}</p>
                     </div>
                 )}
             </CardContent>
             <CardFooter className="p-4 border-t bg-secondary/20">
-                <ChatButton targetUser={user} />
+                <ChatButton targetUser={profile} />
             </CardFooter>
           </Card>
 
-          {(user.type === 'owner' || user.type === 'developer' || user.type === 'dealer') && (
+          {(profile.type === 'owner' || profile.type === 'developer' || profile.type === 'dealer') && (
               <Card className="mt-8">
                   <CardHeader><CardTitle>Properties Posted ({userProperties.length})</CardTitle></CardHeader>
                   <CardContent>
@@ -169,11 +174,11 @@ export function ViewProfileClient() {
               </Card>
           )}
 
-          {user.type === 'seeker' && user.searchHistory && user.searchHistory.length > 0 && (
+          {profile.type === 'seeker' && profile.searchHistory && profile.searchHistory.length > 0 && (
               <Card className="mt-8">
                   <CardHeader><CardTitle>Recent Searches</CardTitle></CardHeader>
                   <CardContent className="space-y-3">
-                      {user.searchHistory.slice(0, 5).map((search, index) => (
+                      {profile.searchHistory.slice(0, 5).map((search, index) => (
                           <div key={index} className="flex items-center gap-3 text-muted-foreground p-3 bg-secondary rounded-md">
                               <Clock className="w-4 h-4 flex-shrink-0" />
                               <span>{search}</span>

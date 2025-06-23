@@ -33,18 +33,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
   
   useEffect(() => {
-      if (!loading) {
-          const isProtectedPage = !isAuthPage;
+      // Don't run redirection logic until authentication is resolved
+      if (loading) return;
 
-          if (!user && isProtectedPage) {
-              router.push('/');
-          }
-          if (user && isAuthPage) {
-              router.push('/reels');
-          }
+      const isProtectedPage = !isAuthPage;
+
+      // If user is not logged in and is trying to access a protected page, redirect to login
+      if (!user && isProtectedPage) {
+          router.push('/');
+      }
+      // If user is logged in and is on the login page, redirect to reels
+      if (user && isAuthPage) {
+          router.push('/reels');
       }
   }, [user, loading, pathname, router, isAuthPage]);
 
+  // Show a loading indicator while auth state is being determined,
+  // or while redirecting the user. This prevents a flash of unstyled/unauthorized content.
   if (loading || (!user && !isAuthPage) || (user && isAuthPage)) {
     return (
         <div className="h-dvh w-screen flex items-center justify-center bg-background">

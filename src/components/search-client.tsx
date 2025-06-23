@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import type { Property } from '@/lib/types';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { dateToJSON } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
+import { useAuth } from '@/hooks/use-auth';
 
 type SortDirection = 'asc' | 'desc';
 
@@ -28,7 +29,7 @@ const mainDoorDirections = ['north', 'south', 'east', 'west', 'north-east', 'nor
 const openSides = ['1', '2', '3', '4'] as const;
 
 const searchSchema = z.object({
-    lookingTo: z.enum(['rent', 'buy']).default('buy'),
+    lookingTo: z.enum(['rent', 'sale']).default('sale'),
     priceRange: z.array(z.number()).default([0, 50000000]),
     location: z.string().optional(),
     societyName: z.string().optional(),
@@ -66,6 +67,7 @@ const CardSkeleton = () => (
 )
 
 export function SearchClient() {
+    const { user, loading: authLoading } = useAuth();
     const [properties, setProperties] = useState<Property[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [filters, setFilters] = useState<z.infer<typeof searchSchema>>(defaultValues);
@@ -78,6 +80,8 @@ export function SearchClient() {
     });
     
     useEffect(() => {
+        if (authLoading) return; // Wait for auth to resolve
+        
         const fetchProperties = async () => {
             setIsLoading(true);
             try {
@@ -93,7 +97,7 @@ export function SearchClient() {
             }
         };
         fetchProperties();
-    }, []);
+    }, [authLoading]);
 
     const lookingTo = form.watch('lookingTo');
     const priceRange = form.watch('priceRange');
@@ -225,7 +229,7 @@ export function SearchClient() {
         setDateSort(direction);
     };
 
-    if (isLoading) {
+    if (isLoading || authLoading) {
         return (
              <div>
                 <h1 className="text-4xl font-bold tracking-tight mb-2">Search Properties</h1>

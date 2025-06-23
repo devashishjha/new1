@@ -24,6 +24,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import type { UserProfile, SeekerProfile } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 type UserType = 'seeker' | 'owner' | 'dealer' | 'developer';
 
@@ -238,52 +239,68 @@ export default function ProfilePage() {
     return (
         <>
             <Header />
-            <main className="container mx-auto py-24 px-4 pb-24">
-                <div className="max-w-2xl mx-auto">
-                    <div className="text-center mb-8">
-                        <h1 className="text-4xl font-bold tracking-tight">Your Profile</h1>
-                        <p className="text-muted-foreground mt-2">Manage your account settings and profile type.</p>
+            <TooltipProvider>
+                <main className="container mx-auto py-24 px-4 pb-24">
+                    <div className="max-w-2xl mx-auto">
+                        <div className="text-center mb-8">
+                            <h1 className="text-4xl font-bold tracking-tight">Your Profile</h1>
+                            <p className="text-muted-foreground mt-2">Manage your account settings and profile type.</p>
+                        </div>
+
+                        <Card className="mb-8">
+                            <CardHeader><CardTitle>Select Your Profile Type</CardTitle><CardDescription>Choose the profile that best describes you.</CardDescription></CardHeader>
+                            <CardContent>
+                                <RadioGroup value={userType} onValueChange={(v) => handleTypeChange(v as UserType)} className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    {['seeker', 'owner', 'dealer', 'developer'].map(type => (
+                                        <div key={type}>
+                                            <RadioGroupItem value={type} id={type} className="peer sr-only" />
+                                            <Label htmlFor={type} className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary capitalize cursor-pointer">
+                                                {type}
+                                            </Label>
+                                        </div>
+                                    ))}
+                                </RadioGroup>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Edit <span className="capitalize text-primary">{userType}</span> Profile</CardTitle>
+                                <CardDescription>Fill in your details below.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <ProfileForm userProfile={userProfile} userType={userType} onProfileUpdate={handleProfileUpdate} />
+                            </CardContent>
+                        </Card>
+
+                        <Card className="mt-8">
+                            <CardContent className="p-4 space-y-2">
+                                 <Link href="/chats"><Button variant="ghost" className="w-full justify-start gap-3"><MessagesSquare className="w-6 h-6" strokeWidth={2.5} /> My Chats</Button></Link>
+                                <Separator />
+                                <Tooltip>
+                                    <TooltipTrigger className="w-full">
+                                        <Button variant="ghost" className="w-full justify-start gap-3" disabled><Shield className="w-6 h-6" strokeWidth={2.5} /> Privacy Policy</Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Coming soon!</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                                <Separator />
+                                <Tooltip>
+                                    <TooltipTrigger className="w-full">
+                                        <Button variant="ghost" className="w-full justify-start gap-3" disabled><FileText className="w-6 h-6" strokeWidth={2.5}/> Terms & Conditions</Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Coming soon!</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                                <Separator />
+                                <Button variant="ghost" className="w-full justify-start text-destructive hover:text-destructive gap-3" onClick={handleLogout}><LogOut className="w-6 h-6" strokeWidth={2.5} /> Log Out</Button>
+                            </CardContent>
+                        </Card>
                     </div>
-
-                    <Card className="mb-8">
-                        <CardHeader><CardTitle>Select Your Profile Type</CardTitle><CardDescription>Choose the profile that best describes you.</CardDescription></CardHeader>
-                        <CardContent>
-                            <RadioGroup value={userType} onValueChange={(v) => handleTypeChange(v as UserType)} className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                {['seeker', 'owner', 'dealer', 'developer'].map(type => (
-                                    <div key={type}>
-                                        <RadioGroupItem value={type} id={type} className="peer sr-only" />
-                                        <Label htmlFor={type} className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary capitalize cursor-pointer">
-                                            {type}
-                                        </Label>
-                                    </div>
-                                ))}
-                            </RadioGroup>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Edit <span className="capitalize text-primary">{userType}</span> Profile</CardTitle>
-                            <CardDescription>Fill in your details below.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <ProfileForm userProfile={userProfile} userType={userType} onProfileUpdate={handleProfileUpdate} />
-                        </CardContent>
-                    </Card>
-
-                    <Card className="mt-8">
-                        <CardContent className="p-4 space-y-2">
-                             <Link href="/chats"><Button variant="ghost" className="w-full justify-start gap-3"><MessagesSquare className="w-6 h-6" strokeWidth={2.5} /> My Chats</Button></Link>
-                            <Separator />
-                             <Link href="#"><Button variant="ghost" className="w-full justify-start gap-3"><Shield className="w-6 h-6" strokeWidth={2.5} /> Privacy Policy</Button></Link>
-                            <Separator />
-                             <Link href="#"><Button variant="ghost" className="w-full justify-start gap-3"><FileText className="w-6 h-6" strokeWidth={2.5}/> Terms & Conditions</Button></Link>
-                            <Separator />
-                            <Button variant="ghost" className="w-full justify-start text-destructive hover:text-destructive gap-3" onClick={handleLogout}><LogOut className="w-6 h-6" strokeWidth={2.5} /> Log Out</Button>
-                        </CardContent>
-                    </Card>
-                </div>
-            </main>
+                </main>
+            </TooltipProvider>
             <BottomNavBar />
         </>
     );

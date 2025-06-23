@@ -43,16 +43,27 @@ export function ReelsClient() {
         const fetchData = async () => {
             setIsLoading(true);
             try {
-                // Fetch user criteria only if a user is logged in
+                // The default criteria for non-seekers or logged-out users.
+                const defaultSearchCriteria = "A great property with good amenities in a nice neighborhood.";
+
                 if (user) {
                     const userDocRef = doc(db, 'users', user.uid);
                     const userDocSnap = await getDoc(userDocRef);
                     if (userDocSnap.exists()) {
                         const userData = userDocSnap.data() as UserProfile;
-                        if (userData.type === 'seeker') {
-                            setUserSearchCriteria((userData as SeekerProfile).searchCriteria || '');
+                        // Use seeker's criteria if they are a seeker and have defined it, otherwise use default
+                        if (userData.type === 'seeker' && (userData as SeekerProfile).searchCriteria) {
+                            setUserSearchCriteria((userData as SeekerProfile).searchCriteria);
+                        } else {
+                            setUserSearchCriteria(defaultSearchCriteria);
                         }
+                    } else {
+                         // User profile doesn't exist, but they are logged in. Use default.
+                        setUserSearchCriteria(defaultSearchCriteria);
                     }
+                } else {
+                    // User is not logged in, use default
+                    setUserSearchCriteria(defaultSearchCriteria);
                 }
 
                 // Fetch properties

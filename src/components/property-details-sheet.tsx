@@ -1,8 +1,8 @@
+
 'use client';
 
 import * as React from 'react';
 import type { Property } from '@/lib/types';
-import type { PropertyMatchScoreOutput } from '@/ai/flows/property-match-score';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
@@ -14,7 +14,6 @@ import {
 import Link from 'next/link';
 import { ScrollArea } from './ui/scroll-area';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Skeleton } from './ui/skeleton';
 import { formatIndianCurrency } from '@/lib/utils';
 import { ChatButton } from './chat-button';
 
@@ -41,7 +40,7 @@ const DetailItem = ({ label, value, icon }: { label: string, value: React.ReactN
 );
 
 
-export function PropertyDetailsSheet({ open, onOpenChange, property, matchInfo, variant = 'default' }: { open: boolean, onOpenChange: (open: boolean) => void, property: Property, matchInfo: PropertyMatchScoreOutput | null | undefined, variant?: 'reels' | 'default' }) {
+export function PropertyDetailsSheet({ open, onOpenChange, property, variant = 'default' }: { open: boolean, onOpenChange: (open: boolean) => void, property: Property, variant?: 'reels' | 'default' }) {
   if (!property) return null;
   
   const priceDisplay = property.price.type === 'rent'
@@ -87,47 +86,6 @@ export function PropertyDetailsSheet({ open, onOpenChange, property, matchInfo, 
             </SheetHeader>
 
             <div className="p-6 grid gap-6">
-                {matchInfo === undefined ? (
-                     <Card className="bg-black/40 border-white/10">
-                        <CardHeader>
-                             <CardTitle className='flex items-center gap-2 text-primary'><Zap className='w-6 h-6' strokeWidth={2.5}/> AI Match Analysis</CardTitle>
-                        </CardHeader>
-                        <CardContent className='space-y-2'>
-                            <Skeleton className='h-4 w-full bg-white/20' />
-                             <Skeleton className='h-4 w-[80%] bg-white/20' />
-                        </CardContent>
-                    </Card>
-                ) : matchInfo ? (
-                    <Card className='bg-primary/10 border-primary/20'>
-                        <CardHeader>
-                            <CardTitle className='flex items-center gap-2 text-primary'><Zap className='w-6 h-6' strokeWidth={2.5} /> AI Match Analysis ({matchInfo.matchScore}%)</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4 text-white">
-                            {matchInfo.summary && (
-                                <p className="text-sm italic text-white/80 border-l-2 border-primary/50 pl-4">
-                                    {matchInfo.summary}
-                                </p>
-                            )}
-                            {matchInfo.matches && matchInfo.matches.length > 0 && (
-                                <div>
-                                    <h4 className="font-semibold mb-2 flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-green-400" /> What Matches</h4>
-                                    <ul className="list-disc list-inside space-y-1 text-sm pl-2">
-                                        {matchInfo.matches.map((match, i) => <li key={`match-${i}`}>{match}</li>)}
-                                    </ul>
-                                </div>
-                            )}
-                            {matchInfo.mismatches && matchInfo.mismatches.length > 0 && (
-                                <div>
-                                    <h4 className="font-semibold mb-2 flex items-center gap-2 pt-3"><XCircle className="w-5 h-5 text-red-400" /> What Doesn't Match</h4>
-                                    <ul className="list-disc list-inside space-y-1 text-sm pl-2">
-                                        {matchInfo.mismatches.map((mismatch, i) => <li key={`mismatch-${i}`}>{mismatch}</li>)}
-                                    </ul>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                ) : null}
-
                 <Card className="bg-black/40 border-white/10">
                     <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Home className="w-6 h-6" strokeWidth={2.5} />Property Details</CardTitle></CardHeader>
                     <CardContent className="space-y-4">

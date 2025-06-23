@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Property } from '@/lib/types';
@@ -26,6 +27,7 @@ import * as React from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from './ui/skeleton';
 import { useChatNavigation } from '@/hooks/use-chat-navigation';
+import { AiMatchDialog } from './ai-match-dialog';
 
 
 const InfoCard = ({ icon, label, value, children }: { icon: React.ElementType, label: string, value?: string | React.ReactNode, children?: React.ReactNode }) => (
@@ -43,6 +45,7 @@ const InfoCard = ({ icon, label, value, children }: { icon: React.ElementType, l
 function ReelComponent({ property, userSearchCriteria }: { property: Property; userSearchCriteria: string }) {
   const [matchInfo, setMatchInfo] = useState<PropertyMatchScoreOutput | null | undefined>(undefined);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isAiMatchDialogOpen, setIsAiMatchDialogOpen] = useState(false);
   const [isShortlisted, setIsShortlisted] = useState(false);
   const [isUIVisible, setIsUIVisible] = useState(true);
   const { toast } = useToast();
@@ -85,6 +88,7 @@ function ReelComponent({ property, userSearchCriteria }: { property: Property; u
   };
 
   const openDetailsSheet = () => setIsDetailsOpen(true);
+  const openAiMatchDialog = () => setIsAiMatchDialogOpen(true);
   
   const handleCall = () => {
     if (property.lister.phone) {
@@ -136,14 +140,13 @@ function ReelComponent({ property, userSearchCriteria }: { property: Property; u
       }
     }
     
-    if (userSearchCriteria) {
-      setMatchInfo(undefined);
+    if (userSearchCriteria && isAiMatchDialogOpen && matchInfo === undefined) {
       fetchScore();
-    } else {
+    } else if (!userSearchCriteria) {
       setMatchInfo(null);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [property, userSearchCriteria, priceDisplay]);
+  }, [userSearchCriteria, isAiMatchDialogOpen]);
 
 
   return (
@@ -192,9 +195,11 @@ function ReelComponent({ property, userSearchCriteria }: { property: Property; u
 
             {/* Horizontally Scrolling Info Cards */}
             <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                <button onClick={(e) => handleInteraction(e, openDetailsSheet)} className="text-left">
+                <button onClick={(e) => handleInteraction(e, openAiMatchDialog)} className="text-left">
                     <InfoCard icon={Zap} label="AI Match">
-                    {matchInfo === undefined ? (
+                    {matchInfo === undefined && !isAiMatchDialogOpen ? (
+                         <p className="text-sm mt-1 text-white/70">Click to see</p>
+                    ) : matchInfo === undefined && isAiMatchDialogOpen ? (
                         <Skeleton className="h-7 w-12 mt-1 bg-white/20" />
                     ) : matchInfo ? (
                         <p className="text-2xl font-bold mt-1 text-white truncate w-full">{matchInfo.matchScore}%</p>
@@ -222,7 +227,8 @@ function ReelComponent({ property, userSearchCriteria }: { property: Property; u
       </div>
 
 
-      <PropertyDetailsSheet open={isDetailsOpen} onOpenChange={setIsDetailsOpen} property={property} matchInfo={matchInfo} variant="reels" />
+      <AiMatchDialog open={isAiMatchDialogOpen} onOpenChange={setIsAiMatchDialogOpen} matchInfo={matchInfo} />
+      <PropertyDetailsSheet open={isDetailsOpen} onOpenChange={setIsDetailsOpen} property={property} variant="reels" />
     </section>
   );
 }

@@ -2,14 +2,14 @@
 
 import { useAuth } from "@/hooks/use-auth";
 import { db } from "@/lib/firebase";
-import type { UserProfile } from "@/lib/types";
+import type { UserProfile, Property } from "@/lib/types";
 import { addDoc, collection, getDocs, query, where, serverTimestamp, doc, getDoc } from "firebase/firestore";
 import { Loader2, MessageCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
 
-export function ChatButton({ targetUser }: { targetUser: UserProfile }) {
+export function ChatButton({ targetUser }: { targetUser: UserProfile | Property['lister'] }) {
     const { user, loading } = useAuth();
     const router = useRouter();
     const { toast } = useToast();

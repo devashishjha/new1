@@ -11,6 +11,7 @@ export type Property = {
     name: string;
     type: 'owner' | 'developer' | 'dealer';
     avatar?: string;
+    phone: string;
   };
   price: {
     type: 'rent' | 'sale';

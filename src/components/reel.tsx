@@ -89,8 +89,12 @@ export function Reel({ property, userSearchCriteria }: { property: Property; use
   const openDetailsSheet = () => setIsDetailsOpen(true);
   
   const handleCall = () => {
-    console.log("Call action triggered");
-    toast({ title: "Calling Lister", description: `Connecting you with ${property.lister.name}` });
+    if (property.lister.phone) {
+        window.location.href = `tel:${property.lister.phone}`;
+        toast({ title: "Calling Lister", description: `Connecting you with ${property.lister.name}` });
+    } else {
+        toast({ variant: 'destructive', title: "No Phone Number", description: "This user has not provided a phone number." });
+    }
   };
   
   const handleChat = async () => {
@@ -132,11 +136,11 @@ export function Reel({ property, userSearchCriteria }: { property: Property; use
                 participants: {
                     [user.uid]: {
                         name: currentUserProfile.name,
-                        avatar: 'https://placehold.co/100x100.png' // Placeholder
+                        avatar: currentUserProfile.avatar || `https://placehold.co/100x100.png`
                     },
                     [targetUser.id]: {
                         name: targetUser.name,
-                        avatar: 'https://placehold.co/100x100.png' // Placeholder
+                        avatar: targetUser.avatar || `https://placehold.co/100x100.png`
                     }
                 },
                 messages: [],

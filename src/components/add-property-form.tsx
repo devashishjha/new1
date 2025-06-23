@@ -180,6 +180,8 @@ export function AddPropertyForm() {
                     id: user.uid,
                     name: userProfile.name,
                     type: userProfile.type,
+                    avatar: userProfile.avatar,
+                    phone: userProfile.phone,
                 },
                 price: { type: values.priceType, amount: values.priceAmount },
                 location: values.location,

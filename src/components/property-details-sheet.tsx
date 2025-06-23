@@ -184,7 +184,13 @@ export function PropertyDetailsSheet({ open, onOpenChange, property, matchInfo, 
                     <p className="text-sm text-muted-foreground capitalize">{property.lister.type}</p>
                 </Link>
                 <div className="flex items-center gap-2">
-                    <Button size="lg" variant="outline"><Phone className="mr-2 h-5 w-5" /> Call</Button>
+                    {property.lister.phone ? (
+                        <a href={`tel:${property.lister.phone}`}>
+                            <Button size="lg" variant="outline"><Phone className="mr-2 h-5 w-5" /> Call</Button>
+                        </a>
+                    ) : (
+                         <Button size="lg" variant="outline" disabled><Phone className="mr-2 h-5 w-5" /> Call</Button>
+                    )}
                     <ChatButton targetUser={property.lister} />
                 </div>
             </SheetFooter>

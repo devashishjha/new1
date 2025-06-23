@@ -19,6 +19,7 @@ export type PropertyMatchScoreInput = z.infer<typeof PropertyMatchScoreInputSche
 
 const PropertyMatchScoreOutputSchema = z.object({
   matchScore: z.number().describe('A percentage score (0-100) indicating how well the property matches the search criteria.'),
+  summary: z.string().describe('A concise, one-sentence summary justifying the match score.'),
   matches: z.array(z.string()).describe('A list of reasons why the property is a good match.'),
   mismatches: z.array(z.string()).describe('A list of reasons why the property is not a good match.'),
 });
@@ -37,8 +38,10 @@ const prompt = ai.definePrompt({
 You will receive property details and user search criteria.
 Your task is to:
 1. Calculate a match score from 0 to 100 indicating how well the property matches the search criteria.
-2. Provide a list of "matches": specific, positive property features that align with the user's search criteria.
-3. Provide a list of "mismatches": specific property features that do not align with the user's search criteria, or could be potential drawbacks.
+2. Write a concise, one-sentence summary that justifies your calculated match score.
+3. Provide a list of "matches": specific, positive property features that align with the user's search criteria.
+4. Provide a list of "mismatches": specific property features that do not align with the user's search criteria, or could be potential drawbacks.
+
 
 **CRITICAL INSTRUCTIONS:**
 - You MUST provide at least one item for both the 'matches' and 'mismatches' lists.

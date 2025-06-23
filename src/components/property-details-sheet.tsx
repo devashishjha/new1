@@ -103,6 +103,11 @@ export function PropertyDetailsSheet({ open, onOpenChange, property, matchInfo, 
                             <CardTitle className='flex items-center gap-2 text-primary'><Zap className='w-6 h-6' strokeWidth={2.5} /> AI Match Analysis ({matchInfo.matchScore}%)</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4 text-white">
+                            {matchInfo.summary && (
+                                <p className="text-sm italic text-white/80 border-l-2 border-primary/50 pl-4">
+                                    {matchInfo.summary}
+                                </p>
+                            )}
                             {matchInfo.matches && matchInfo.matches.length > 0 && (
                                 <div>
                                     <h4 className="font-semibold mb-2 flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-green-400" /> What Matches</h4>

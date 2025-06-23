@@ -57,6 +57,7 @@ export function AuthForm() {
             }
             // Redirection is handled by AuthProvider
         } catch (error: any) {
+            console.error("Google Sign-In Error:", error);
             toast({
                 variant: 'destructive',
                 title: 'Authentication Failed',

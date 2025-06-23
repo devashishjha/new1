@@ -141,16 +141,25 @@ export function SearchClient() {
                 return priceTypeMatch && priceRangeMatch && locationMatch && societyMatch && propertyTypeMatch && configMatch && floorMatch && totalFloorMatch && housesOnFloorMatch && directionMatch && openSidesMatch && kitchenMatch && balconyMatch && sunlightMatch && parking2WMatch && parking4WMatch && liftMatch && playAreaMatch && clinicMatch && playSchoolMatch && marketMatch && pharmacyMatch && clubhouseMatch && waterMeterMatch && gasMatch;
             });
 
-        if (priceSort !== 'none') {
-            filtered.sort((a, b) => priceSort === 'asc' ? a.price.amount - b.price.amount : b.price.amount - a.price.amount);
-        } else {
-            const getDate = (p: Property) => p.postedOn instanceof Date ? p.postedOn.getTime() : new Date(p.postedOn as string).getTime();
-            filtered.sort((a, b) => {
-                const dateA = getDate(a);
-                const dateB = getDate(b);
-                return dateSort === 'asc' ? dateA - dateB : dateB - a;
-            });
-        }
+        const getDate = (p: Property) => p.postedOn instanceof Date ? p.postedOn.getTime() : new Date(p.postedOn as string).getTime();
+
+        filtered.sort((a, b) => {
+            // Primary Sort: Price
+            if (priceSort !== 'none') {
+                const priceA = a.price.amount;
+                const priceB = b.price.amount;
+                const priceDiff = priceSort === 'asc' ? priceA - priceB : priceB - priceA;
+                if (priceDiff !== 0) {
+                    return priceDiff;
+                }
+            }
+            
+            // Secondary Sort: Date (as tie-breaker or primary sort)
+            const dateA = getDate(a);
+            const dateB = getDate(b);
+            return dateSort === 'asc' ? dateA - dateB : dateB - dateA;
+        });
+
         return filtered;
     }, [properties, filters, priceSort, dateSort]);
 
@@ -221,11 +230,9 @@ export function SearchClient() {
 
     const handlePriceSort = (direction: SortDirection) => {
         setPriceSort(priceSort === direction ? 'none' : direction);
-        if (priceSort !== 'none') setDateSort('desc');
     };
 
     const handleDateSort = (direction: SortDirection) => {
-        setPriceSort('none');
         setDateSort(direction);
     };
 
@@ -370,8 +377,8 @@ export function SearchClient() {
                 <div className="flex items-center gap-3">
                     <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Sort by Date:</span>
                     <div className="flex gap-2">
-                        <Button size="sm" variant="outline" className={cn(dateSort === 'desc' && priceSort === 'none' && 'border-primary text-primary font-bold')} onClick={() => handleDateSort('desc')}>Newest</Button>
-                        <Button size="sm" variant="outline" className={cn(dateSort === 'asc' && priceSort === 'none' && 'border-primary text-primary font-bold')} onClick={() => handleDateSort('asc')}>Oldest</Button>
+                        <Button size="sm" variant="outline" className={cn(dateSort === 'desc' && 'border-primary text-primary font-bold')} onClick={() => handleDateSort('desc')}>Newest</Button>
+                        <Button size="sm" variant="outline" className={cn(dateSort === 'asc' && 'border-primary text-primary font-bold')} onClick={() => handleDateSort('asc')}>Oldest</Button>
                     </div>
                 </div>
             </div>
@@ -391,3 +398,5 @@ export function SearchClient() {
         </div>
     );
 }
+
+    

@@ -60,7 +60,7 @@ export function AuthForm() {
             console.error("Google Sign-In Error:", error);
             let description = error.message;
             if (error.code === 'auth/unauthorized-domain') {
-                description = "This domain is not authorized for sign-in. Please contact support.";
+                description = "This app's domain is not authorized. Please add it to the 'Authorized domains' list in your Firebase Authentication settings.";
             }
             toast({
                 variant: 'destructive',

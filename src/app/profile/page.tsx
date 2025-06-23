@@ -158,7 +158,7 @@ export default function ProfilePage() {
                         bio: 'Welcome to LOKALITY!',
                         type: 'seeker',
                         searchCriteria: 'I am looking for a new property.',
-                        avatar: `https://placehold.co/100x100.png`,
+                        avatar: user.photoURL || `https://placehold.co/100x100.png`,
                     };
                     setDoc(userDocRef, defaultProfile).then(() => {
                         setUserProfile(defaultProfile);

@@ -19,7 +19,7 @@ const nextConfig: NextConfig = {
     ],
   },
   experimental: {
-    // No experimental flags needed for this fix.
+    // No experimental flags needed.
   },
   // allowedDevOrigins is a top-level property
   allowedDevOrigins: [

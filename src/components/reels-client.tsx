@@ -8,6 +8,7 @@ import { doc, getDoc, collection, getDocs, query, orderBy } from 'firebase/fires
 import { db } from '@/lib/firebase';
 import { Skeleton } from './ui/skeleton';
 import { dateToJSON } from '@/lib/utils';
+import { dummyProperties } from '@/lib/dummy-data';
 
 function ReelSkeleton() {
     return (
@@ -58,11 +59,18 @@ export function ReelsClient() {
                 const propertiesCol = collection(db, 'properties');
                 const q = query(propertiesCol, orderBy('postedOn', 'desc'));
                 const snapshot = await getDocs(q);
-                const fetchedProperties = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Property));
+                let fetchedProperties = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Property));
+
+                // If no properties from Firestore, use dummy data
+                if (fetchedProperties.length === 0) {
+                    fetchedProperties = dummyProperties;
+                }
+                
                 setProperties(fetchedProperties.map(p => dateToJSON(p)) as Property[]);
             } catch (error) {
                 console.error("Error fetching data:", error);
-                // In a real app, you might show a toast notification here
+                // Fallback to dummy data on error as well
+                setProperties(dummyProperties.map(p => dateToJSON(p)) as Property[]);
             } finally {
                 setIsLoading(false);
             }

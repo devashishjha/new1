@@ -57,7 +57,8 @@ export function AuthForm() {
             }
             // Redirection is handled by AuthProvider
         } catch (error: any) {
-            console.error("Google Sign-In Error:", error);
+            console.error("Google Sign-In Error Code:", error.code);
+            console.error("Google Sign-In Error Message:", error.message);
             let description = error.message;
             if (error.code === 'auth/unauthorized-domain') {
                 description = "This app's domain is not authorized. Please add it to the 'Authorized domains' list in your Firebase Authentication settings.";

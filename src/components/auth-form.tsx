@@ -142,30 +142,30 @@ export function AuthForm() {
 
 
     return (
-        <Card className="w-full max-w-sm shadow-2xl border-border/20 bg-card/10 backdrop-blur-lg">
+        <Card className="w-full max-w-sm shadow-2xl bg-black/20 backdrop-blur-lg border border-white/20">
             <CardHeader className="text-center space-y-2">
                 <h1 className="text-4xl font-black text-white tracking-tighter mx-auto">LOKALITY</h1>
             </CardHeader>
             <CardContent className="grid gap-4">
-                <Button variant="outline" size="lg" className="w-full border-input" onClick={handleGoogleSignIn} disabled={isLoading || isGoogleLoading}>
+                <Button variant="outline" size="lg" className="w-full bg-white/10 border-white/20 text-white hover:bg-white/20" onClick={handleGoogleSignIn} disabled={isLoading || isGoogleLoading}>
                     {isGoogleLoading ? <Loader2 className="mr-2 animate-spin" /> : <GoogleIcon className="mr-2" />}
                     {isGoogleLoading ? 'Signing in...' : 'Continue with Google'}
                 </Button>
                 
                 <div className="flex items-center gap-4 my-1">
-                    <div className="flex-grow border-t border-border/50" />
-                    <span className="text-xs uppercase text-muted-foreground">or</span>
-                    <div className="flex-grow border-t border-border/50" />
+                    <div className="flex-grow border-t border-white/30" />
+                    <span className="text-xs uppercase text-white/70">or</span>
+                    <div className="flex-grow border-t border-white/30" />
                 </div>
 
                 <form onSubmit={handleEmailAuth} className="grid gap-4">
                     <div className="grid gap-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input id="email" type="email" placeholder="Enter your email" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading || isGoogleLoading} className="bg-background/50" />
+                        <Label htmlFor="email" className="text-white">Email</Label>
+                        <Input id="email" type="email" placeholder="Enter your email" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading || isGoogleLoading} className="bg-white/10 border-white/20 text-white placeholder:text-white/60" />
                     </div>
                     <div className="grid gap-2">
-                        <Label htmlFor="password">Password</Label>
-                        <Input id="password" type="password" placeholder="Enter your password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading || isGoogleLoading} className="bg-background/50" />
+                        <Label htmlFor="password" className="text-white">Password</Label>
+                        <Input id="password" type="password" placeholder="Enter your password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading || isGoogleLoading} className="bg-white/10 border-white/20 text-white placeholder:text-white/60" />
                     </div>
                     
                     {isLogin && (
@@ -188,7 +188,7 @@ export function AuthForm() {
                 </form>
                 
                 <div className="text-center text-sm pt-2">
-                    <p className="text-muted-foreground">
+                    <p className="text-white/70">
                         {isLogin ? "Don't have an account?" : "Already have an account?"}{' '}
                         <button onClick={() => setIsLogin(!isLogin)} className="underline hover:text-primary font-semibold">
                             {isLogin ? "Sign Up" : "Sign In"}

@@ -1,6 +1,6 @@
 'use client';
 
-import type { Property } from '@/lib/types';
+import type { Property, UserProfile } from '@/lib/types';
 import type { PropertyMatchScoreOutput } from '@/ai/flows/property-match-score';
 import { useEffect, useState } from 'react';
 import { PropertyDetailsSheet } from '@/components/property-details-sheet';
@@ -23,6 +23,11 @@ import { formatIndianCurrency } from '@/lib/utils';
 import * as React from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from './ui/skeleton';
+import { useAuth } from '@/hooks/use-auth';
+import { useRouter } from 'next/navigation';
+import { db } from '@/lib/firebase';
+import { addDoc, collection, doc, getDoc, getDocs, query, serverTimestamp, where } from 'firebase/firestore';
+
 
 const InfoCard = ({ icon, label, value, children }: { icon: React.ElementType, label: string, value?: string | React.ReactNode, children?: React.ReactNode }) => (
     <div className="flex-shrink-0 flex flex-col items-start justify-center rounded-xl bg-black/40 backdrop-blur-md p-3 border border-white/20 min-w-[160px] h-20">
@@ -42,6 +47,9 @@ export function Reel({ property, userSearchCriteria }: { property: Property; use
   const [isShortlisted, setIsShortlisted] = useState(false);
   const [isUIVisible, setIsUIVisible] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const router = useRouter();
+
 
   useEffect(() => {
     try {
@@ -85,9 +93,66 @@ export function Reel({ property, userSearchCriteria }: { property: Property; use
     toast({ title: "Calling Lister", description: `Connecting you with ${property.lister.name}` });
   };
   
-  const handleChat = () => {
-    console.log("Chat action triggered");
-    toast({ title: "Opening Chat", description: `Starting a conversation with ${property.lister.name}` });
+  const handleChat = async () => {
+    if (!user) {
+        toast({ variant: 'destructive', title: "Not Logged In", description: "You need to be logged in to start a chat." });
+        return;
+    }
+
+    const targetUser = property.lister;
+    if (user.uid === targetUser.id) {
+         toast({ variant: 'destructive', title: "Cannot Chat", description: "You cannot start a chat with yourself." });
+        return;
+    }
+
+    try {
+        const chatsRef = collection(db, 'chats');
+        const q = query(chatsRef, where('participantIds', 'array-contains', user.uid));
+        const querySnapshot = await getDocs(q);
+        
+        let existingChatId: string | null = null;
+        querySnapshot.forEach(doc => {
+            const chat = doc.data();
+            if (chat.participantIds.includes(targetUser.id)) {
+                existingChatId = doc.id;
+            }
+        });
+
+        if (existingChatId) {
+            router.push(`/chats/${existingChatId}`);
+        } else {
+            const currentUserDocSnap = await getDoc(doc(db, 'users', user.uid));
+            if (!currentUserDocSnap.exists()) {
+                throw new Error("Could not find current user's profile.");
+            }
+            const currentUserProfile = currentUserDocSnap.data() as UserProfile;
+
+            const newChatRef = await addDoc(chatsRef, {
+                participantIds: [user.uid, targetUser.id],
+                participants: {
+                    [user.uid]: {
+                        name: currentUserProfile.name,
+                        avatar: 'https://placehold.co/100x100.png' // Placeholder
+                    },
+                    [targetUser.id]: {
+                        name: targetUser.name,
+                        avatar: 'https://placehold.co/100x100.png' // Placeholder
+                    }
+                },
+                messages: [],
+                lastMessage: {
+                    text: 'Chat started.',
+                    timestamp: serverTimestamp(),
+                    senderId: user.uid,
+                },
+                unreadCount: 0,
+            });
+            router.push(`/chats/${newChatRef.id}`);
+        }
+    } catch (error) {
+        console.error("Error starting chat:", error);
+        toast({ variant: 'destructive', title: "Error", description: "Could not start the chat. Please try again." });
+    }
   };
 
   useEffect(() => {

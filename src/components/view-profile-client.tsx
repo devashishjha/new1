@@ -34,7 +34,7 @@ const DetailItem = ({ label, value, icon }: { label: string, value: React.ReactN
 export function ViewProfileClient() {
   const params = useParams();
   const userId = params.id as string;
-  const { loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [userProperties, setUserProperties] = useState<Property[]>([]);
@@ -48,7 +48,6 @@ export function ViewProfileClient() {
     const fetchData = async () => {
       setIsLoading(true);
       
-      // Attempt to fetch user from Firestore
       const userDocRef = doc(db, 'users', userId);
       const userDocSnap = await getDoc(userDocRef);
 
@@ -63,43 +62,50 @@ export function ViewProfileClient() {
           setUserProperties(properties.map(p => dateToJSON(p)) as Property[]);
         }
       } else {
-        // If not in Firestore, fall back to dummy data
+        // Fallback to dummy data if user is not in Firestore
         const dummyLister = dummyProperties.find(p => p.lister.id === userId)?.lister;
         
         if (dummyLister) {
-          let userProfile: UserProfile;
+          // Create a FULL, VALID UserProfile from the dummy data
           const baseProfile = {
             id: dummyLister.id,
             name: dummyLister.name,
-            email: `${dummyLister.name.toLowerCase().replace(' ', '.')}@example.com`,
-            phone: dummyLister.phone,
+            email: `${dummyLister.name.toLowerCase().replace(/\s/g, '.')}@example.com`,
+            phone: dummyLister.phone || '',
             bio: `A passionate ${dummyLister.type} helping people find their dream homes.`,
-            avatar: dummyLister.avatar,
+            avatar: dummyLister.avatar || 'https://placehold.co/100x100.png',
           };
 
-          switch(dummyLister.type) {
+          let fullDummyProfile: UserProfile | null = null;
+          switch (dummyLister.type) {
             case 'owner':
-              userProfile = { ...baseProfile, type: 'owner' };
+              fullDummyProfile = { ...baseProfile, type: 'owner' };
               break;
             case 'dealer':
-              userProfile = { ...baseProfile, type: 'dealer', companyName: `${dummyLister.name}'s Realty` };
+              fullDummyProfile = {
+                ...baseProfile,
+                type: 'dealer',
+                companyName: `${dummyLister.name}'s Realty`,
+              };
               break;
             case 'developer':
-              userProfile = { ...baseProfile, type: 'developer', companyName: `${dummyLister.name} Corp`, reraId: 'DUMMY/RERA/12345' };
+              fullDummyProfile = {
+                ...baseProfile,
+                type: 'developer',
+                companyName: `${dummyLister.name} Corp`,
+                reraId: 'DUMMY/RERA/12345',
+              };
               break;
-            default:
-              // This case should not be hit with current data, but it's a good safeguard
-              setProfile(null);
-              setIsLoading(false);
-              return;
           }
           
-          setProfile(userProfile);
+          setProfile(fullDummyProfile);
           
-          const propertiesByDummyLister = dummyProperties.filter(p => p.lister.id === userId);
-          setUserProperties(propertiesByDummyLister.map(p => dateToJSON(p)) as Property[]);
+          if (fullDummyProfile) {
+            const propertiesByDummyLister = dummyProperties.filter(p => p.lister.id === userId);
+            setUserProperties(propertiesByDummyLister.map(p => dateToJSON(p)) as Property[]);
+          }
+          
         } else {
-          // Not in Firestore or dummy data
           setProfile(null);
         }
       }
@@ -118,28 +124,30 @@ export function ViewProfileClient() {
     notFound();
   }
 
+  const isLoggedInUser = user?.uid === userId;
+  
   if (isLoading || authLoading) {
     return (
       <>
         <Header />
         <main className="container mx-auto py-24 px-4 pb-24">
            <div className="max-w-4xl mx-auto">
-              <Skeleton className="h-10 w-48 mb-4" />
+              <Skeleton className="h-10 w-48 mb-4 bg-white/20" />
               <Card>
                 <CardHeader className="text-center">
-                  <Skeleton className="w-24 h-24 rounded-full mx-auto mb-4" />
-                  <Skeleton className="h-8 w-48 mx-auto" />
-                  <Skeleton className="h-6 w-24 mx-auto mt-2" />
+                  <Skeleton className="w-24 h-24 rounded-full mx-auto mb-4 bg-white/20" />
+                  <Skeleton className="h-8 w-48 mx-auto bg-white/20" />
+                  <Skeleton className="h-6 w-24 mx-auto mt-2 bg-white/20" />
                 </CardHeader>
                 <CardContent className="space-y-6">
-                   <Skeleton className="h-5 w-3/4 mx-auto" />
-                   <div className="space-y-6 pt-4 border-t">
-                      <Skeleton className="h-12 w-full" />
-                      <Skeleton className="h-12 w-full" />
+                   <Skeleton className="h-5 w-3/4 mx-auto bg-white/20" />
+                   <div className="space-y-6 pt-4 border-t border-white/10">
+                      <Skeleton className="h-12 w-full bg-white/20" />
+                      <Skeleton className="h-12 w-full bg-white/20" />
                    </div>
                 </CardContent>
-                <CardFooter className="p-4 border-t bg-secondary/20">
-                  <Skeleton className="h-12 w-full" />
+                <CardFooter className="p-4 border-t border-white/10 bg-black/20">
+                  <Skeleton className="h-12 w-full bg-white/20" />
                 </CardFooter>
               </Card>
            </div>
@@ -149,22 +157,33 @@ export function ViewProfileClient() {
     )
   }
   
-  // This will only render if profile is not null.
+  if (!profile) {
+    return (
+      <>
+        <Header />
+        <main className="container mx-auto py-24 px-4 pb-24 flex items-center justify-center">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </main>
+        <BottomNavBar />
+      </>
+    )
+  }
+
   return (
     <>
       <Header />
       <main className="container mx-auto py-24 px-4 pb-24">
         <div className="max-w-4xl mx-auto">
-          <Link href="/reels">
+          <Link href={isLoggedInUser ? "/profile" : "/reels"}>
             <Button variant="ghost" className="mb-4">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Reels
+              Back to {isLoggedInUser ? "Your Profile" : "Reels"}
             </Button>
           </Link>
           
           <Card>
             <CardHeader className="text-center">
-              <div className="w-24 h-24 bg-secondary rounded-full mx-auto flex items-center justify-center mb-4 overflow-hidden">
+              <div className="w-24 h-24 bg-secondary rounded-full mx-auto flex items-center justify-center mb-4 overflow-hidden border-2 border-primary">
                   {profile.avatar ? (
                       <Image src={profile.avatar} alt={profile.name} width={96} height={96} className="object-cover w-full h-full" data-ai-hint="person portrait" />
                   ) : (
@@ -178,29 +197,33 @@ export function ViewProfileClient() {
             </CardHeader>
             <CardContent className="space-y-6">
                 <p className="text-center text-muted-foreground italic px-4">&quot;{profile.bio}&quot;</p>
-                <div className="space-y-6 pt-4 border-t">
+                <div className="space-y-6 pt-4 border-t border-white/10">
                     <DetailItem label="Email" value={profile.email} icon={AtSign} />
                     <DetailItem label="Phone" value={profile.phone || 'Not provided'} icon={Phone} />
                     {(profile.type === 'dealer' || profile.type === 'developer') && profile.companyName && <DetailItem label="Company Name" value={profile.companyName} icon={Building} />}
                     {(profile.type === 'dealer' || profile.type === 'developer') && profile.reraId && <DetailItem label="RERA ID" value={profile.reraId} icon={ChevronsRight} />}
                 </div>
                 {profile.type === 'seeker' && (profile as SeekerProfile).searchCriteria && (
-                    <div className="space-y-2 pt-4 border-t">
+                    <div className="space-y-2 pt-4 border-t border-white/10">
                         <h3 className="text-sm text-muted-foreground">Search Criteria</h3>
                         <p className="font-mono text-sm bg-secondary p-4 rounded-md">{(profile as SeekerProfile).searchCriteria}</p>
                     </div>
                 )}
             </CardContent>
-            <CardFooter className="p-4 border-t bg-secondary/20">
-                <ChatButton targetUser={profile} />
-            </CardFooter>
+            {!isLoggedInUser && (
+                 <CardFooter className="p-4 border-t border-white/10 bg-black/20">
+                    <ChatButton targetUser={profile} />
+                </CardFooter>
+            )}
           </Card>
 
           {(profile.type === 'owner' || profile.type === 'developer' || profile.type === 'dealer') && (
               <Card className="mt-8">
                   <CardHeader><CardTitle>Properties Posted ({userProperties.length})</CardTitle></CardHeader>
                   <CardContent>
-                      {userProperties.length > 0 ? (
+                      {isLoading ? (
+                          <div className="text-center py-4"><Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" /></div>
+                      ) : userProperties.length > 0 ? (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                               {userProperties.map(property => (
                                   <ShortlistedPropertyCard key={property.id} property={property} />

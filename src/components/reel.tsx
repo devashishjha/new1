@@ -2,7 +2,7 @@
 
 import type { Property } from '@/lib/types';
 import type { PropertyMatchScoreOutput } from '@/ai/flows/property-match-score';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import { PropertyDetailsSheet } from '@/components/property-details-sheet';
 import { getPropertyMatchScore } from '@/app/actions';
@@ -49,6 +49,77 @@ function ReelComponent({ property, userSearchCriteria }: { property: Property; u
   const [isUIVisible, setIsUIVisible] = useState(true);
   const { toast } = useToast();
   const { navigateToChat, isNavigating: isStartingChat } = useChatNavigation();
+  const reelRef = useRef<HTMLElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  // Observer to detect when the reel is in view and trigger AI fetch
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect(); // Fetch only once when it becomes visible
+        }
+      },
+      { threshold: 0.5 } // Trigger when 50% of the element is visible
+    );
+
+    const currentRef = reelRef.current;
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
+    };
+  }, []);
+
+  const priceDisplay = property.price.type === 'rent'
+    ? `₹ ${property.price.amount.toLocaleString('en-IN')}/mo`
+    : formatIndianCurrency(property.price.amount);
+    
+  useEffect(() => {
+    async function fetchScore() {
+      const amenitiesList = [
+        property.amenities.hasBalcony && 'Balcony', // Corrected from property.hasBalcony
+        property.amenities.hasLift && 'Lift',
+        property.amenities.hasClubhouse && 'Clubhouse',
+        property.amenities.hasChildrenPlayArea && "Children's Play Area",
+        property.amenities.hasGasPipeline && 'Gas Pipeline',
+      ].filter(Boolean).join(', ');
+
+      const propertyDetailsString = `
+        This is a ${property.configuration} ${property.propertyType} for ${property.price.type} at ${property.societyName}, ${property.location}.
+        Price: ${priceDisplay}.
+        Area: ${property.area.superBuiltUp} sqft.
+        Floor: ${property.floorNo} of ${property.totalFloors}.
+        Main door facing: ${property.mainDoorDirection}.
+        Parking: ${property.parking.has4Wheeler ? 'Car' : 'No Car'}, ${property.parking.has2Wheeler ? 'Bike' : 'No Bike'}.
+        Key Amenities: ${amenitiesList || 'None listed'}.
+        Description: ${property.description}
+      `;
+
+      try {
+        const result = await getPropertyMatchScore({
+          propertyDetails: propertyDetailsString,
+          searchCriteria: userSearchCriteria,
+        });
+        setMatchInfo(result);
+      } catch (error) {
+        console.error("Failed to get property match score:", error);
+        setMatchInfo(null);
+      }
+    }
+    
+    // Fetch score when the component is visible and criteria are available
+    if (userSearchCriteria && isVisible && matchInfo === undefined) {
+      fetchScore();
+    } else if (!userSearchCriteria) {
+      setMatchInfo(null);
+    }
+  }, [userSearchCriteria, isVisible, matchInfo, property, priceDisplay]);
 
 
   useEffect(() => {
@@ -102,54 +173,9 @@ function ReelComponent({ property, userSearchCriteria }: { property: Property; u
     navigateToChat(property.lister);
   };
 
-  const priceDisplay = property.price.type === 'rent'
-    ? `₹ ${property.price.amount.toLocaleString('en-IN')}/mo`
-    : formatIndianCurrency(property.price.amount);
-    
-  useEffect(() => {
-    async function fetchScore() {
-      const amenitiesList = [
-        property.hasBalcony && 'Balcony',
-        property.amenities.hasLift && 'Lift',
-        property.amenities.hasClubhouse && 'Clubhouse',
-        property.amenities.hasChildrenPlayArea && "Children's Play Area",
-        property.amenities.hasGasPipeline && 'Gas Pipeline',
-      ].filter(Boolean).join(', ');
-
-      const propertyDetailsString = `
-        This is a ${property.configuration} ${property.propertyType} for ${property.price.type} at ${property.societyName}, ${property.location}.
-        Price: ${priceDisplay}.
-        Area: ${property.area.superBuiltUp} sqft.
-        Floor: ${property.floorNo} of ${property.totalFloors}.
-        Main door facing: ${property.mainDoorDirection}.
-        Parking: ${property.parking.has4Wheeler ? 'Car' : 'No Car'}, ${property.parking.has2Wheeler ? 'Bike' : 'No Bike'}.
-        Key Amenities: ${amenitiesList || 'None listed'}.
-        Description: ${property.description}
-      `;
-
-      try {
-        const result = await getPropertyMatchScore({
-          propertyDetails: propertyDetailsString,
-          searchCriteria: userSearchCriteria,
-        });
-        setMatchInfo(result);
-      } catch (error) {
-        console.error("Failed to get property match score:", error);
-        setMatchInfo(null);
-      }
-    }
-    
-    if (userSearchCriteria && isAiMatchDialogOpen && matchInfo === undefined) {
-      fetchScore();
-    } else if (!userSearchCriteria) {
-      setMatchInfo(null);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userSearchCriteria, isAiMatchDialogOpen]);
-
-
   return (
     <section 
+      ref={reelRef}
       className="h-full w-full snap-start relative text-white overflow-hidden"
       onClick={() => setIsUIVisible(!isUIVisible)}
     >
@@ -196,9 +222,7 @@ function ReelComponent({ property, userSearchCriteria }: { property: Property; u
             <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide">
                 <button onClick={(e) => handleInteraction(e, openAiMatchDialog)} className="text-left">
                     <InfoCard icon={Zap} label="AI Match">
-                    {matchInfo === undefined && !isAiMatchDialogOpen ? (
-                         <p className="text-sm mt-1 text-white/70">Click to see</p>
-                    ) : matchInfo === undefined && isAiMatchDialogOpen ? (
+                    {matchInfo === undefined ? (
                         <Skeleton className="h-7 w-12 mt-1 bg-white/20" />
                     ) : matchInfo ? (
                         <p className="text-2xl font-bold mt-1 text-white truncate w-full">{matchInfo.matchScore}%</p>

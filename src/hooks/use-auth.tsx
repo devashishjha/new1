@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import type { User } from 'firebase/auth';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, isFirebaseEnabled } from '@/lib/firebase';
 import { useRouter, usePathname } from 'next/navigation';
 
 type AuthContextType = {
@@ -24,6 +24,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isAuthPage = pathname === '/';
 
   useEffect(() => {
+    // If firebase is not configured, we don't need to check for a user.
+    if (!isFirebaseEnabled || !auth) {
+      setUser(null);
+      setLoading(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);

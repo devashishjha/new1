@@ -108,10 +108,12 @@ export function SearchClient({ initialProperties }: { initialProperties: Propert
         if (priceSort !== 'none') {
             properties.sort((a, b) => priceSort === 'asc' ? a.price.amount - b.price.amount : b.price.amount - a.price.amount);
         } else {
+            // Firestore timestamps can be strings after serialization
+            const getDate = (p: Property) => p.postedOn instanceof Date ? p.postedOn.getTime() : new Date(p.postedOn as string).getTime();
             properties.sort((a, b) => {
-                const dateA = new Date(a.postedOn).getTime();
-                const dateB = new Date(b.postedOn).getTime();
-                return dateSort === 'asc' ? dateA - dateB : dateB - a.postedOn.getTime();
+                const dateA = getDate(a);
+                const dateB = getDate(b);
+                return dateSort === 'asc' ? dateA - dateB : dateB - dateA;
             });
         }
         return properties;

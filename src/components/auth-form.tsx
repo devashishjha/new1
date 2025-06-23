@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,6 +10,7 @@ import { auth, db } from '@/lib/firebase';
 import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, getAdditionalUserInfo, UserCredential } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import type { SeekerProfile } from '@/lib/types';
+import { Loader2 } from 'lucide-react';
 
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -26,7 +26,9 @@ export function AuthForm() {
     const { toast } = useToast();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [isLogin, setIsLogin] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
+    const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
     const createNewUserProfile = async (userCredential: UserCredential) => {
         const user = userCredential.user;
@@ -43,7 +45,7 @@ export function AuthForm() {
     };
 
     const handleGoogleSignIn = async () => {
-        setIsLoading(true);
+        setIsGoogleLoading(true);
         const provider = new GoogleAuthProvider();
         try {
             const userCredential = await signInWithPopup(auth, provider);
@@ -60,38 +62,29 @@ export function AuthForm() {
                 description: error.message,
             });
         } finally {
-            setIsLoading(false);
+            setIsGoogleLoading(false);
         }
     };
 
-    const handleEmailSignIn = async (e: React.FormEvent) => {
+    const handleEmailAuth = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
         try {
-            await signInWithEmailAndPassword(auth, email, password);
-            // Redirection is handled by AuthProvider for existing users
-        } catch (error: any) {
-            if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-                // Try to create a new user if sign-in fails
-                try {
-                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                    await createNewUserProfile(userCredential);
-                    toast({ title: 'Welcome!', description: 'Your account has been created.' });
-                    // Redirection is handled by AuthProvider for new users
-                } catch (createError: any) {
-                    toast({
-                        variant: 'destructive',
-                        title: 'Sign Up Failed',
-                        description: createError.message,
-                    });
-                }
+            if (isLogin) {
+                await signInWithEmailAndPassword(auth, email, password);
+                // Redirection handled by AuthProvider
             } else {
-                toast({
-                    variant: 'destructive',
-                    title: 'Sign In Failed',
-                    description: error.message,
-                });
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                await createNewUserProfile(userCredential);
+                toast({ title: 'Welcome!', description: 'Your account has been created.' });
+                // Redirection handled by AuthProvider
             }
+        } catch (error: any) {
+             toast({
+                variant: 'destructive',
+                title: isLogin ? 'Sign In Failed' : 'Sign Up Failed',
+                description: error.message,
+            });
         } finally {
             setIsLoading(false);
         }
@@ -104,9 +97,9 @@ export function AuthForm() {
                 <CardDescription>Discover properties like never before</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
-                <Button variant="outline" size="lg" className="w-full border-input" onClick={handleGoogleSignIn} disabled={isLoading}>
-                    <GoogleIcon className="mr-2" />
-                    {isLoading ? 'Signing in...' : 'Continue with Google'}
+                <Button variant="outline" size="lg" className="w-full border-input" onClick={handleGoogleSignIn} disabled={isLoading || isGoogleLoading}>
+                    {isGoogleLoading ? <Loader2 className="mr-2 animate-spin" /> : <GoogleIcon className="mr-2" />}
+                    {isGoogleLoading ? 'Signing in...' : 'Continue with Google'}
                 </Button>
                 
                 <div className="relative my-1">
@@ -118,25 +111,29 @@ export function AuthForm() {
                     </div>
                 </div>
 
-                <form onSubmit={handleEmailSignIn} className="grid gap-4">
+                <form onSubmit={handleEmailAuth} className="grid gap-4">
                     <div className="grid gap-2">
                         <Label htmlFor="email">Email</Label>
-                        <Input id="email" type="email" placeholder="Enter your email" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} />
+                        <Input id="email" type="email" placeholder="Enter your email" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading || isGoogleLoading} />
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="password">Password</Label>
-                        <Input id="password" type="password" placeholder="Enter your password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading} />
+                        <Input id="password" type="password" placeholder="Enter your password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading || isGoogleLoading} />
                     </div>
 
-                    <Button size="lg" className="w-full" type="submit" disabled={isLoading}>
-                        {isLoading ? 'Processing...' : 'Sign In / Sign Up'}
+                    <Button size="lg" className="w-full" type="submit" disabled={isLoading || isGoogleLoading}>
+                        {isLoading && <Loader2 className="mr-2 animate-spin" />}
+                        {isLoading ? (isLogin ? 'Signing In...' : 'Signing Up...') : (isLogin ? 'Sign In' : 'Sign Up')}
                     </Button>
                 </form>
                 
                 <div className="text-center text-sm pt-2">
-                    <Link href="#" className="underline text-muted-foreground hover:text-primary">
-                        Forgot Password?
-                    </Link>
+                    <p className="text-muted-foreground">
+                        {isLogin ? "Don't have an account?" : "Already have an account?"}{' '}
+                        <button onClick={() => setIsLogin(!isLogin)} className="underline hover:text-primary font-semibold">
+                            {isLogin ? "Sign Up" : "Sign In"}
+                        </button>
+                    </p>
                 </div>
             </CardContent>
         </Card>

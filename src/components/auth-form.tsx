@@ -94,7 +94,7 @@ export function AuthForm() {
     return (
         <Card className="w-full max-w-sm shadow-2xl border-0">
             <CardHeader className="text-center space-y-2">
-                <h1 className="text-4xl font-black text-primary tracking-tighter mx-auto">LOKALITY</h1>
+                <h1 className="text-4xl font-black text-white tracking-tighter mx-auto">LOKALITY</h1>
                 <CardDescription>Discover properties like never before</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">

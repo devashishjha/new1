@@ -49,7 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return (
         <div className="h-dvh w-screen flex items-center justify-center bg-background">
           <div className="w-full max-w-sm space-y-6 flex flex-col items-center">
-              <h1 className="text-4xl font-black text-primary tracking-tighter mx-auto">LOKALITY</h1>
+              <h1 className="text-4xl font-black text-white tracking-tighter mx-auto">LOKALITY</h1>
               <p className="text-muted-foreground animate-pulse">Loading...</p>
           </div>
         </div>

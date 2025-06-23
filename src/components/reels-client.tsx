@@ -37,6 +37,8 @@ export function ReelsClient() {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
+        // This effect should only run when the `user` object is available.
+        // `useAuth` hook ensures this component doesn't render until auth state is resolved.
         if (user) {
             const fetchData = async () => {
                 setIsLoading(true);
@@ -64,10 +66,8 @@ export function ReelsClient() {
                 }
             };
             fetchData();
-        } else if (!user && !isLoading) {
-            // AuthProvider will redirect, no need to do anything here.
         }
-    }, [user, isLoading]);
+    }, [user]); // The dependency is only on `user`.
 
     if (isLoading) {
         return (

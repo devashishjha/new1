@@ -71,6 +71,8 @@ export function AuthForm() {
                 description = "This app's domain is not authorized for Google Sign-In. Please add it to the 'Authorized domains' list in your Firebase project's Authentication settings.";
             } else if (error.code === 'auth/operation-not-allowed') {
                 description = "Google Sign-In is not enabled for this project. Please go to your Firebase Console -> Authentication -> Sign-in method and enable the Google provider.";
+            } else if (error.code === 'auth/permission-denied') {
+                description = "Authentication failed. Please ensure the 'Identity Toolkit API' is enabled in your Google Cloud project for this Firebase project.";
             }
             toast({
                 variant: 'destructive',

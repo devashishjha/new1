@@ -33,11 +33,11 @@ export default function Error({
                 <Button onClick={() => reset()} size="lg">
                     Try again
                 </Button>
-                {process.env.NODE_ENV === 'development' && (
+                {process.env.NODE_ENV === 'development' ? (
                     <pre className="mt-6 text-left text-xs bg-muted p-4 rounded-md overflow-auto text-destructive">
                         <code>{error.stack}</code>
                     </pre>
-                )}
+                ) : null}
             </CardContent>
         </Card>
     </main>

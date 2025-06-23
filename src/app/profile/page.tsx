@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -297,9 +298,11 @@ export default function ProfilePage() {
                                             <p className="font-bold text-lg">₹500</p>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
-                                                    <Button size="sm" className="mt-1" disabled>
-                                                        <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
-                                                    </Button>
+                                                    <div className='inline-block'>
+                                                        <Button size="sm" className="mt-1" disabled>
+                                                            <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
+                                                        </Button>
+                                                    </div>
                                                 </TooltipTrigger>
                                                 <TooltipContent>
                                                     <p>Payment gateway coming soon!</p>
@@ -320,9 +323,11 @@ export default function ProfilePage() {
                                             <p className="font-bold text-lg">₹500</p>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
-                                                    <Button size="sm" className="mt-1" disabled>
-                                                        <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
-                                                    </Button>
+                                                    <div className='inline-block'>
+                                                        <Button size="sm" className="mt-1" disabled>
+                                                            <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
+                                                        </Button>
+                                                    </div>
                                                 </TooltipTrigger>
                                                 <TooltipContent>
                                                     <p>Payment gateway coming soon!</p>
@@ -343,9 +348,11 @@ export default function ProfilePage() {
                                             <p className="font-bold text-lg">₹1000</p>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
-                                                    <Button size="sm" className="mt-1" disabled>
-                                                        <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
-                                                    </Button>
+                                                    <div className='inline-block'>
+                                                        <Button size="sm" className="mt-1" disabled>
+                                                            <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
+                                                        </Button>
+                                                    </div>
                                                 </TooltipTrigger>
                                                 <TooltipContent>
                                                     <p>Payment gateway coming soon!</p>
@@ -362,8 +369,10 @@ export default function ProfilePage() {
                                  <Link href="/chats"><Button variant="ghost" className="w-full justify-start gap-3"><MessagesSquare className="w-6 h-6" strokeWidth={2.5} /> My Chats</Button></Link>
                                 <Separator />
                                 <Tooltip>
-                                    <TooltipTrigger className="w-full">
-                                        <Button variant="ghost" className="w-full justify-start gap-3" disabled><Shield className="w-6 h-6" strokeWidth={2.5} /> Privacy Policy</Button>
+                                    <TooltipTrigger asChild>
+                                        <div className='w-full'>
+                                            <Button variant="ghost" className="w-full justify-start gap-3" disabled><Shield className="w-6 h-6" strokeWidth={2.5} /> Privacy Policy</Button>
+                                        </div>
                                     </TooltipTrigger>
                                     <TooltipContent>
                                         <p>Coming soon!</p>
@@ -371,8 +380,10 @@ export default function ProfilePage() {
                                 </Tooltip>
                                 <Separator />
                                 <Tooltip>
-                                    <TooltipTrigger className="w-full">
-                                        <Button variant="ghost" className="w-full justify-start gap-3" disabled><FileText className="w-6 h-6" strokeWidth={2.5}/> Terms & Conditions</Button>
+                                    <TooltipTrigger asChild>
+                                        <div className='w-full'>
+                                            <Button variant="ghost" className="w-full justify-start gap-3" disabled><FileText className="w-6 h-6" strokeWidth={2.5}/> Terms & Conditions</Button>
+                                        </div>
                                     </TooltipTrigger>
                                     <TooltipContent>
                                         <p>Coming soon!</p>

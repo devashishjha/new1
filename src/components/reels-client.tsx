@@ -90,6 +90,10 @@ export function ReelsClient() {
         fetchData();
     }, [user, authLoading]);
 
+    const handleDeleteProperty = (propertyId: string) => {
+        setProperties(prev => prev.filter(p => p.id !== propertyId));
+    };
+
     if (isLoading || authLoading) {
         return (
              <main className="h-full w-full overflow-hidden">
@@ -102,7 +106,7 @@ export function ReelsClient() {
         <main className="h-full w-full overflow-y-auto snap-y snap-mandatory scroll-smooth">
             {properties.length > 0 ? (
                 properties.map((property) => (
-                    <Reel key={property.id} property={property} userSearchCriteria={userSearchCriteria} />
+                    <Reel key={property.id} property={property} userSearchCriteria={userSearchCriteria} onDelete={handleDeleteProperty} />
                 ))
             ) : (
                  <div className="h-full w-full snap-start relative flex flex-col justify-center items-center p-4 text-center">

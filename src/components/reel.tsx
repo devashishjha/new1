@@ -5,7 +5,7 @@ import type { PropertyMatchScoreOutput } from '@/ai/flows/property-match-score';
 import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import { PropertyDetailsSheet } from '@/components/property-details-sheet';
-import { getPropertyMatchScore } from '@/app/actions';
+import { getPropertyMatchScore, deletePropertyAction } from '@/app/actions';
 import Link from 'next/link';
 import { 
     Bookmark, 
@@ -20,6 +20,7 @@ import {
     CircleDollarSign,
     Zap,
     Loader2,
+    Trash2,
 } from 'lucide-react';
 import { formatIndianCurrency } from '@/lib/utils';
 import * as React from 'react';
@@ -27,6 +28,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from './ui/skeleton';
 import { useChatNavigation } from '@/hooks/use-chat-navigation';
 import { AiMatchDialog } from './ai-match-dialog';
+import { useAuth } from '@/hooks/use-auth';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 
 const InfoCard = ({ icon, label, value, children }: { icon: React.ElementType, label: string, value?: string | React.ReactNode, children?: React.ReactNode }) => (
@@ -41,16 +44,22 @@ const InfoCard = ({ icon, label, value, children }: { icon: React.ElementType, l
 );
 
 
-function ReelComponent({ property, userSearchCriteria }: { property: Property; userSearchCriteria: string }) {
+function ReelComponent({ property, userSearchCriteria, onDelete }: { property: Property; userSearchCriteria: string; onDelete: (propertyId: string) => void }) {
   const [matchInfo, setMatchInfo] = useState<PropertyMatchScoreOutput | null | undefined>(undefined);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isAiMatchDialogOpen, setIsAiMatchDialogOpen] = useState(false);
   const [isShortlisted, setIsShortlisted] = useState(false);
   const [isUIVisible, setIsUIVisible] = useState(true);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  
   const { toast } = useToast();
   const { navigateToChat, isNavigating: isStartingChat } = useChatNavigation();
+  const { user } = useAuth();
   const reelRef = useRef<HTMLElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+
+  const isLister = user?.uid === property.lister.id;
 
   // Observer to detect when the reel is in view and trigger AI fetch
   useEffect(() => {
@@ -156,6 +165,19 @@ function ReelComponent({ property, userSearchCriteria }: { property: Property; u
        toast({ variant: 'destructive', title: "Error", description: "Could not update shortlist." });
     }
   };
+  
+  const handleDeleteConfirm = async () => {
+    setIsDeleting(true);
+    const result = await deletePropertyAction(property.id);
+    if (result.success) {
+        toast({ title: "Property Deleted", description: result.message });
+        onDelete(property.id);
+        setIsDeleteDialogOpen(false);
+    } else {
+        toast({ variant: 'destructive', title: "Deletion Failed", description: result.message });
+    }
+    setIsDeleting(false);
+  };
 
   const openDetailsSheet = () => setIsDetailsOpen(true);
   const openAiMatchDialog = () => setIsAiMatchDialogOpen(true);
@@ -216,6 +238,30 @@ function ReelComponent({ property, userSearchCriteria }: { property: Property; u
                 <button onClick={(e) => handleInteraction(e, openDetailsSheet)} className="flex-1 flex flex-col items-center gap-1 p-1 rounded-full hover:bg-white/10 transition-colors">
                     <Info strokeWidth={2.5} className="h-6 w-6"/>
                 </button>
+                {isLister && (
+                  <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                      <AlertDialogTrigger asChild>
+                           <button onClick={(e) => e.stopPropagation()} className="flex-1 flex flex-col items-center gap-1 p-1 rounded-full hover:bg-destructive/80 transition-colors text-destructive">
+                              <Trash2 strokeWidth={2.5} className="h-6 w-6"/>
+                          </button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                          <AlertDialogHeader>
+                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                  This action cannot be undone. This will permanently delete this property listing.
+                              </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                              <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={handleDeleteConfirm} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
+                                  {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                  Delete
+                              </AlertDialogAction>
+                          </AlertDialogFooter>
+                      </AlertDialogContent>
+                  </AlertDialog>
+                )}
             </div>
 
             {/* Horizontally Scrolling Info Cards */}

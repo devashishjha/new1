@@ -1,3 +1,4 @@
+'use client';
 import { Header } from '@/components/header';
 import { BottomNavBar } from '@/components/bottom-nav-bar';
 import { ChatsListClient } from '@/components/chats-list-client';

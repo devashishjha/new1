@@ -1,3 +1,4 @@
+'use client';
 import { SearchClient } from '@/components/search-client';
 import { Header } from '@/components/header';
 import { BottomNavBar } from '@/components/bottom-nav-bar';

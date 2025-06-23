@@ -1,3 +1,4 @@
+'use client';
 import { ReelsClient } from '@/components/reels-client';
 import { Header } from '@/components/header';
 import { BottomNavBar } from '@/components/bottom-nav-bar';

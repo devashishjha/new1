@@ -1,3 +1,4 @@
+'use client';
 import { ViewProfileClient } from "@/components/view-profile-client";
 
 export const dynamic = 'force-dynamic';

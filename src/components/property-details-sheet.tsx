@@ -32,11 +32,11 @@ const Amenity = ({ icon, label, available }: { icon: React.ElementType, label: s
 
 const DetailItem = ({ label, value, icon }: { label: string, value: React.ReactNode, icon?: React.ElementType }) => (
   <div className="flex justify-between items-center text-sm">
-    <div className="flex items-center gap-2 text-muted-foreground">
+    <div className="flex items-center gap-2 text-white/80">
       {icon && React.createElement(icon, { className: 'w-5 h-5', strokeWidth: 2 })}
       <span>{label}</span>
     </div>
-    <span className="font-semibold text-right">{value}</span>
+    <span className="font-semibold text-right text-white">{value}</span>
   </div>
 );
 
@@ -50,13 +50,13 @@ export function PropertyDetailsSheet({ open, onOpenChange, property, matchInfo, 
     
   const descriptionAndAreaCards = (
     <>
-      <Card>
+      <Card className="bg-black/40 border-white/10">
           <CardHeader><CardTitle className="text-lg flex items-center gap-2"><FileText className="w-6 h-6" strokeWidth={2.5} />Description</CardTitle></CardHeader>
           <CardContent>
-              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{property.description}</p>
+              <p className="text-sm text-white/80 whitespace-pre-wrap">{property.description}</p>
           </CardContent>
       </Card>
-      <Card>
+      <Card className="bg-black/40 border-white/10">
           <CardHeader><CardTitle className="text-lg flex items-center gap-2"><AreaChart className="w-6 h-6" strokeWidth={2.5} />Area & Sunlight</CardTitle></CardHeader>
           <CardContent className="space-y-4">
               <DetailItem label="Super Built-up Area" value={`${property.area.superBuiltUp} sqft`} />
@@ -70,7 +70,7 @@ export function PropertyDetailsSheet({ open, onOpenChange, property, matchInfo, 
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-xl md:max-w-2xl p-0">
+      <SheetContent className="w-full sm:max-w-xl md:max-w-2xl p-0 bg-black/50 backdrop-blur-lg border-l border-white/20 text-white">
         <ScrollArea className="h-full">
             <SheetHeader className="p-6 bg-cover bg-center text-left" style={{backgroundImage: `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url(${property.image})`}}>
               <SheetTitle className="text-3xl font-bold text-white">{property.title}</SheetTitle>
@@ -87,12 +87,22 @@ export function PropertyDetailsSheet({ open, onOpenChange, property, matchInfo, 
             </SheetHeader>
 
             <div className="p-6 grid gap-6">
-                {matchInfo ? (
+                {matchInfo === undefined ? (
+                     <Card className="bg-black/40 border-white/10">
+                        <CardHeader>
+                             <CardTitle className='flex items-center gap-2 text-primary'><Zap className='w-6 h-6' strokeWidth={2.5}/> AI Match Analysis</CardTitle>
+                        </CardHeader>
+                        <CardContent className='space-y-2'>
+                            <Skeleton className='h-4 w-full bg-white/20' />
+                             <Skeleton className='h-4 w-[80%] bg-white/20' />
+                        </CardContent>
+                    </Card>
+                ) : matchInfo ? (
                     <Card className='bg-primary/10 border-primary/20'>
                         <CardHeader>
                             <CardTitle className='flex items-center gap-2 text-primary'><Zap className='w-6 h-6' strokeWidth={2.5} /> AI Match Analysis ({matchInfo.matchScore}%)</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-4">
+                        <CardContent className="space-y-4 text-white">
                             {matchInfo.matches && matchInfo.matches.length > 0 && (
                                 <div>
                                     <h4 className="font-semibold mb-2 flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-green-400" /> What Matches</h4>
@@ -111,19 +121,9 @@ export function PropertyDetailsSheet({ open, onOpenChange, property, matchInfo, 
                             )}
                         </CardContent>
                     </Card>
-                ) : (
-                    <Card>
-                        <CardHeader>
-                             <CardTitle className='flex items-center gap-2'><Zap className='w-6 h-6' strokeWidth={2.5}/> AI Match Analysis</CardTitle>
-                        </CardHeader>
-                        <CardContent className='space-y-2'>
-                            <Skeleton className='h-4 w-full' />
-                             <Skeleton className='h-4 w-[80%]' />
-                        </CardContent>
-                    </Card>
-                )}
+                ) : null}
 
-                <Card>
+                <Card className="bg-black/40 border-white/10">
                     <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Home className="w-6 h-6" strokeWidth={2.5} />Property Details</CardTitle></CardHeader>
                     <CardContent className="space-y-4">
                         <DetailItem label="Property Type" value={<span className="capitalize">{property.propertyType}</span>} icon={Building} />
@@ -144,14 +144,14 @@ export function PropertyDetailsSheet({ open, onOpenChange, property, matchInfo, 
                 )}
                 
                 <div className="grid md:grid-cols-2 gap-6">
-                    <Card>
+                    <Card className="bg-black/40 border-white/10">
                         <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Car className="w-6 h-6" strokeWidth={2.5} />Parking</CardTitle></CardHeader>
                         <CardContent className="space-y-4">
                             <DetailItem label="4-Wheeler Parking" value={property.parking.has4Wheeler ? 'Available' : 'Not Available'} />
                             <DetailItem label="2-Wheeler Parking" value={property.parking.has2Wheeler ? 'Available' : 'Not Available'} />
                         </CardContent>
                     </Card>
-                    <Card>
+                    <Card className="bg-black/40 border-white/10">
                         <CardHeader><CardTitle className="text-lg flex items-center gap-2"><CircleDollarSign className="w-6 h-6" strokeWidth={2.5} />Charges</CardTitle></CardHeader>
                         <CardContent className="space-y-4">
                             <DetailItem label="Maintenance" value={`₹ ${property.charges.maintenancePerMonth.toLocaleString('en-IN')}/mo`} />
@@ -162,9 +162,9 @@ export function PropertyDetailsSheet({ open, onOpenChange, property, matchInfo, 
                     </Card>
                 </div>
                 
-                <Card>
+                <Card className="bg-black/40 border-white/10">
                     <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Gift className="w-6 h-6" strokeWidth={2.5}/>Amenities</CardTitle></CardHeader>
-                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-white">
                         <Amenity icon={Zap} label="Lift Available" available={property.amenities.hasLift} />
                         <Amenity icon={Users} label="Clubhouse" available={property.amenities.hasClubhouse} />
                         <Amenity icon={Gamepad2} label="Children's Play Area" available={property.amenities.hasChildrenPlayArea} />
@@ -178,10 +178,10 @@ export function PropertyDetailsSheet({ open, onOpenChange, property, matchInfo, 
                 </Card>
 
             </div>
-            <SheetFooter className="p-6 bg-secondary/50 flex flex-row items-center gap-4 sticky bottom-0">
+            <SheetFooter className="p-4 bg-black/60 flex flex-row items-center gap-4 sticky bottom-0 border-t border-white/20">
                 <Link href={`/view-profile/${property.lister.id}`} className="hover:underline flex-grow">
                     <p className="font-bold">{property.lister.name}</p>
-                    <p className="text-sm text-muted-foreground capitalize">{property.lister.type}</p>
+                    <p className="text-sm text-white/70 capitalize">{property.lister.type}</p>
                 </Link>
                 <div className="flex items-center gap-2">
                     {property.lister.phone ? (

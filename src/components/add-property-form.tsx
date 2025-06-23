@@ -81,17 +81,34 @@ export function AddPropertyForm() {
     const form = useForm<z.infer<typeof propertySchema>>({
         resolver: zodResolver(propertySchema),
         defaultValues: {
+            // Basic Info
             priceType: 'sale',
+            priceAmount: 0,
+            location: '',
+            societyName: '',
+            description: '',
+            // video is a file input, so it's okay to be uncontrolled initially.
+
+            // Property Details
             propertyType: 'apartment',
             configuration: '2bhk',
+            floorNo: 0,
+            totalFloors: 0,
             mainDoorDirection: 'east',
             openSides: '1',
+            housesOnSameFloor: 1,
+
+            // Features & Area
             kitchenUtility: false,
             hasBalcony: false,
             sunlightEntersHome: false,
             sunlightPercentage: 50,
             has2WheelerParking: false,
             has4WheelerParking: false,
+            superBuiltUpArea: 0,
+            carpetArea: 0,
+
+            // Amenities
             hasLift: false,
             hasChildrenPlayArea: false,
             hasDoctorClinic: false,
@@ -101,10 +118,12 @@ export function AddPropertyForm() {
             hasClubhouse: false,
             hasWaterMeter: false,
             hasGasPipeline: false,
+
+            // Charges
             maintenancePerMonth: 0,
             securityDeposit: 0,
             moveInCharges: 0,
-            description: "",
+            brokerage: 0,
         },
     });
 

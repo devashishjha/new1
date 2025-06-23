@@ -182,13 +182,15 @@ function ReelComponent({ property, userSearchCriteria }: { property: Property; u
             {/* Horizontally Scrolling Info Cards */}
             <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide">
                 {userSearchCriteria && (
-                  <InfoCard icon={Zap} label="AI Match">
-                    {matchInfo ? (
-                      <p className="text-2xl font-bold mt-1 text-white truncate w-full">{matchInfo.matchScore}%</p>
-                    ) : (
-                      <Skeleton className="h-7 w-12 mt-1 bg-white/20" />
-                    )}
-                  </InfoCard>
+                    <button onClick={(e) => handleInteraction(e, openDetailsSheet)} className="text-left">
+                        <InfoCard icon={Zap} label="AI Match">
+                        {matchInfo ? (
+                            <p className="text-2xl font-bold mt-1 text-white truncate w-full">{matchInfo.matchScore}%</p>
+                        ) : (
+                            <Skeleton className="h-7 w-12 mt-1 bg-white/20" />
+                        )}
+                        </InfoCard>
+                    </button>
                 )}
                 <Link href={`/view-profile/${property.lister.id}`} onClick={(e) => e.stopPropagation()}>
                     <InfoCard icon={UserCircle} label="Posted By" value={property.lister.name} />

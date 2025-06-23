@@ -47,66 +47,73 @@ export function ViewProfileClient() {
 
     const fetchData = async () => {
       setIsLoading(true);
-      setProfile(null); // Reset on each fetch
-      setUserProperties([]);
+      
+      // Attempt to fetch user from Firestore
+      const userDocRef = doc(db, 'users', userId);
+      const userDocSnap = await getDoc(userDocRef);
 
-      try {
-        // 1. Try to fetch from Firestore
-        const docRef = doc(db, 'users', userId);
-        const docSnap = await getDoc(docRef);
+      if (userDocSnap.exists()) {
+        const userProfile = { id: userDocSnap.id, ...userDocSnap.data() } as UserProfile;
+        setProfile(userProfile);
         
-        if (docSnap.exists()) {
-          const userProfile = { id: docSnap.id, ...docSnap.data() } as UserProfile;
-          setProfile(userProfile);
-
-          if (['owner', 'developer', 'dealer'].includes(userProfile.type)) {
-            const q = query(collection(db, "properties"), where("lister.id", "==", userId));
-            const querySnapshot = await getDocs(q);
-            const properties = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Property));
-            setUserProperties(properties.map(p => dateToJSON(p)) as Property[]);
-          }
-          setIsLoading(false);
-          return; // Exit: Found in Firestore
+        if (['owner', 'developer', 'dealer'].includes(userProfile.type)) {
+          const q = query(collection(db, "properties"), where("lister.id", "==", userId));
+          const querySnapshot = await getDocs(q);
+          const properties = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Property));
+          setUserProperties(properties.map(p => dateToJSON(p)) as Property[]);
         }
-
-        // 2. If not in Firestore, try to find in dummy data
+      } else {
+        // If not in Firestore, fall back to dummy data
         const dummyLister = dummyProperties.find(p => p.lister.id === userId)?.lister;
+        
         if (dummyLister) {
-            const userProfile: UserProfile = {
-                id: dummyLister.id,
-                name: dummyLister.name,
-                email: `${dummyLister.name.toLowerCase().replace(' ', '.')}@example.com`,
-                phone: dummyLister.phone,
-                bio: `A passionate ${dummyLister.type} helping people find their dream homes.`,
-                type: dummyLister.type,
-                avatar: dummyLister.avatar,
-                // Add conditional properties to satisfy the UserProfile union type
-                ...(dummyLister.type === 'dealer' && { companyName: `${dummyLister.name}'s Realty` }),
-                ...(dummyLister.type === 'developer' && { companyName: `${dummyLister.name} Corp`, reraId: 'DUMMY/RERA/12345' }),
-            };
-            setProfile(userProfile);
+          let userProfile: UserProfile;
+          const baseProfile = {
+            id: dummyLister.id,
+            name: dummyLister.name,
+            email: `${dummyLister.name.toLowerCase().replace(' ', '.')}@example.com`,
+            phone: dummyLister.phone,
+            bio: `A passionate ${dummyLister.type} helping people find their dream homes.`,
+            avatar: dummyLister.avatar,
+          };
 
-            const propertiesByDummyLister = dummyProperties.filter(p => p.lister.id === userId);
-            setUserProperties(propertiesByDummyLister.map(p => dateToJSON(p)) as Property[]);
-            setIsLoading(false);
-            return; // Exit: Found in dummy data
+          switch(dummyLister.type) {
+            case 'owner':
+              userProfile = { ...baseProfile, type: 'owner' };
+              break;
+            case 'dealer':
+              userProfile = { ...baseProfile, type: 'dealer', companyName: `${dummyLister.name}'s Realty` };
+              break;
+            case 'developer':
+              userProfile = { ...baseProfile, type: 'developer', companyName: `${dummyLister.name} Corp`, reraId: 'DUMMY/RERA/12345' };
+              break;
+            default:
+              // This case should not be hit with current data, but it's a good safeguard
+              setProfile(null);
+              setIsLoading(false);
+              return;
+          }
+          
+          setProfile(userProfile);
+          
+          const propertiesByDummyLister = dummyProperties.filter(p => p.lister.id === userId);
+          setUserProperties(propertiesByDummyLister.map(p => dateToJSON(p)) as Property[]);
+        } else {
+          // Not in Firestore or dummy data
+          setProfile(null);
         }
-
-        // 3. If not found anywhere, it's a 404.
-        // Profile remains null, and loading is set to false. The check below will trigger notFound().
-        setIsLoading(false);
-
-      } catch (error) {
-        console.error("Error fetching profile data: ", error);
-        setIsLoading(false); // Ensure loading is false on error
       }
+      setIsLoading(false);
     };
 
-    fetchData();
+    fetchData().catch(error => {
+        console.error("Error fetching profile data: ", error);
+        setIsLoading(false);
+        setProfile(null);
+    });
   }, [userId, authLoading]);
 
-  // This check runs on every render.
-  // When loading is finished and profile is still null, it means nothing was found.
+  // This check runs after loading is complete
   if (!isLoading && !profile) {
     notFound();
   }

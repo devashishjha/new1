@@ -149,32 +149,42 @@ export default function ProfilePage() {
             return;
         };
 
+        const setupFallbackAndNotify = (variant: 'default' | 'destructive', title: string, description: string) => {
+            const fallbackProfile: UserProfile = {
+                id: user.uid,
+                name: user.displayName || user.email?.split('@')[0] || 'New User',
+                email: user.email!,
+                phone: user.phoneNumber || '',
+                bio: 'Welcome to LOKALITY!',
+                type: 'seeker',
+                searchCriteria: 'I am looking for a new property.',
+                avatar: user.photoURL || `https://placehold.co/100x100.png`
+            };
+            setUserProfile(fallbackProfile);
+            setUserType('seeker');
+            setIsLoading(false);
+            toast({
+                variant: variant as 'default' | 'destructive' | null | undefined,
+                title,
+                description,
+                duration: 7000,
+            });
+        }
+
         const userDocRef = doc(db, 'users', user.uid);
         getDoc(userDocRef).then(docSnap => {
             if (docSnap.exists()) {
                 const profile = docSnap.data() as UserProfile;
                 setUserProfile(profile);
                 setUserType(profile.type);
+                setIsLoading(false);
             } else {
-                // This can happen if the profile creation during sign-up failed or is delayed.
-                // We guide the user to sign out and back in, which should re-trigger profile creation.
-                console.error("Authenticated user has no profile document in Firestore.");
-                toast({
-                    variant: 'destructive',
-                    title: "Profile Not Found",
-                    description: "We couldn't find your profile. Please try signing out and signing back in.",
-                    duration: 5000,
-                });
+                console.warn("User profile not found in Firestore. Creating a default local profile.");
+                setupFallbackAndNotify('default', 'Welcome! Complete Your Profile', 'Please review your details and save them to create your profile.');
             }
-            setIsLoading(false);
         }).catch(error => {
             console.error("Error fetching user profile:", error);
-            setIsLoading(false);
-            toast({
-                variant: 'destructive',
-                title: "Could not load profile",
-                description: "An error occurred while fetching your data. Please check your network connection.",
-            });
+            setupFallbackAndNotify('destructive', 'Could Not Load Profile', 'There was an error fetching your data. We have set up a temporary profile for you.');
         });
     }, [user, toast]);
     
@@ -221,7 +231,7 @@ export default function ProfilePage() {
         toast({ title: "Logged Out", description: "You have been successfully logged out." });
     };
 
-    if (isLoading || !userProfile) {
+    if (isLoading) {
         return (
              <>
                 <Header />
@@ -237,6 +247,30 @@ export default function ProfilePage() {
                 </main>
                 <BottomNavBar />
              </>
+        )
+    }
+
+    if (!userProfile) {
+        // This case should ideally not be hit if user is logged in, due to the fallback logic.
+        // But it's a good safeguard.
+        return (
+            <>
+                <Header />
+                 <main className="container mx-auto py-24 px-4 pb-24">
+                    <div className="max-w-2xl mx-auto text-center">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Error Loading Profile</CardTitle>
+                                <CardDescription>We couldn't load your profile. This might be a temporary issue. Please try logging out and signing back in.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                 <Button onClick={handleLogout}><LogOut className="mr-2 h-4 w-4" /> Log Out</Button>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </main>
+                <BottomNavBar />
+            </>
         )
     }
 

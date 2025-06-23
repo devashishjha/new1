@@ -40,20 +40,20 @@ const searchSchema = z.object({
     housesOnSameFloor: z.number().optional(),
     mainDoorDirection: z.array(z.string()).default([]),
     openSides: z.array(z.string()).default([]),
-    kitchenUtility: z.boolean().optional(),
-    hasBalcony: z.boolean().optional(),
-    sunlightEntersHome: z.boolean().optional(),
-    has2WheelerParking: z.boolean().optional(),
-    has4WheelerParking: z.boolean().optional(),
-    hasLift: z.boolean().optional(),
-    hasChildrenPlayArea: z.boolean().optional(),
-    hasDoctorClinic: z.boolean().optional(),
-    hasPlaySchool: z.boolean().optional(),
-    hasSuperMarket: z.boolean().optional(),
-    hasPharmacy: z.boolean().optional(),
-    hasClubhouse: z.boolean().optional(),
-    hasWaterMeter: z.boolean().optional(),
-    hasGasPipeline: z.boolean().optional(),
+    kitchenUtility: z.boolean().default(false),
+    hasBalcony: z.boolean().default(false),
+    sunlightEntersHome: z.boolean().default(false),
+    has2WheelerParking: z.boolean().default(false),
+    has4WheelerParking: z.boolean().default(false),
+    hasLift: z.boolean().default(false),
+    hasChildrenPlayArea: z.boolean().default(false),
+    hasDoctorClinic: z.boolean().default(false),
+    hasPlaySchool: z.boolean().default(false),
+    hasSuperMarket: z.boolean().default(false),
+    hasPharmacy: z.boolean().default(false),
+    hasClubhouse: z.boolean().default(false),
+    hasWaterMeter: z.boolean().default(false),
+    hasGasPipeline: z.boolean().default(false),
 });
 
 const defaultValues = searchSchema.parse({});
@@ -72,7 +72,7 @@ export function SearchClient() {
     const [isLoading, setIsLoading] = useState(true);
     const [filters, setFilters] = useState<z.infer<typeof searchSchema>>(defaultValues);
     const [priceSort, setPriceSort] = useState<'asc' | 'desc' | 'none'>('none');
-    const [dateSort, setDateSort] = useState<'asc' | 'desc'>('desc');
+    const [dateSort, setDateSort = useState<'asc' | 'desc'>('desc');
 
     const form = useForm<z.infer<typeof searchSchema>>({
         resolver: zodResolver(searchSchema),
@@ -123,20 +123,20 @@ export function SearchClient() {
                 const housesOnFloorMatch = !filters.housesOnSameFloor || p.features.housesOnSameFloor === filters.housesOnSameFloor;
                 const directionMatch = filters.mainDoorDirection.length === 0 || filters.mainDoorDirection.includes(p.mainDoorDirection);
                 const openSidesMatch = filters.openSides.length === 0 || filters.openSides.includes(p.openSides);
-                const kitchenMatch = filters.kitchenUtility === undefined || p.kitchenUtility === filters.kitchenUtility;
-                const balconyMatch = filters.hasBalcony === undefined || p.hasBalcony === filters.hasBalcony;
-                const sunlightMatch = filters.sunlightEntersHome === undefined || p.features.sunlightEntersHome === filters.sunlightEntersHome;
-                const parking2WMatch = filters.has2WheelerParking === undefined || p.parking.has2Wheeler === filters.has2WheelerParking;
-                const parking4WMatch = filters.has4WheelerParking === undefined || p.parking.has4Wheeler === filters.has4WheelerParking;
-                const liftMatch = filters.hasLift === undefined || p.amenities.hasLift === filters.hasLift;
-                const playAreaMatch = filters.hasChildrenPlayArea === undefined || p.amenities.hasChildrenPlayArea === filters.hasChildrenPlayArea;
-                const clinicMatch = filters.hasDoctorClinic === undefined || p.amenities.hasDoctorClinic === filters.hasDoctorClinic;
-                const playSchoolMatch = filters.hasPlaySchool === undefined || p.amenities.hasPlaySchool === filters.hasPlaySchool;
-                const marketMatch = filters.hasSuperMarket === undefined || p.amenities.hasSuperMarket === filters.hasSuperMarket;
-                const pharmacyMatch = filters.hasPharmacy === undefined || p.amenities.hasPharmacy === filters.hasPharmacy;
-                const clubhouseMatch = filters.hasClubhouse === undefined || p.amenities.hasClubhouse === filters.hasClubhouse;
-                const waterMeterMatch = filters.hasWaterMeter === undefined || p.amenities.hasWaterMeter === filters.hasWaterMeter;
-                const gasMatch = filters.hasGasPipeline === undefined || p.amenities.hasGasPipeline === filters.hasGasPipeline;
+                const kitchenMatch = !filters.kitchenUtility || p.kitchenUtility;
+                const balconyMatch = !filters.hasBalcony || p.hasBalcony;
+                const sunlightMatch = !filters.sunlightEntersHome || p.features.sunlightEntersHome;
+                const parking2WMatch = !filters.has2WheelerParking || p.parking.has2Wheeler;
+                const parking4WMatch = !filters.has4WheelerParking || p.parking.has4Wheeler;
+                const liftMatch = !filters.hasLift || p.amenities.hasLift;
+                const playAreaMatch = !filters.hasChildrenPlayArea || p.amenities.hasChildrenPlayArea;
+                const clinicMatch = !filters.hasDoctorClinic || p.amenities.hasDoctorClinic;
+                const playSchoolMatch = !filters.hasPlaySchool || p.amenities.hasPlaySchool;
+                const marketMatch = !filters.hasSuperMarket || p.amenities.hasSuperMarket;
+                const pharmacyMatch = !filters.hasPharmacy || p.amenities.hasPharmacy;
+                const clubhouseMatch = !filters.hasClubhouse || p.amenities.hasClubhouse;
+                const waterMeterMatch = !filters.hasWaterMeter || p.amenities.hasWaterMeter;
+                const gasMatch = !filters.hasGasPipeline || p.amenities.hasGasPipeline;
 
                 return priceTypeMatch && priceRangeMatch && locationMatch && societyMatch && propertyTypeMatch && configMatch && floorMatch && totalFloorMatch && housesOnFloorMatch && directionMatch && openSidesMatch && kitchenMatch && balconyMatch && sunlightMatch && parking2WMatch && parking4WMatch && liftMatch && playAreaMatch && clinicMatch && playSchoolMatch && marketMatch && pharmacyMatch && clubhouseMatch && waterMeterMatch && gasMatch;
             });
@@ -178,30 +178,27 @@ export function SearchClient() {
          <FormField
             control={form.control}
             name={name}
-            render={() => (
+            render={({ field }) => (
                 <FormItem>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                         {items.map((item) => (
-                            <FormField
-                                key={item}
-                                control={form.control}
-                                name={name}
-                                render={({ field }) => (
-                                    <FormItem key={item} className="flex flex-row items-start space-x-3 space-y-0">
-                                        <FormControl>
-                                            <Checkbox
-                                                checked={field.value?.includes(item)}
-                                                onCheckedChange={(checked) => {
-                                                    return checked
-                                                        ? field.onChange([...field.value, item])
-                                                        : field.onChange(field.value?.filter((value) => value !== item));
-                                                }}
-                                            />
-                                        </FormControl>
-                                        <FormLabel className="font-normal capitalize">{item.replace('-', ' ')}</FormLabel>
-                                    </FormItem>
-                                )}
-                            />
+                            <FormItem key={item} className="flex flex-row items-start space-x-3 space-y-0">
+                                <FormControl>
+                                    <Checkbox
+                                        checked={field.value?.includes(item)}
+                                        onCheckedChange={(checked) => {
+                                            return checked
+                                                ? field.onChange([...field.value, item])
+                                                : field.onChange(
+                                                    field.value?.filter(
+                                                        (value) => value !== item
+                                                    )
+                                                );
+                                        }}
+                                    />
+                                </FormControl>
+                                <FormLabel className="font-normal capitalize">{item.replace('-', ' ')}</FormLabel>
+                            </FormItem>
                         ))}
                     </div>
                     <FormMessage />
@@ -218,8 +215,8 @@ export function SearchClient() {
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0">
                      <FormControl>
                         <Checkbox
-                            checked={!!field.value}
-                            onCheckedChange={(checked) => field.onChange(checked ? true : undefined)}
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
                         />
                     </FormControl>
                     <FormLabel className="font-normal">{label}</FormLabel>

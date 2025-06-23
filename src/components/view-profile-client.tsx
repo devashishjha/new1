@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { notFound, useParams } from 'next/navigation';
 import Link from 'next/link';
-import type { UserProfile, Property } from '@/lib/types';
+import type { UserProfile, Property, SeekerProfile } from '@/lib/types';
 import { Header } from '@/components/header';
 import { BottomNavBar } from '@/components/bottom-nav-bar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -18,6 +18,7 @@ import { ChatButton } from '@/components/chat-button';
 import Image from 'next/image';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/use-auth';
+import { dummyProperties } from '@/lib/dummy-data';
 
 const DetailItem = ({ label, value, icon }: { label: string, value: React.ReactNode, icon?: React.ElementType }) => (
   <div className="flex items-start gap-4">
@@ -47,24 +48,48 @@ export function ViewProfileClient() {
       setIsLoading(true);
 
       try {
-        // Fetch user profile
+        // Fetch user profile from Firestore
         const docRef = doc(db, 'users', userId);
         const docSnap = await getDoc(docRef);
         
-        if (!docSnap.exists()) {
-          setIsLoading(false);
-          return notFound();
-        }
+        if (docSnap.exists()) {
+          const userProfile = { id: docSnap.id, ...docSnap.data() } as UserProfile;
+          setProfile(userProfile);
 
-        const userProfile = { id: docSnap.id, ...docSnap.data() } as UserProfile;
-        setProfile(userProfile);
+          // Fetch user properties if applicable
+          if (userProfile.type === 'owner' || userProfile.type === 'developer' || userProfile.type === 'dealer') {
+            const q = query(collection(db, "properties"), where("lister.id", "==", userId));
+            const querySnapshot = await getDocs(q);
+            const properties = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Property));
+            setUserProperties(properties.map(p => dateToJSON(p)) as Property[]);
+          }
+        } else {
+            // User not found in Firestore, check dummy data as a fallback
+            const dummyLister = dummyProperties.find(p => p.lister.id === userId)?.lister;
 
-        // Fetch user properties if applicable
-        if (userProfile.type === 'owner' || userProfile.type === 'developer' || userProfile.type === 'dealer') {
-          const q = query(collection(db, "properties"), where("lister.id", "==", userId));
-          const querySnapshot = await getDocs(q);
-          const properties = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Property));
-          setUserProperties(properties.map(p => dateToJSON(p)) as Property[]);
+            if (dummyLister) {
+                // Found a dummy lister, create a profile object
+                const dummyProfile: UserProfile = {
+                    id: dummyLister.id,
+                    name: dummyLister.name,
+                    email: `${dummyLister.name.toLowerCase().replace(' ', '.')}@example.com`,
+                    phone: dummyLister.phone,
+                    bio: `A passionate ${dummyLister.type} helping people find their dream homes.`,
+                    type: dummyLister.type,
+                    avatar: dummyLister.avatar,
+                    searchCriteria: '' // Add default for seeker type
+                };
+
+                setProfile(dummyProfile);
+
+                // Find all properties by this dummy lister
+                const propertiesByDummyLister = dummyProperties.filter(p => p.lister.id === userId);
+                setUserProperties(propertiesByDummyLister.map(p => dateToJSON(p)) as Property[]);
+            } else {
+                // Not in Firestore and not in dummy data, so it's a real 404
+                setIsLoading(false);
+                return notFound();
+            }
         }
       } catch (error) {
         console.error("Error fetching profile data: ", error);
@@ -145,10 +170,10 @@ export function ViewProfileClient() {
                     {(profile.type === 'dealer' || profile.type === 'developer') && profile.companyName && <DetailItem label="Company Name" value={profile.companyName} icon={Building} />}
                     {(profile.type === 'dealer' || profile.type === 'developer') && profile.reraId && <DetailItem label="RERA ID" value={profile.reraId} icon={ChevronsRight} />}
                 </div>
-                {profile.type === 'seeker' && profile.searchCriteria && (
+                {profile.type === 'seeker' && (profile as SeekerProfile).searchCriteria && (
                     <div className="space-y-2 pt-4 border-t">
                         <h3 className="text-sm text-muted-foreground">Search Criteria</h3>
-                        <p className="font-mono text-sm bg-secondary p-4 rounded-md">{profile.searchCriteria}</p>
+                        <p className="font-mono text-sm bg-secondary p-4 rounded-md">{(profile as SeekerProfile).searchCriteria}</p>
                     </div>
                 )}
             </CardContent>

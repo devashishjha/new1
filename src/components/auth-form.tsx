@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState } from 'react';
@@ -68,6 +69,8 @@ export function AuthForm() {
                 description = "The sign-in window was closed. Please try again.";
             } else if (error.code === 'auth/unauthorized-domain') {
                 description = "This app's domain is not authorized for Google Sign-In. Please add it to the 'Authorized domains' list in your Firebase project's Authentication settings.";
+            } else if (error.code === 'auth/operation-not-allowed') {
+                description = "Google Sign-In is not enabled for this project. Please go to your Firebase Console -> Authentication -> Sign-in method and enable the Google provider.";
             }
             toast({
                 variant: 'destructive',

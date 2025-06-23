@@ -177,6 +177,18 @@ function ReelComponent({ property, userSearchCriteria }: { property: Property; u
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-4">
+             {/* Description Box */}
+            <div 
+                className="rounded-xl bg-black/40 backdrop-blur-md p-3 border border-white/20 mb-4 text-left cursor-pointer"
+                onClick={(e) => handleInteraction(e, openDetailsSheet)}
+            >
+                <h3 className="font-bold text-lg line-clamp-1">{property.title}</h3>
+                <p className="text-sm text-white/80 line-clamp-2 mt-1">
+                    {property.description}
+                </p>
+            </div>
+
+
             {/* Action Bar */}
             <div className="flex justify-around items-center rounded-full bg-black/30 p-1.5 backdrop-blur-sm border border-white/20 mb-4 max-w-sm mx-auto">
                 <button onClick={(e) => handleInteraction(e, handleCall)} className="flex-1 flex flex-col items-center gap-1 p-1 rounded-full hover:bg-white/10 transition-colors">

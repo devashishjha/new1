@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -22,7 +23,7 @@ import { signOut } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import type { UserProfile, SeekerProfile } from '@/lib/types';
+import type { UserProfile, SeekerProfile, DealerProfile, DeveloperProfile } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -72,6 +73,8 @@ function ProfileForm({ userProfile, userType, onProfileUpdate }: { userProfile: 
       companyName: (userProfile.type === 'dealer' || userProfile.type === 'developer') ? userProfile.companyName : '',
       reraId: (userProfile.type === 'dealer' || userProfile.type === 'developer') ? userProfile.reraId : '',
     },
+    // This resets the form when the userType changes, ensuring validation is re-run
+    key: userType, 
   });
 
   async function onSubmit(values: any) {
@@ -181,33 +184,31 @@ export default function ProfilePage() {
 
     const handleTypeChange = (newType: UserType) => {
         if (!userProfile) return;
-        
-        const baseProfile = {
-            id: userProfile.id,
-            name: userProfile.name,
-            email: userProfile.email,
-            phone: userProfile.phone,
-            bio: userProfile.bio,
-            avatar: userProfile.avatar,
+
+        // Create a new profile object, preserving all existing fields,
+        // and just updating the type. This prevents data loss on switching.
+        const newProfile: UserProfile = {
+            ...userProfile,
+            type: newType,
         };
 
-        let newProfile: UserProfile;
-
+        // Ensure the new profile has the necessary fields for its type, even if empty
         switch (newType) {
             case 'seeker':
-                newProfile = { ...baseProfile, type: 'seeker', searchCriteria: (userProfile as SeekerProfile).searchCriteria || '' };
-                break;
-            case 'owner':
-                newProfile = { ...baseProfile, type: 'owner' };
+                if (!('searchCriteria' in newProfile)) {
+                    (newProfile as SeekerProfile).searchCriteria = '';
+                }
                 break;
             case 'dealer':
-                newProfile = { ...baseProfile, type: 'dealer', companyName: (userProfile as any).companyName || '', reraId: (userProfile as any).reraId || '' };
-                break;
             case 'developer':
-                newProfile = { ...baseProfile, type: 'developer', companyName: (userProfile as any).companyName || '', reraId: (userProfile as any).reraId || '' };
+                if (!('companyName' in newProfile)) {
+                    (newProfile as DealerProfile | DeveloperProfile).companyName = '';
+                }
+                if (!('reraId' in newProfile)) {
+                    (newProfile as DealerProfile | DeveloperProfile).reraId = '';
+                }
                 break;
-            default:
-                newProfile = userProfile;
+            // 'owner' has no extra fields to initialize
         }
 
         setUserProfile(newProfile);

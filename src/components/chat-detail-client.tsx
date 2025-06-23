@@ -102,7 +102,7 @@ export function ChatDetailClient() {
 
   if (isLoading) {
     return (
-        <div className="flex flex-col h-dvh bg-background items-center justify-center">
+        <div className="flex flex-col h-dvh items-center justify-center">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </div>
     );
@@ -119,7 +119,7 @@ export function ChatDetailClient() {
   });
 
   return (
-    <div className="flex flex-col h-dvh bg-background">
+    <div className="flex flex-col h-dvh">
       <header className="fixed top-0 left-0 right-0 z-40 bg-card/80 backdrop-blur-sm border-b">
         <div className="container mx-auto flex items-center h-16 gap-4 px-4">
             <Link href="/chats">

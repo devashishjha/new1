@@ -52,7 +52,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // or while redirecting the user. This prevents a flash of unstyled/unauthorized content.
   if (loading || (!user && !isAuthPage) || (user && isAuthPage)) {
     return (
-        <div className="h-dvh w-screen flex items-center justify-center bg-background">
+        <div className="h-dvh w-screen flex items-center justify-center">
           <div className="w-full max-w-sm space-y-6 flex flex-col items-center">
               <h1 className="text-4xl font-black text-white tracking-tighter mx-auto">LOKALITY</h1>
               <p className="text-muted-foreground animate-pulse">Loading...</p>

@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 export default function ReelsPage() {
   return (
-    <div className="h-dvh w-screen bg-background">
+    <div className="h-dvh w-screen">
       <Header />
       <ReelsClient />
       <BottomNavBar />

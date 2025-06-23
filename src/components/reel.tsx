@@ -1,8 +1,9 @@
 'use client';
 
-import type { Property, UserProfile } from '@/lib/types';
+import type { Property } from '@/lib/types';
 import type { PropertyMatchScoreOutput } from '@/ai/flows/property-match-score';
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { PropertyDetailsSheet } from '@/components/property-details-sheet';
 import { getPropertyMatchScore } from '@/app/actions';
 import Link from 'next/link';
@@ -18,15 +19,13 @@ import {
     AreaChart,
     CircleDollarSign,
     Zap,
+    Loader2,
 } from 'lucide-react';
 import { formatIndianCurrency } from '@/lib/utils';
 import * as React from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from './ui/skeleton';
-import { useAuth } from '@/hooks/use-auth';
-import { useRouter } from 'next/navigation';
-import { db } from '@/lib/firebase';
-import { addDoc, collection, doc, getDoc, getDocs, query, serverTimestamp, where } from 'firebase/firestore';
+import { useChatNavigation } from '@/hooks/use-chat-navigation';
 
 
 const InfoCard = ({ icon, label, value, children }: { icon: React.ElementType, label: string, value?: string | React.ReactNode, children?: React.ReactNode }) => (
@@ -41,14 +40,13 @@ const InfoCard = ({ icon, label, value, children }: { icon: React.ElementType, l
 );
 
 
-export function Reel({ property, userSearchCriteria }: { property: Property; userSearchCriteria: string }) {
+function ReelComponent({ property, userSearchCriteria }: { property: Property; userSearchCriteria: string }) {
   const [matchInfo, setMatchInfo] = useState<PropertyMatchScoreOutput | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isShortlisted, setIsShortlisted] = useState(false);
   const [isUIVisible, setIsUIVisible] = useState(true);
   const { toast } = useToast();
-  const { user } = useAuth();
-  const router = useRouter();
+  const { navigateToChat, isNavigating: isStartingChat } = useChatNavigation();
 
 
   useEffect(() => {
@@ -97,66 +95,8 @@ export function Reel({ property, userSearchCriteria }: { property: Property; use
     }
   };
   
-  const handleChat = async () => {
-    if (!user) {
-        toast({ variant: 'destructive', title: "Not Logged In", description: "You need to be logged in to start a chat." });
-        return;
-    }
-
-    const targetUser = property.lister;
-    if (user.uid === targetUser.id) {
-         toast({ variant: 'destructive', title: "Cannot Chat", description: "You cannot start a chat with yourself." });
-        return;
-    }
-
-    try {
-        const chatsRef = collection(db, 'chats');
-        const q = query(chatsRef, where('participantIds', 'array-contains', user.uid));
-        const querySnapshot = await getDocs(q);
-        
-        let existingChatId: string | null = null;
-        querySnapshot.forEach(doc => {
-            const chat = doc.data();
-            if (chat.participantIds.includes(targetUser.id)) {
-                existingChatId = doc.id;
-            }
-        });
-
-        if (existingChatId) {
-            router.push(`/chats/${existingChatId}`);
-        } else {
-            const currentUserDocSnap = await getDoc(doc(db, 'users', user.uid));
-            if (!currentUserDocSnap.exists()) {
-                throw new Error("Could not find current user's profile.");
-            }
-            const currentUserProfile = currentUserDocSnap.data() as UserProfile;
-
-            const newChatRef = await addDoc(chatsRef, {
-                participantIds: [user.uid, targetUser.id],
-                participants: {
-                    [user.uid]: {
-                        name: currentUserProfile.name,
-                        avatar: currentUserProfile.avatar || `https://placehold.co/100x100.png`
-                    },
-                    [targetUser.id]: {
-                        name: targetUser.name,
-                        avatar: targetUser.avatar || `https://placehold.co/100x100.png`
-                    }
-                },
-                messages: [],
-                lastMessage: {
-                    text: 'Chat started.',
-                    timestamp: serverTimestamp(),
-                    senderId: user.uid,
-                },
-                unreadCount: 0,
-            });
-            router.push(`/chats/${newChatRef.id}`);
-        }
-    } catch (error) {
-        console.error("Error starting chat:", error);
-        toast({ variant: 'destructive', title: "Error", description: "Could not start the chat. Please try again." });
-    }
+  const handleChat = () => {
+    navigateToChat(property.lister);
   };
 
   useEffect(() => {
@@ -204,7 +144,15 @@ export function Reel({ property, userSearchCriteria }: { property: Property; use
           <video src={property.video} autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover" />
       ) : (
         property.image && (
-          <img src={property.image} alt={property.title} data-ai-hint="apartment interior" className="absolute inset-0 w-full h-full object-cover" />
+          <Image 
+            src={property.image} 
+            alt={property.title} 
+            fill
+            sizes="100vw"
+            priority={true}
+            className="object-cover"
+            data-ai-hint="apartment interior"
+          />
         )
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
@@ -223,8 +171,8 @@ export function Reel({ property, userSearchCriteria }: { property: Property; use
                 <button onClick={(e) => handleInteraction(e, toggleShortlist)} className={`flex-1 flex flex-col items-center gap-1 p-1 rounded-full hover:bg-white/10 transition-colors ${isShortlisted ? 'text-primary' : ''}`}>
                     <Bookmark strokeWidth={2.5} className="h-6 w-6" fill={isShortlisted ? 'currentColor' : 'none'}/>
                 </button>
-                <button onClick={(e) => handleInteraction(e, handleChat)} className="flex-1 flex flex-col items-center gap-1 p-1 rounded-full hover:bg-white/10 transition-colors">
-                    <MessageCircle strokeWidth={2.5} className="h-6 w-6"/>
+                <button onClick={(e) => handleInteraction(e, handleChat)} className="flex-1 flex flex-col items-center gap-1 p-1 rounded-full hover:bg-white/10 transition-colors" disabled={isStartingChat}>
+                    {isStartingChat ? <Loader2 className="h-6 w-6 animate-spin"/> : <MessageCircle strokeWidth={2.5} className="h-6 w-6"/>}
                 </button>
                 <button onClick={(e) => handleInteraction(e, openDetailsSheet)} className="flex-1 flex flex-col items-center gap-1 p-1 rounded-full hover:bg-white/10 transition-colors">
                     <Info strokeWidth={2.5} className="h-6 w-6"/>
@@ -265,3 +213,5 @@ export function Reel({ property, userSearchCriteria }: { property: Property; use
     </section>
   );
 }
+
+export const Reel = React.memo(ReelComponent);

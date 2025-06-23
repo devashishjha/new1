@@ -1,0 +1,334 @@
+'use client';
+
+import { useState, useMemo } from 'react';
+import type { Property } from '@/lib/types';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
+import { ShortlistedPropertyCard } from '@/components/shortlisted-property-card';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from './ui/checkbox';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
+import { Slider } from './ui/slider';
+import { formatIndianCurrency } from '@/lib/utils';
+import { Input } from './ui/input';
+
+type SortDirection = 'asc' | 'desc';
+
+const propertyTypes = ['apartment', 'villa', 'row house', 'penthouse', 'independent house', 'builder floor'] as const;
+const configurations = ['studio', '1bhk', '2bhk', '3bhk', '4bhk', '5bhk+'] as const;
+const mainDoorDirections = ['north', 'south', 'east', 'west', 'north-east', 'north-west', 'south-east', 'south-west'] as const;
+const openSides = ['1', '2', '3', '4'] as const;
+
+const searchSchema = z.object({
+    lookingTo: z.enum(['rent', 'buy']).default('buy'),
+    priceRange: z.array(z.number()).default([0, 50000000]),
+    location: z.string().optional(),
+    societyName: z.string().optional(),
+    propertyType: z.array(z.string()).default([]),
+    configuration: z.array(z.string()).default([]),
+    floorRange: z.array(z.number()).default([0, 50]),
+    totalFloorRange: z.array(z.number()).default([0, 50]),
+    housesOnSameFloor: z.number().optional(),
+    mainDoorDirection: z.array(z.string()).default([]),
+    openSides: z.array(z.string()).default([]),
+    kitchenUtility: z.boolean().optional(),
+    hasBalcony: z.boolean().optional(),
+    sunlightEntersHome: z.boolean().optional(),
+    has2WheelerParking: z.boolean().optional(),
+    has4WheelerParking: z.boolean().optional(),
+    hasLift: z.boolean().optional(),
+    hasChildrenPlayArea: z.boolean().optional(),
+    hasDoctorClinic: z.boolean().optional(),
+    hasPlaySchool: z.boolean().optional(),
+    hasSuperMarket: z.boolean().optional(),
+    hasPharmacy: z.boolean().optional(),
+    hasClubhouse: z.boolean().optional(),
+    hasWaterMeter: z.boolean().optional(),
+    hasGasPipeline: z.boolean().optional(),
+});
+
+export function SearchClient({ initialProperties }: { initialProperties: Property[] }) {
+    const [filters, setFilters] = useState<z.infer<typeof searchSchema>>(searchSchema.parse({}));
+    const [priceSort, setPriceSort] = useState<'asc' | 'desc' | 'none'>('none');
+    const [dateSort, setDateSort] = useState<'asc' | 'desc'>('desc');
+
+    const form = useForm<z.infer<typeof searchSchema>>({
+        resolver: zodResolver(searchSchema),
+        defaultValues: filters,
+    });
+
+    const lookingTo = form.watch('lookingTo');
+    const priceRange = form.watch('priceRange');
+    const floorRange = form.watch('floorRange');
+    const totalFloorRange = form.watch('totalFloorRange');
+
+    const MAX_PRICE_BUY = 50000000; // 5 Cr
+    const MAX_PRICE_RENT = 300000; // 3 Lakh
+    const currentMaxPrice = lookingTo === 'rent' ? MAX_PRICE_RENT : MAX_PRICE_BUY;
+    const priceStep = lookingTo === 'rent' ? 5000 : 100000;
+
+    const filteredAndSortedProperties = useMemo(() => {
+        let properties = [...initialProperties]
+            .filter(p => {
+                const priceTypeMatch = filters.lookingTo === 'rent' ? p.price.type === 'rent' : p.price.type === 'sale';
+                const priceRangeMatch = p.price.amount >= filters.priceRange[0] && p.price.amount <= filters.priceRange[1];
+                const locationMatch = !filters.location || p.location.toLowerCase().includes(filters.location.toLowerCase());
+                const societyMatch = !filters.societyName || p.societyName.toLowerCase().includes(filters.societyName.toLowerCase());
+                const propertyTypeMatch = filters.propertyType.length === 0 || filters.propertyType.includes(p.propertyType);
+                const configMatch = filters.configuration.length === 0 || filters.configuration.includes(p.configuration);
+                const floorMatch = p.floorNo >= filters.floorRange[0] && p.floorNo <= filters.floorRange[1];
+                const totalFloorMatch = p.totalFloors >= filters.totalFloorRange[0] && p.totalFloors <= filters.totalFloorRange[1];
+                const housesOnFloorMatch = !filters.housesOnSameFloor || p.features.housesOnSameFloor === filters.housesOnSameFloor;
+                const directionMatch = filters.mainDoorDirection.length === 0 || filters.mainDoorDirection.includes(p.mainDoorDirection);
+                const openSidesMatch = filters.openSides.length === 0 || filters.openSides.includes(p.openSides);
+                const kitchenMatch = filters.kitchenUtility === undefined || p.kitchenUtility === filters.kitchenUtility;
+                const balconyMatch = filters.hasBalcony === undefined || p.hasBalcony === filters.hasBalcony;
+                const sunlightMatch = filters.sunlightEntersHome === undefined || p.features.sunlightEntersHome === filters.sunlightEntersHome;
+                const parking2WMatch = filters.has2WheelerParking === undefined || p.parking.has2Wheeler === filters.has2WheelerParking;
+                const parking4WMatch = filters.has4WheelerParking === undefined || p.parking.has4Wheeler === filters.has4WheelerParking;
+                const liftMatch = filters.hasLift === undefined || p.amenities.hasLift === filters.hasLift;
+                const playAreaMatch = filters.hasChildrenPlayArea === undefined || p.amenities.hasChildrenPlayArea === filters.hasChildrenPlayArea;
+                const clinicMatch = filters.hasDoctorClinic === undefined || p.amenities.hasDoctorClinic === filters.hasDoctorClinic;
+                const playSchoolMatch = filters.hasPlaySchool === undefined || p.amenities.hasPlaySchool === filters.hasPlaySchool;
+                const marketMatch = filters.hasSuperMarket === undefined || p.amenities.hasSuperMarket === filters.hasSuperMarket;
+                const pharmacyMatch = filters.hasPharmacy === undefined || p.amenities.hasPharmacy === filters.hasPharmacy;
+                const clubhouseMatch = filters.hasClubhouse === undefined || p.amenities.hasClubhouse === filters.hasClubhouse;
+                const waterMeterMatch = filters.hasWaterMeter === undefined || p.amenities.hasWaterMeter === filters.hasWaterMeter;
+                const gasMatch = filters.hasGasPipeline === undefined || p.amenities.hasGasPipeline === filters.hasGasPipeline;
+
+                return priceTypeMatch && priceRangeMatch && locationMatch && societyMatch && propertyTypeMatch && configMatch && floorMatch && totalFloorMatch && housesOnFloorMatch && directionMatch && openSidesMatch && kitchenMatch && balconyMatch && sunlightMatch && parking2WMatch && parking4WMatch && liftMatch && playAreaMatch && clinicMatch && playSchoolMatch && marketMatch && pharmacyMatch && clubhouseMatch && waterMeterMatch && gasMatch;
+            });
+
+        if (priceSort !== 'none') {
+            properties.sort((a, b) => priceSort === 'asc' ? a.price.amount - b.price.amount : b.price.amount - a.price.amount);
+        } else {
+            properties.sort((a, b) => {
+                const dateA = new Date(a.postedOn).getTime();
+                const dateB = new Date(b.postedOn).getTime();
+                return dateSort === 'asc' ? dateA - dateB : dateB - dateA;
+            });
+        }
+        return properties;
+    }, [initialProperties, filters, priceSort, dateSort]);
+
+    function onSubmit(values: z.infer<typeof searchSchema>) {
+        const activeFilters: Partial<z.infer<typeof searchSchema>> = {};
+        for (const key in values) {
+            const K = key as keyof typeof values;
+            if(Array.isArray(values[K]) && (values[K] as any[]).length === 0) continue;
+            if(values[K] !== undefined && values[K] !== '' && values[K] !== false) {
+                 (activeFilters as any)[K] = values[K];
+            }
+        }
+        setFilters(searchSchema.parse(values));
+    }
+    
+    const renderCheckboxGroup = (name: "propertyType" | "configuration" | "mainDoorDirection" | "openSides", items: readonly string[]) => (
+         <FormField
+            control={form.control}
+            name={name}
+            render={() => (
+                <FormItem>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        {items.map((item) => (
+                            <FormField
+                                key={item}
+                                control={form.control}
+                                name={name}
+                                render={({ field }) => (
+                                    <FormItem key={item} className="flex flex-row items-start space-x-3 space-y-0">
+                                        <FormControl>
+                                            <Checkbox
+                                                checked={field.value?.includes(item)}
+                                                onCheckedChange={(checked) => {
+                                                    return checked
+                                                        ? field.onChange([...field.value, item])
+                                                        : field.onChange(field.value?.filter((value) => value !== item));
+                                                }}
+                                            />
+                                        </FormControl>
+                                        <FormLabel className="font-normal capitalize">{item.replace('-', ' ')}</FormLabel>
+                                    </FormItem>
+                                )}
+                            />
+                        ))}
+                    </div>
+                    <FormMessage />
+                </FormItem>
+            )}
+        />
+    );
+    
+    const renderBooleanField = (name: keyof z.infer<typeof searchSchema>, label: string) => (
+        <FormField
+            control={form.control}
+            name={name}
+            render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                     <FormControl>
+                        <Checkbox
+                            checked={!!field.value}
+                            onCheckedChange={(checked) => field.onChange(checked ? true : undefined)}
+                        />
+                    </FormControl>
+                    <FormLabel className="font-normal">{label}</FormLabel>
+                </FormItem>
+            )}
+        />
+    );
+
+    const handlePriceSort = (direction: SortDirection) => {
+        setPriceSort(priceSort === direction ? 'none' : direction);
+    };
+
+    const handleDateSort = (direction: SortDirection) => {
+        setPriceSort('none');
+        setDateSort(direction);
+    };
+
+    return (
+        <div>
+            <h1 className="text-4xl font-bold tracking-tight mb-2">Search Properties</h1>
+            <p className="text-muted-foreground mb-8">Find your next home by searching and sorting.</p>
+
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <Card>
+                        <CardContent className="p-6">
+                            <Accordion type="multiple" className="w-full -m-6" defaultValue={['item-1']}>
+                                <AccordionItem value="item-1">
+                                    <AccordionTrigger className="p-6"><CardTitle>Advanced Search</CardTitle></AccordionTrigger>
+                                    <AccordionContent className="p-6 pt-0 space-y-6">
+                                        <div className="grid md:grid-cols-2 gap-6">
+                                            <FormField control={form.control} name="lookingTo" render={({ field }) => ( <FormItem><FormLabel>Looking to</FormLabel><Select onValueChange={(value) => { field.onChange(value); form.setValue('priceRange', [0, value === 'rent' ? MAX_PRICE_RENT : MAX_PRICE_BUY]); }} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="rent">Rent</SelectItem><SelectItem value="buy">Buy</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
+                                            <FormField control={form.control} name="location" render={({ field }) => ( <FormItem><FormLabel>Location</FormLabel><FormControl><Input placeholder="e.g. Koramangala" {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                                            <FormField control={form.control} name="societyName" render={({ field }) => ( <FormItem><FormLabel>Society Name</FormLabel><FormControl><Input placeholder="e.g. Prestige Acropolis" {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                                        </div>
+
+                                        <FormField control={form.control} name="priceRange" render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Budget</FormLabel>
+                                                <FormControl>
+                                                    <Slider
+                                                        min={0}
+                                                        max={currentMaxPrice}
+                                                        step={priceStep}
+                                                        value={field.value}
+                                                        onValueChange={field.onChange}
+                                                        className="pt-2"
+                                                    />
+                                                </FormControl>
+                                                <div className="flex justify-between text-sm text-muted-foreground pt-2">
+                                                    <span>{formatIndianCurrency(priceRange[0])}</span>
+                                                    <span>{formatIndianCurrency(priceRange[1])}</span>
+                                                </div>
+                                            </FormItem>
+                                        )} />
+                                        
+                                        <div className="grid md:grid-cols-2 gap-6">
+                                        <FormField control={form.control} name="floorRange" render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Floor Number</FormLabel>
+                                                <FormControl>
+                                                    <Slider min={0} max={50} step={1} value={field.value} onValueChange={field.onChange} className="pt-2" />
+                                                </FormControl>
+                                                <div className="flex justify-between text-sm text-muted-foreground pt-2">
+                                                    <span>{floorRange[0]}</span>
+                                                    <span>{floorRange[1]}</span>
+                                                </div>
+                                            </FormItem>
+                                        )} />
+                                        <FormField control={form.control} name="totalFloorRange" render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Total Floors in Building</FormLabel>
+                                                <FormControl>
+                                                    <Slider min={0} max={50} step={1} value={field.value} onValueChange={field.onChange} className="pt-2" />
+                                                </FormControl>
+                                                <div className="flex justify-between text-sm text-muted-foreground pt-2">
+                                                    <span>{totalFloorRange[0]}</span>
+                                                    <span>{totalFloorRange[1]}</span>
+                                                </div>
+                                            </FormItem>
+                                        )} />
+                                        </div>
+
+                                        <div>
+                                            <h3 className="mb-4 text-lg font-medium">Property Type</h3>
+                                            {renderCheckboxGroup('propertyType', propertyTypes)}
+                                        </div>
+                                        <div>
+                                            <h3 className="mb-4 text-lg font-medium">Configuration</h3>
+                                            {renderCheckboxGroup('configuration', configurations)}
+                                        </div>
+                                        <div>
+                                            <h3 className="mb-4 text-lg font-medium">Main Door Direction</h3>
+                                            {renderCheckboxGroup('mainDoorDirection', mainDoorDirections)}
+                                        </div>
+                                        <div>
+                                            <h3 className="mb-4 text-lg font-medium">Open Sides</h3>
+                                            {renderCheckboxGroup('openSides', openSides)}
+                                        </div>
+                                        <div>
+                                            <h3 className="mb-4 text-lg font-medium">Features & Amenities</h3>
+                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                                {renderBooleanField('kitchenUtility', 'Kitchen Utility')}
+                                                {renderBooleanField('hasBalcony', 'Balcony')}
+                                                {renderBooleanField('sunlightEntersHome', 'Sunlight')}
+                                                {renderBooleanField('has2WheelerParking', '2-Wheeler Parking')}
+                                                {renderBooleanField('has4WheelerParking', '4-Wheeler Parking')}
+                                                {renderBooleanField('hasLift', 'Lift')}
+                                                {renderBooleanField('hasChildrenPlayArea', "Play Area")}
+                                                {renderBooleanField('hasDoctorClinic', "Doctor's Clinic")}
+                                                {renderBooleanField('hasPlaySchool', 'Play School')}
+                                                {renderBooleanField('hasSuperMarket', 'Super Market')}
+                                                {renderBooleanField('hasPharmacy', 'Pharmacy')}
+                                                {renderBooleanField('hasClubhouse', 'Clubhouse')}
+                                                {renderBooleanField('hasWaterMeter', 'Water Meter')}
+                                                {renderBooleanField('hasGasPipeline', 'Gas Pipeline')}
+                                            </div>
+                                        </div>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            </Accordion>
+                        </CardContent>
+                    </Card>
+                    <Button type="submit" size="lg" className="w-full">Search Properties</Button>
+                </form>
+            </Form>
+
+            <div className="flex flex-col sm:flex-row gap-6 my-8">
+                <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Sort by Price:</span>
+                    <div className="flex gap-2">
+                        <Button size="sm" variant={priceSort === 'desc' ? 'primary' : 'outline'} onClick={() => handlePriceSort('desc')}>High to Low</Button>
+                        <Button size="sm" variant={priceSort === 'asc' ? 'primary' : 'outline'} onClick={() => handlePriceSort('asc')}>Low to High</Button>
+                    </div>
+                </div>
+                <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Sort by Date:</span>
+                    <div className="flex gap-2">
+                        <Button size="sm" variant={dateSort === 'desc' && priceSort === 'none' ? 'primary' : 'outline'} onClick={() => handleDateSort('desc')}>Newest</Button>
+                        <Button size="sm" variant={dateSort === 'asc' && priceSort === 'none' ? 'primary' : 'outline'} onClick={() => handleDateSort('asc')}>Oldest</Button>
+                    </div>
+                </div>
+            </div>
+
+            {filteredAndSortedProperties.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredAndSortedProperties.map(property => (
+                        <ShortlistedPropertyCard key={property.id} property={property} />
+                    ))}
+                </div>
+            ) : (
+                <div className="text-center py-20 border border-dashed rounded-lg mt-10">
+                    <h2 className="text-xl font-semibold">No Properties Found</h2>
+                    <p className="text-muted-foreground mt-2">Try adjusting your search filters.</p>
+                </div>
+            )}
+        </div>
+    );
+}

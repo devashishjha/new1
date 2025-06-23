@@ -45,17 +45,16 @@ export function ReelsClient({ initialProperties }: { initialProperties: Property
                     if (userData.type === 'seeker' && userData.searchCriteria) {
                         setUserSearchCriteria(userData.searchCriteria);
                     } else {
-                        setUserSearchCriteria("I want a 3BHK in a good neighborhood.");
+                        setUserSearchCriteria('');
                     }
                 } else {
-                     setUserSearchCriteria("I want a 3BHK in a good neighborhood.");
+                     setUserSearchCriteria('');
                 }
                 setIsLoading(false);
             };
             fetchSeekerCriteria();
         } else {
-            // If there's no user, we can still show properties with a default search criteria
-            setUserSearchCriteria("I want a 3BHK in a good neighborhood.");
+            setUserSearchCriteria('');
             setIsLoading(false);
         }
     }, [user]);

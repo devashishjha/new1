@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { notFound, useParams } from 'next/navigation';
 import Link from 'next/link';
-import type { UserProfile, Property, SeekerProfile } from '@/lib/types';
+import type { UserProfile, Property, SeekerProfile, DeveloperProfile, DealerProfile } from '@/lib/types';
 import { Header } from '@/components/header';
 import { BottomNavBar } from '@/components/bottom-nav-bar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -86,7 +86,8 @@ export function ViewProfileClient() {
                 ...baseProfile,
                 type: 'dealer',
                 companyName: `${dummyLister.name}'s Realty`,
-              };
+                reraId: '', // Ensure all required fields are present
+              } as DealerProfile;
               break;
             case 'developer':
               fullDummyProfile = {
@@ -94,7 +95,7 @@ export function ViewProfileClient() {
                 type: 'developer',
                 companyName: `${dummyLister.name} Corp`,
                 reraId: 'DUMMY/RERA/12345',
-              };
+              } as DeveloperProfile;
               break;
           }
           
@@ -200,8 +201,8 @@ export function ViewProfileClient() {
                 <div className="space-y-6 pt-4 border-t border-white/10">
                     <DetailItem label="Email" value={profile.email} icon={AtSign} />
                     <DetailItem label="Phone" value={profile.phone || 'Not provided'} icon={Phone} />
-                    {(profile.type === 'dealer' || profile.type === 'developer') && profile.companyName && <DetailItem label="Company Name" value={profile.companyName} icon={Building} />}
-                    {(profile.type === 'dealer' || profile.type === 'developer') && profile.reraId && <DetailItem label="RERA ID" value={profile.reraId} icon={ChevronsRight} />}
+                    {(profile.type === 'dealer' || profile.type === 'developer') && (profile as DealerProfile).companyName && <DetailItem label="Company Name" value={(profile as DealerProfile).companyName} icon={Building} />}
+                    {(profile.type === 'dealer' || profile.type === 'developer') && (profile as DeveloperProfile).reraId && <DetailItem label="RERA ID" value={(profile as DeveloperProfile).reraId} icon={ChevronsRight} />}
                 </div>
                 {profile.type === 'seeker' && (profile as SeekerProfile).searchCriteria && (
                     <div className="space-y-2 pt-4 border-t border-white/10">

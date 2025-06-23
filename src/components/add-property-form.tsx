@@ -254,12 +254,12 @@ export function AddPropertyForm() {
                 </Card>
 
                 <Accordion type="multiple" className="w-full space-y-4" defaultValue={['item-1']}>
-                    <AccordionItem value="item-5" asChild><Card><AccordionTrigger className="p-6"><CardTitle>Description & Media</CardTitle></AccordionTrigger><AccordionContent className="p-6 pt-0 grid gap-6">
+                    <AccordionItem value="item-5" asChild><Card><AccordionTrigger className="p-6"><h3 className="text-2xl font-semibold leading-none tracking-tight">Description & Media</h3></AccordionTrigger><AccordionContent className="p-6 pt-0 grid gap-6">
                         <FormField control={form.control} name="description" render={({ field }) => ( <FormItem> <div className="flex items-center justify-between"> <FormLabel>Property Description</FormLabel> <Button type="button" variant="outline" size="sm" onClick={handleGenerateDescription} disabled={isGenerating}> <Wand2 className="mr-2 h-4 w-4" /> {isGenerating ? 'Generating...' : 'Generate with AI'} </Button> </div> <FormControl> <Textarea rows={5} placeholder="A compelling description of your property..." {...field} /> </FormControl> <FormDescription> You can write your own or use the AI generator based on the details you've provided. </FormDescription> <FormMessage /> </FormItem> )} />
                         <FormField control={form.control} name="video" render={({ field }) => ( <FormItem> <FormLabel>Property Video</FormLabel> <FormControl> <Input type="file" accept="video/*" {...form.register('video')} /> </FormControl> <FormDescription> Upload a short video of your property for the reel. </FormDescription> <FormMessage /> </FormItem> )} />
                     </AccordionContent></Card></AccordionItem>
 
-                    <AccordionItem value="item-1" asChild><Card><AccordionTrigger className="p-6"><CardTitle>Property Details</CardTitle></AccordionTrigger><AccordionContent className="p-6 pt-0 grid md:grid-cols-2 gap-6">
+                    <AccordionItem value="item-1" asChild><Card><AccordionTrigger className="p-6"><h3 className="text-2xl font-semibold leading-none tracking-tight">Property Details</h3></AccordionTrigger><AccordionContent className="p-6 pt-0 grid md:grid-cols-2 gap-6">
                         <FormField control={form.control} name="propertyType" render={({ field }) => ( <FormItem><FormLabel>Property Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="apartment">Apartment</SelectItem><SelectItem value="villa">Villa</SelectItem><SelectItem value="row house">Row House</SelectItem><SelectItem value="penthouse">Penthouse</SelectItem><SelectItem value="independent house">Independent House</SelectItem><SelectItem value="builder floor">Builder Floor</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
                         <FormField control={form.control} name="configuration" render={({ field }) => ( <FormItem><FormLabel>Configuration</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="studio">Studio</SelectItem><SelectItem value="1bhk">1BHK</SelectItem><SelectItem value="2bhk">2BHK</SelectItem><SelectItem value="3bhk">3BHK</SelectItem><SelectItem value="4bhk">4BHK</SelectItem><SelectItem value="5bhk+">5BHK+</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
                         <FormField control={form.control} name="floorNo" render={({ field }) => ( <FormItem><FormLabel>Floor Number</FormLabel><FormControl><Input type="number" placeholder="10" {...field} /></FormControl><FormMessage /></FormItem> )}/>
@@ -269,7 +269,7 @@ export function AddPropertyForm() {
                         <FormField control={form.control} name="housesOnSameFloor" render={({ field }) => ( <FormItem><FormLabel>Houses on Same Floor</FormLabel><FormControl><Input type="number" placeholder="4" {...field} /></FormControl><FormMessage /></FormItem> )}/>
                     </AccordionContent></Card></AccordionItem>
 
-                    <AccordionItem value="item-2" asChild><Card><AccordionTrigger className="p-6"><CardTitle>Features, Area & Parking</CardTitle></AccordionTrigger><AccordionContent className="p-6 pt-0 grid md:grid-cols-2 gap-x-6 gap-y-4">
+                    <AccordionItem value="item-2" asChild><Card><AccordionTrigger className="p-6"><h3 className="text-2xl font-semibold leading-none tracking-tight">Features, Area & Parking</h3></AccordionTrigger><AccordionContent className="p-6 pt-0 grid md:grid-cols-2 gap-x-6 gap-y-4">
                         {renderCheckboxField('kitchenUtility', 'Kitchen Utility')}
                         {renderCheckboxField('hasBalcony', 'Has Balcony')}
                         {renderCheckboxField('sunlightEntersHome', 'Sunlight Enters Home')}
@@ -280,7 +280,7 @@ export function AddPropertyForm() {
                         <FormField control={form.control} name="sunlightPercentage" render={({ field }) => ( <FormItem> <FormLabel>Sunlight Percentage ({field.value}%)</FormLabel> <FormControl> <Slider min={0} max={100} step={5} defaultValue={[field.value]} onValueChange={(value) => field.onChange(value[0])} /> </FormControl> </FormItem> )} />
                     </AccordionContent></Card></AccordionItem>
 
-                     <AccordionItem value="item-3" asChild><Card><AccordionTrigger className="p-6"><CardTitle>Amenities</CardTitle></AccordionTrigger><AccordionContent className="p-6 pt-0 grid md:grid-cols-2 gap-x-6 gap-y-4">
+                     <AccordionItem value="item-3" asChild><Card><AccordionTrigger className="p-6"><h3 className="text-2xl font-semibold leading-none tracking-tight">Amenities</h3></AccordionTrigger><AccordionContent className="p-6 pt-0 grid md:grid-cols-2 gap-x-6 gap-y-4">
                         {renderCheckboxField('hasLift', 'Lift Available')}
                         {renderCheckboxField('hasChildrenPlayArea', "Children's Play Area")}
                         {renderCheckboxField('hasDoctorClinic', "Doctor's Clinic")}
@@ -292,7 +292,7 @@ export function AddPropertyForm() {
                         {renderCheckboxField('hasGasPipeline', 'Gas Pipeline')}
                     </AccordionContent></Card></AccordionItem>
 
-                    <AccordionItem value="item-4" asChild><Card><AccordionTrigger className="p-6"><CardTitle>Charges & Fees</CardTitle></AccordionTrigger><AccordionContent className="p-6 pt-0 grid md:grid-cols-2 gap-6">
+                    <AccordionItem value="item-4" asChild><Card><AccordionTrigger className="p-6"><h3 className="text-2xl font-semibold leading-none tracking-tight">Charges & Fees</h3></AccordionTrigger><AccordionContent className="p-6 pt-0 grid md:grid-cols-2 gap-6">
                         <FormField control={form.control} name="maintenancePerMonth" render={({ field }) => ( <FormItem><FormLabel>Maintenance (/month)</FormLabel><FormControl><Input type="number" placeholder="100" {...field} /></FormControl><FormMessage /></FormItem> )}/>
                         <FormField control={form.control} name="securityDeposit" render={({ field }) => ( <FormItem><FormLabel>Security Deposit</FormLabel><FormControl><Input type="number" placeholder="5000" {...field} /></FormControl><FormMessage /></FormItem> )}/>
                          <FormField control={form.control} name="brokerage" render={({ field }) => ( <FormItem><FormLabel>Brokerage (if any)</FormLabel><FormControl><Input type="number" placeholder="0" {...field} /></FormControl><FormMessage /></FormItem> )}/>

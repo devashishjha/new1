@@ -22,6 +22,7 @@ export default function ChatPage() {
   const [otherUser, setOtherUser] = useState<UserProfile | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
@@ -68,26 +69,35 @@ export default function ChatPage() {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !user || !chatId) return;
+    if (!newMessage.trim() || !user || !chatId || isSending) return;
 
-    const chatDocRef = doc(db, 'chats', chatId);
-    const messageData = {
-        id: Date.now().toString(), // Not ideal for production, use uuid
-        senderId: user.uid,
-        text: newMessage,
-        timestamp: serverTimestamp()
-    };
+    setIsSending(true);
+    const textToSend = newMessage;
+    setNewMessage(''); // Clear input immediately for better UX
 
-    await updateDoc(chatDocRef, {
-        messages: arrayUnion(messageData),
-        lastMessage: {
-            text: newMessage,
-            timestamp: serverTimestamp(),
-            senderId: user.uid
-        }
-    });
+    try {
+      const chatDocRef = doc(db, 'chats', chatId);
+      const messageData = {
+          id: Date.now().toString(), // Not ideal for production, use uuid
+          senderId: user.uid,
+          text: textToSend,
+          timestamp: serverTimestamp()
+      };
 
-    setNewMessage('');
+      await updateDoc(chatDocRef, {
+          messages: arrayUnion(messageData),
+          lastMessage: {
+              text: textToSend,
+              timestamp: serverTimestamp(),
+              senderId: user.uid
+          }
+      });
+    } catch (error) {
+      console.error("Error sending message:", error);
+      setNewMessage(textToSend); // Restore message on error
+    } finally {
+      setIsSending(false);
+    }
   };
 
   if (isLoading) {
@@ -140,9 +150,10 @@ export default function ChatPage() {
                 className="flex-grow bg-background" 
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
+                disabled={isSending}
             />
-            <Button size="icon" type="submit" disabled={!newMessage.trim()}>
-              <Send />
+            <Button size="icon" type="submit" disabled={!newMessage.trim() || isSending}>
+              {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send />}
             </Button>
           </div>
         </form>

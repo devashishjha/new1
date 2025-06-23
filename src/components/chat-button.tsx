@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { db } from "@/lib/firebase";
 import type { UserProfile } from "@/lib/types";
 import { addDoc, collection, getDocs, query, where, serverTimestamp, doc } from "firebase/firestore";
-import { MessageCircle } from "lucide-react";
+import { Loader2, MessageCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -80,13 +80,18 @@ export function ChatButton({ targetUser }: { targetUser: UserProfile }) {
         }
     };
 
-    if (loading || !user || user.uid === targetUser.id) {
+    if (loading) {
         return (
              <Button size="lg" className="w-full" disabled>
-                <MessageCircle className="mr-2 h-5 w-5" />
-                Chat with {targetUser.name.split(' ')[0]}
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                Loading Chat...
             </Button>
         );
+    }
+    
+    // Don't show the button if the user is viewing their own profile or is not logged in.
+    if (!user || user.uid === targetUser.id) {
+        return null;
     }
 
     return (

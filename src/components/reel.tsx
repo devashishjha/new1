@@ -41,7 +41,7 @@ const InfoCard = ({ icon, label, value, children }: { icon: React.ElementType, l
 
 
 function ReelComponent({ property, userSearchCriteria }: { property: Property; userSearchCriteria: string }) {
-  const [matchInfo, setMatchInfo] = useState<PropertyMatchScoreOutput | null>(null);
+  const [matchInfo, setMatchInfo] = useState<PropertyMatchScoreOutput | null | undefined>(undefined);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isShortlisted, setIsShortlisted] = useState(false);
   const [isUIVisible, setIsUIVisible] = useState(true);
@@ -99,20 +99,29 @@ function ReelComponent({ property, userSearchCriteria }: { property: Property; u
     navigateToChat(property.lister);
   };
 
+  const priceDisplay = property.price.type === 'rent'
+    ? `₹ ${property.price.amount.toLocaleString('en-IN')}/mo`
+    : formatIndianCurrency(property.price.amount);
+    
   useEffect(() => {
     async function fetchScore() {
+      const amenitiesList = [
+        property.hasBalcony && 'Balcony',
+        property.amenities.hasLift && 'Lift',
+        property.amenities.hasClubhouse && 'Clubhouse',
+        property.amenities.hasChildrenPlayArea && "Children's Play Area",
+        property.amenities.hasGasPipeline && 'Gas Pipeline',
+      ].filter(Boolean).join(', ');
+
       const propertyDetailsString = `
-        Title: ${property.title}, 
-        Type: ${property.propertyType} (${property.configuration}),
-        Location: ${property.location},
-        Society: ${property.societyName},
-        Price: ${formatIndianCurrency(property.price.amount)} (${property.price.type}),
-        Area: ${property.area.superBuiltUp} sqft super built-up, ${property.area.carpet} sqft carpet,
-        Floor: ${property.floorNo} of ${property.totalFloors},
-        Features: Main door facing ${property.mainDoorDirection}, ${property.openSides} open sides, ${property.features.housesOnSameFloor} houses on the same floor.
-        Parking: 4-wheeler - ${property.parking.has4Wheeler ? 'Yes' : 'No'}, 2-wheeler - ${property.parking.has2Wheeler ? 'Yes' : 'No'}.
-        Amenities: Balcony - ${property.hasBalcony ? 'Yes' : 'No'}, Lift - ${property.amenities.hasLift ? 'Yes' : 'No'}, Clubhouse - ${property.amenities.hasClubhouse ? 'Yes' : 'No'}, Children's Play Area - ${property.amenities.hasChildrenPlayArea ? 'Yes' : 'No'}, Gas Pipeline - ${property.amenities.hasGasPipeline ? 'Yes' : 'No'}, Sunlight enters - ${property.features.sunlightEntersHome ? 'Yes' : 'No'} (${property.amenities.sunlightPercentage}%).
-        Charges: Maintenance - ${formatIndianCurrency(property.charges.maintenancePerMonth)}, Security Deposit - ${formatIndianCurrency(property.charges.securityDeposit)}, Brokerage - ${formatIndianCurrency(property.charges.brokerage)}, Move-in Charges - ${formatIndianCurrency(property.charges.moveInCharges)}.
+        This is a ${property.configuration} ${property.propertyType} for ${property.price.type} at ${property.societyName}, ${property.location}.
+        Price: ${priceDisplay}.
+        Area: ${property.area.superBuiltUp} sqft.
+        Floor: ${property.floorNo} of ${property.totalFloors}.
+        Main door facing: ${property.mainDoorDirection}.
+        Parking: ${property.parking.has4Wheeler ? 'Car' : 'No Car'}, ${property.parking.has2Wheeler ? 'Bike' : 'No Bike'}.
+        Key Amenities: ${amenitiesList || 'None listed'}.
+        Description: ${property.description}
       `;
 
       try {
@@ -123,17 +132,19 @@ function ReelComponent({ property, userSearchCriteria }: { property: Property; u
         setMatchInfo(result);
       } catch (error) {
         console.error("Failed to get property match score:", error);
+        setMatchInfo(null);
       }
     }
     
     if (userSearchCriteria) {
+      setMatchInfo(undefined);
       fetchScore();
+    } else {
+      setMatchInfo(null);
     }
-  }, [property, userSearchCriteria]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [property, userSearchCriteria, priceDisplay]);
 
-  const priceDisplay = property.price.type === 'rent'
-    ? `₹ ${property.price.amount.toLocaleString('en-IN')}/mo`
-    : formatIndianCurrency(property.price.amount);
 
   return (
     <section 
@@ -183,10 +194,12 @@ function ReelComponent({ property, userSearchCriteria }: { property: Property; u
             <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide">
                 <button onClick={(e) => handleInteraction(e, openDetailsSheet)} className="text-left">
                     <InfoCard icon={Zap} label="AI Match">
-                    {matchInfo ? (
+                    {matchInfo === undefined ? (
+                        <Skeleton className="h-7 w-12 mt-1 bg-white/20" />
+                    ) : matchInfo ? (
                         <p className="text-2xl font-bold mt-1 text-white truncate w-full">{matchInfo.matchScore}%</p>
                     ) : (
-                        <Skeleton className="h-7 w-12 mt-1 bg-white/20" />
+                        <p className="text-sm mt-1 text-white/70">N/A</p>
                     )}
                     </InfoCard>
                 </button>

@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { auth, db } from '@/lib/firebase';
-import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, getAdditionalUserInfo, UserCredential } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, getAdditionalUserInfo, UserCredential, sendPasswordResetEmail } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import type { SeekerProfile } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
@@ -90,6 +90,34 @@ export function AuthForm() {
             setIsLoading(false);
         }
     };
+    
+    const handlePasswordReset = async () => {
+        if (!email) {
+            toast({
+                variant: 'destructive',
+                title: 'Email Required',
+                description: 'Please enter your email address to reset your password.',
+            });
+            return;
+        }
+        setIsLoading(true);
+        try {
+            await sendPasswordResetEmail(auth, email);
+            toast({
+                title: 'Password Reset Email Sent',
+                description: 'Check your inbox for instructions to reset your password.',
+            });
+        } catch (error: any) {
+            toast({
+                variant: 'destructive',
+                title: 'Reset Failed',
+                description: error.message,
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
 
     return (
         <Card className="w-full max-w-sm shadow-2xl border-0">
@@ -120,6 +148,19 @@ export function AuthForm() {
                         <Label htmlFor="password">Password</Label>
                         <Input id="password" type="password" placeholder="Enter your password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading || isGoogleLoading} />
                     </div>
+                    
+                    {isLogin && (
+                        <div className="text-right -mt-2">
+                            <button
+                                type="button"
+                                onClick={handlePasswordReset}
+                                className="text-sm font-medium text-primary hover:underline disabled:opacity-50"
+                                disabled={isLoading || isGoogleLoading || !email}
+                            >
+                                Forgot Password?
+                            </button>
+                        </div>
+                    )}
 
                     <Button size="lg" className="w-full" type="submit" disabled={isLoading || isGoogleLoading}>
                         {isLoading && <Loader2 className="mr-2 animate-spin" />}

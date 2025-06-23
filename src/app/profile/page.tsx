@@ -14,7 +14,7 @@ import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Shield, FileText, LogOut, MessagesSquare, Loader2 } from 'lucide-react';
+import { Shield, FileText, LogOut, MessagesSquare, Loader2, Star, Handshake, Sparkles, KeyRound, ShoppingCart } from 'lucide-react';
 import { BottomNavBar } from '@/components/bottom-nav-bar';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -274,6 +274,87 @@ export default function ProfilePage() {
                                 <ProfileForm userProfile={userProfile} userType={userType} onProfileUpdate={handleProfileUpdate} />
                             </CardContent>
                         </Card>
+
+                        {userType === 'seeker' && (
+                            <Card className="mt-8">
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <Star className="text-accent" /> Premium Features
+                                    </CardTitle>
+                                    <CardDescription>Unlock exclusive benefits to supercharge your property search.</CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="flex items-center justify-between p-4 rounded-lg bg-secondary">
+                                        <div className="flex items-center gap-4">
+                                            <Handshake className="w-6 h-6 text-primary" />
+                                            <div>
+                                                <h4 className="font-semibold">Expert Consultation</h4>
+                                                <p className="text-sm text-muted-foreground">Get professional advice on real estate.</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="font-bold text-lg">₹500</p>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button size="sm" className="mt-1" disabled>
+                                                        <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Payment gateway coming soon!</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between p-4 rounded-lg bg-secondary">
+                                        <div className="flex items-center gap-4">
+                                            <Sparkles className="w-6 h-6 text-primary" />
+                                            <div>
+                                                <h4 className="font-semibold">AI Features</h4>
+                                                <p className="text-sm text-muted-foreground">Advanced AI match analysis & insights.</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="font-bold text-lg">₹500</p>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button size="sm" className="mt-1" disabled>
+                                                        <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Payment gateway coming soon!</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between p-4 rounded-lg bg-secondary">
+                                        <div className="flex items-center gap-4">
+                                            <KeyRound className="w-6 h-6 text-primary" />
+                                            <div>
+                                                <h4 className="font-semibold">Unlock Big Bargain Properties</h4>
+                                                <p className="text-sm text-muted-foreground">Access exclusive off-market deals.</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="font-bold text-lg">₹1000</p>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button size="sm" className="mt-1" disabled>
+                                                        <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Payment gateway coming soon!</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
 
                         <Card className="mt-8">
                             <CardContent className="p-4 space-y-2">

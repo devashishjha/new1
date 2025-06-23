@@ -7,8 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { auth, db } from '@/lib/firebase';
-import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, getAdditionalUserInfo, UserCredential, sendPasswordResetEmail } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, getAdditionalUserInfo, sendPasswordResetEmail, type User } from 'firebase/auth';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import type { SeekerProfile } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
 
@@ -30,19 +30,23 @@ export function AuthForm() {
     const [isLoading, setIsLoading] = useState(false);
     const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-    const createNewUserProfile = async (userCredential: UserCredential) => {
-        const user = userCredential.user;
-        const newUserProfile: SeekerProfile = {
-            id: user.uid,
-            name: user.displayName || user.email?.split('@')[0] || 'New User',
-            email: user.email!,
-            phone: user.phoneNumber || '',
-            bio: 'Welcome to LOKALITY!',
-            type: 'seeker',
-            searchCriteria: 'I am looking for a new property.',
-            avatar: user.photoURL || `https://placehold.co/100x100.png`
-        };
-        await setDoc(doc(db, "users", user.uid), newUserProfile);
+    const createNewUserProfile = async (user: User) => {
+        const userDocRef = doc(db, "users", user.uid);
+        const docSnap = await getDoc(userDocRef);
+
+        if (!docSnap.exists()) {
+            const newUserProfile: SeekerProfile = {
+                id: user.uid,
+                name: user.displayName || user.email?.split('@')[0] || 'New User',
+                email: user.email!,
+                phone: user.phoneNumber || '',
+                bio: 'Welcome to LOKALITY!',
+                type: 'seeker',
+                searchCriteria: 'I am looking for a new property.',
+                avatar: user.photoURL || `https://placehold.co/100x100.png`
+            };
+            await setDoc(userDocRef, newUserProfile);
+        }
     };
 
     const handleGoogleSignIn = async () => {
@@ -52,21 +56,24 @@ export function AuthForm() {
             const userCredential = await signInWithPopup(auth, provider);
             const additionalUserInfo = getAdditionalUserInfo(userCredential);
             if (additionalUserInfo?.isNewUser) {
-                await createNewUserProfile(userCredential);
+                await createNewUserProfile(userCredential.user);
                 toast({ title: 'Welcome!', description: 'Your account has been created.' });
             }
             // Redirection is handled by AuthProvider
         } catch (error: any) {
             console.error("Google Sign-In Error Code:", error.code);
             console.error("Google Sign-In Error Message:", error.message);
-            let description = error.message;
-            if (error.code === 'auth/unauthorized-domain') {
-                description = "This app's domain is not authorized. Please add it to the 'Authorized domains' list in your Firebase Authentication settings.";
+            let description = `An unknown error occurred. (Code: ${error.code})`;
+             if (error.code === 'auth/popup-closed-by-user') {
+                description = "The sign-in window was closed. Please try again.";
+            } else if (error.code === 'auth/unauthorized-domain') {
+                description = "This app's domain is not authorized for Google Sign-In. Please add it to the 'Authorized domains' list in your Firebase project's Authentication settings.";
             }
             toast({
                 variant: 'destructive',
                 title: 'Authentication Failed',
                 description: description,
+                duration: 9000,
             });
         } finally {
             setIsGoogleLoading(false);
@@ -82,7 +89,7 @@ export function AuthForm() {
                 // Redirection handled by AuthProvider
             } else {
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                await createNewUserProfile(userCredential);
+                await createNewUserProfile(userCredential.user);
                 toast({ title: 'Welcome!', description: 'Your account has been created.' });
                 // Redirection handled by AuthProvider
             }

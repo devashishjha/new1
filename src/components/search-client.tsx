@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -13,11 +14,10 @@ import { Checkbox } from './ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 import { Slider } from './ui/slider';
-import { formatIndianCurrency } from '@/lib/utils';
+import { cn, formatIndianCurrency, dateToJSON } from '@/lib/utils';
 import { Input } from './ui/input';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
-import { dateToJSON } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
 import { useAuth } from '@/hooks/use-auth';
 
@@ -148,7 +148,7 @@ export function SearchClient() {
             filtered.sort((a, b) => {
                 const dateA = getDate(a);
                 const dateB = getDate(b);
-                return dateSort === 'asc' ? dateA - dateB : dateB - dateA;
+                return dateSort === 'asc' ? dateA - dateB : dateB - a;
             });
         }
         return filtered;
@@ -363,15 +363,15 @@ export function SearchClient() {
                 <div className="flex items-center gap-3">
                     <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Sort by Price:</span>
                     <div className="flex gap-2">
-                        <Button size="sm" variant={priceSort === 'desc' ? 'primary' : 'outline'} onClick={() => handlePriceSort('desc')}>High to Low</Button>
-                        <Button size="sm" variant={priceSort === 'asc' ? 'primary' : 'outline'} onClick={() => handlePriceSort('asc')}>Low to High</Button>
+                        <Button size="sm" variant="outline" className={cn(priceSort === 'desc' && 'border-primary text-primary font-bold')} onClick={() => handlePriceSort('desc')}>High to Low</Button>
+                        <Button size="sm" variant="outline" className={cn(priceSort === 'asc' && 'border-primary text-primary font-bold')} onClick={() => handlePriceSort('asc')}>Low to High</Button>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
                     <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Sort by Date:</span>
                     <div className="flex gap-2">
-                        <Button size="sm" variant={dateSort === 'desc' && priceSort === 'none' ? 'primary' : 'outline'} onClick={() => handleDateSort('desc')}>Newest</Button>
-                        <Button size="sm" variant={dateSort === 'asc' && priceSort === 'none' ? 'primary' : 'outline'} onClick={() => handleDateSort('asc')}>Oldest</Button>
+                        <Button size="sm" variant="outline" className={cn(dateSort === 'desc' && priceSort === 'none' && 'border-primary text-primary font-bold')} onClick={() => handleDateSort('desc')}>Newest</Button>
+                        <Button size="sm" variant="outline" className={cn(dateSort === 'asc' && priceSort === 'none' && 'border-primary text-primary font-bold')} onClick={() => handleDateSort('asc')}>Oldest</Button>
                     </div>
                 </div>
             </div>

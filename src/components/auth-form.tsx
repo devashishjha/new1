@@ -142,7 +142,7 @@ export function AuthForm() {
 
 
     return (
-        <Card className="w-full max-w-sm shadow-2xl border-white/20 bg-card/10 backdrop-blur-lg">
+        <Card className="w-full max-w-sm shadow-2xl border-border/20 bg-card/10 backdrop-blur-lg">
             <CardHeader className="text-center space-y-2">
                 <h1 className="text-4xl font-black text-white tracking-tighter mx-auto">LOKALITY</h1>
             </CardHeader>
@@ -191,7 +191,7 @@ export function AuthForm() {
                     <p className="text-muted-foreground">
                         {isLogin ? "Don't have an account?" : "Already have an account?"}{' '}
                         <button onClick={() => setIsLogin(!isLogin)} className="underline hover:text-primary font-semibold">
-                            {isLogin ? "Sign Up" : "Sign Up"}
+                            {isLogin ? "Sign Up" : "Sign In"}
                         </button>
                     </p>
                 </div>

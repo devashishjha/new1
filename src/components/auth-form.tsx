@@ -58,10 +58,14 @@ export function AuthForm() {
             // Redirection is handled by AuthProvider
         } catch (error: any) {
             console.error("Google Sign-In Error:", error);
+            let description = error.message;
+            if (error.code === 'auth/unauthorized-domain') {
+                description = "This domain is not authorized for sign-in. Please contact support.";
+            }
             toast({
                 variant: 'destructive',
                 title: 'Authentication Failed',
-                description: error.message,
+                description: description,
             });
         } finally {
             setIsGoogleLoading(false);
@@ -82,10 +86,27 @@ export function AuthForm() {
                 // Redirection handled by AuthProvider
             }
         } catch (error: any) {
+            let description = "An unexpected error occurred. Please try again.";
+            switch (error.code) {
+                case 'auth/invalid-email':
+                    description = "Please enter a valid email address.";
+                    break;
+                case 'auth/user-not-found':
+                case 'auth/wrong-password':
+                case 'auth/invalid-credential':
+                    description = "Invalid email or password. Please check your credentials and try again.";
+                    break;
+                case 'auth/email-already-in-use':
+                    description = "An account with this email already exists. Please sign in or use a different email.";
+                    break;
+                case 'auth/weak-password':
+                    description = "Your password is too weak. Please choose a stronger password (at least 6 characters).";
+                    break;
+            }
              toast({
                 variant: 'destructive',
                 title: isLogin ? 'Sign In Failed' : 'Sign Up Failed',
-                description: error.message,
+                description: description,
             });
         } finally {
             setIsLoading(false);

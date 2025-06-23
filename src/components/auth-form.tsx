@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
@@ -95,7 +95,6 @@ export function AuthForm() {
         <Card className="w-full max-w-sm shadow-2xl border-0">
             <CardHeader className="text-center space-y-2">
                 <h1 className="text-4xl font-black text-white tracking-tighter mx-auto">LOKALITY</h1>
-                <CardDescription>Discover properties like never before</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
                 <Button variant="outline" size="lg" className="w-full border-input" onClick={handleGoogleSignIn} disabled={isLoading || isGoogleLoading}>

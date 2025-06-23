@@ -1,5 +1,7 @@
-import React from 'react';
-import { notFound } from 'next/navigation';
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { notFound, useParams } from 'next/navigation';
 import Link from 'next/link';
 import type { UserProfile, Property } from '@/lib/types';
 import { Header } from '@/components/header';
@@ -7,14 +9,14 @@ import { BottomNavBar } from '@/components/bottom-nav-bar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, AtSign, Building, ChevronsRight, Phone, User, Clock, MessageCircle } from 'lucide-react';
+import { ArrowLeft, AtSign, Building, ChevronsRight, Phone, User, Clock, Loader2 } from 'lucide-react';
 import { ShortlistedPropertyCard } from '@/components/shortlisted-property-card';
 import { db } from '@/lib/firebase';
 import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
 import { dateToJSON } from '@/lib/utils';
 import { ChatButton } from '@/components/chat-button';
 import Image from 'next/image';
-
+import { Skeleton } from '@/components/ui/skeleton';
 
 const DetailItem = ({ label, value, icon }: { label: string, value: React.ReactNode, icon?: React.ElementType }) => (
   <div className="flex items-start gap-4">
@@ -26,31 +28,80 @@ const DetailItem = ({ label, value, icon }: { label: string, value: React.ReactN
   </div>
 );
 
-async function getUserProfile(id: string): Promise<UserProfile | null> {
-  const docRef = doc(db, 'users', id);
-  const docSnap = await getDoc(docRef);
-  if (!docSnap.exists()) return null;
-  return { id: docSnap.id, ...docSnap.data() } as UserProfile;
-}
+export default function ViewProfilePage() {
+  const params = useParams();
+  const userId = params.id as string;
+  
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [userProperties, setUserProperties] = useState<Property[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-async function getUserProperties(userId: string): Promise<Property[]> {
-    const q = query(collection(db, "properties"), where("lister.id", "==", userId));
-    const querySnapshot = await getDocs(q);
-    const properties = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Property));
-    return properties.map(p => dateToJSON(p)) as Property[];
-}
+  useEffect(() => {
+    if (!userId) return;
 
+    const fetchData = async () => {
+      setIsLoading(true);
 
-export default async function ViewProfilePage({ params }: { params: { id: string } }) {
-  const user = await getUserProfile(params.id);
+      // Fetch user profile
+      const docRef = doc(db, 'users', userId);
+      const docSnap = await getDoc(docRef);
+      
+      if (!docSnap.exists()) {
+        setIsLoading(false);
+        return notFound();
+      }
+
+      const userProfile = { id: docSnap.id, ...docSnap.data() } as UserProfile;
+      setUser(userProfile);
+
+      // Fetch user properties if applicable
+      if (userProfile.type === 'owner' || userProfile.type === 'developer' || userProfile.type === 'dealer') {
+        const q = query(collection(db, "properties"), where("lister.id", "==", userId));
+        const querySnapshot = await getDocs(q);
+        const properties = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Property));
+        setUserProperties(properties.map(p => dateToJSON(p)) as Property[]);
+      }
+      
+      setIsLoading(false);
+    };
+
+    fetchData();
+  }, [userId]);
+
+  if (isLoading) {
+    return (
+      <>
+        <Header />
+        <main className="container mx-auto py-24 px-4 pb-24">
+           <div className="max-w-4xl mx-auto">
+              <Skeleton className="h-10 w-48 mb-4" />
+              <Card>
+                <CardHeader className="text-center">
+                  <Skeleton className="w-24 h-24 rounded-full mx-auto mb-4" />
+                  <Skeleton className="h-8 w-48 mx-auto" />
+                  <Skeleton className="h-6 w-24 mx-auto mt-2" />
+                </CardHeader>
+                <CardContent className="space-y-6">
+                   <Skeleton className="h-5 w-3/4 mx-auto" />
+                   <div className="space-y-6 pt-4 border-t">
+                      <Skeleton className="h-12 w-full" />
+                      <Skeleton className="h-12 w-full" />
+                   </div>
+                </CardContent>
+                <CardFooter className="p-4 border-t bg-secondary/20">
+                  <Skeleton className="h-12 w-full" />
+                </CardFooter>
+              </Card>
+           </div>
+        </main>
+        <BottomNavBar />
+      </>
+    )
+  }
 
   if (!user) {
-    notFound();
+    return notFound();
   }
-  
-  const userProperties = (user.type === 'owner' || user.type === 'developer' || user.type === 'dealer')
-    ? await getUserProperties(user.id)
-    : [];
 
   return (
     <>

@@ -88,7 +88,7 @@ export function AddPropertyForm() {
             location: '',
             societyName: '',
             description: '',
-            // video is a file input, so it's okay to be uncontrolled initially.
+            video: undefined,
 
             // Property Details
             propertyType: 'apartment',
@@ -276,7 +276,7 @@ export function AddPropertyForm() {
                 <Accordion type="multiple" className="w-full space-y-4" defaultValue={['item-1']}>
                     <AccordionItem value="item-5" asChild><Card><AccordionTrigger className="p-6"><h3 className="text-2xl font-semibold leading-none tracking-tight">Description & Media</h3></AccordionTrigger><AccordionContent className="p-6 pt-0 grid gap-6">
                         <FormField control={form.control} name="description" render={({ field }) => ( <FormItem> <div className="flex items-center justify-between"> <FormLabel>Property Description</FormLabel> <Button type="button" variant="outline" size="sm" onClick={handleGenerateDescription} disabled={isGenerating}> <Wand2 className="mr-2 h-4 w-4" /> {isGenerating ? 'Generating...' : 'Generate with AI'} </Button> </div> <FormControl> <Textarea rows={5} placeholder="A compelling description of your property..." {...field} className="text-black" /> </FormControl> <FormDescription> You can write your own or use the AI generator based on the details you've provided. </FormDescription> <FormMessage /> </FormItem> )} />
-                        <FormField control={form.control} name="video" render={({ field }) => ( <FormItem> <FormLabel>Property Video</FormLabel> <FormControl> <Input type="file" accept="video/*" {...form.register('video')} /> </FormControl> <FormDescription> Upload a short video of your property for the reel. </FormDescription> <FormMessage /> </FormItem> )} />
+                        <FormField control={form.control} name="video" render={({ field: { onChange, onBlur, name, ref } }) => ( <FormItem> <FormLabel>Property Video</FormLabel> <FormControl> <Input type="file" accept="video/*" onBlur={onBlur} name={name} ref={ref} onChange={(e) => onChange(e.target.files)} /> </FormControl> <FormDescription> Upload a short video of your property for the reel. </FormDescription> <FormMessage /> </FormItem> )} />
                     </AccordionContent></Card></AccordionItem>
 
                     <AccordionItem value="item-1" asChild><Card><AccordionTrigger className="p-6"><h3 className="text-2xl font-semibold leading-none tracking-tight">Property Details</h3></AccordionTrigger><AccordionContent className="p-6 pt-0 grid md:grid-cols-2 gap-6">
@@ -297,7 +297,7 @@ export function AddPropertyForm() {
                         {renderCheckboxField('has4WheelerParking', '4-Wheeler Parking')}
                         <FormField control={form.control} name="superBuiltUpArea" render={({ field }) => ( <FormItem><FormLabel>Super Built-up Area (sqft)</FormLabel><FormControl><Input type="number" placeholder="1200" {...field} className="text-black" /></FormControl><FormMessage /></FormItem> )}/>
                         <FormField control={form.control} name="carpetArea" render={({ field }) => ( <FormItem><FormLabel>Carpet Area (sqft)</FormLabel><FormControl><Input type="number" placeholder="950" {...field} className="text-black" /></FormControl><FormMessage /></FormItem> )}/>
-                        <FormField control={form.control} name="sunlightPercentage" render={({ field }) => ( <FormItem> <FormLabel>Sunlight Percentage ({field.value}%)</FormLabel> <FormControl> <Slider min={0} max={100} step={5} defaultValue={[field.value]} onValueChange={(value) => field.onChange(value[0])} /> </FormControl> </FormItem> )} />
+                        <FormField control={form.control} name="sunlightPercentage" render={({ field }) => ( <FormItem> <FormLabel>Sunlight Percentage ({field.value}%)</FormLabel> <FormControl> <Slider min={0} max={100} step={5} value={[field.value]} onValueChange={(value) => field.onChange(value[0])} /> </FormControl> </FormItem> )} />
                     </AccordionContent></Card></AccordionItem>
 
                      <AccordionItem value="item-3" asChild><Card><AccordionTrigger className="p-6"><h3 className="text-2xl font-semibold leading-none tracking-tight">Amenities</h3></AccordionTrigger><AccordionContent className="p-6 pt-0 grid md:grid-cols-2 gap-x-6 gap-y-4">

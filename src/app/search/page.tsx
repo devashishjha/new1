@@ -2,6 +2,8 @@ import { SearchClient } from '@/components/search-client';
 import { Header } from '@/components/header';
 import { BottomNavBar } from '@/components/bottom-nav-bar';
 
+export const dynamic = 'force-dynamic';
+
 export default function SearchPage() {
   return (
     <>

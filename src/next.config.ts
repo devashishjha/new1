@@ -1,26 +1,3 @@
-import type {NextConfig} from 'next';
-
-const nextConfig: NextConfig = {
-  /* config options here */
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'placehold.co',
-        port: '',
-        pathname: '/**',
-      },
-    ],
-  },
-  experimental: {
-    // No experimental flags needed.
-  },
-};
-
-export default nextConfig;
+// This file is intentionally left blank.
+// A duplicate next.config.ts was found in the src/ directory, which can cause
+// startup errors. The primary configuration file should be at the project root.

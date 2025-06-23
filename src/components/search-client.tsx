@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { Property } from '@/lib/types';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,6 +15,10 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './
 import { Slider } from './ui/slider';
 import { formatIndianCurrency } from '@/lib/utils';
 import { Input } from './ui/input';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, orderBy, query } from 'firebase/firestore';
+import { dateToJSON } from '@/lib/utils';
+import { Skeleton } from './ui/skeleton';
 
 type SortDirection = 'asc' | 'desc';
 
@@ -53,7 +57,17 @@ const searchSchema = z.object({
 
 const defaultValues = searchSchema.parse({});
 
-export function SearchClient({ initialProperties }: { initialProperties: Property[] }) {
+const CardSkeleton = () => (
+    <div className="space-y-2">
+        <Skeleton className="h-48 w-full" />
+        <Skeleton className="h-6 w-3/4" />
+        <Skeleton className="h-4 w-1/2" />
+    </div>
+)
+
+export function SearchClient() {
+    const [properties, setProperties] = useState<Property[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [filters, setFilters] = useState<z.infer<typeof searchSchema>>(defaultValues);
     const [priceSort, setPriceSort] = useState<'asc' | 'desc' | 'none'>('none');
     const [dateSort, setDateSort] = useState<'asc' | 'desc'>('desc');
@@ -62,6 +76,24 @@ export function SearchClient({ initialProperties }: { initialProperties: Propert
         resolver: zodResolver(searchSchema),
         defaultValues: filters,
     });
+    
+    useEffect(() => {
+        const fetchProperties = async () => {
+            setIsLoading(true);
+            try {
+                const propertiesCol = collection(db, 'properties');
+                const q = query(propertiesCol, orderBy('postedOn', 'desc'));
+                const snapshot = await getDocs(q);
+                const fetchedProperties = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Property));
+                setProperties(fetchedProperties.map(p => dateToJSON(p)) as Property[]);
+            } catch (error) {
+                console.error("Error fetching properties:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchProperties();
+    }, []);
 
     const lookingTo = form.watch('lookingTo');
     const priceRange = form.watch('priceRange');
@@ -74,7 +106,7 @@ export function SearchClient({ initialProperties }: { initialProperties: Propert
     const priceStep = lookingTo === 'rent' ? 5000 : 100000;
 
     const filteredAndSortedProperties = useMemo(() => {
-        let properties = [...initialProperties]
+        let filtered = [...properties]
             .filter(p => {
                 const priceTypeMatch = filters.lookingTo === 'rent' ? p.price.type === 'rent' : p.price.type === 'sale';
                 const priceRangeMatch = p.price.amount >= filters.priceRange[0] && p.price.amount <= filters.priceRange[1];
@@ -106,18 +138,17 @@ export function SearchClient({ initialProperties }: { initialProperties: Propert
             });
 
         if (priceSort !== 'none') {
-            properties.sort((a, b) => priceSort === 'asc' ? a.price.amount - b.price.amount : b.price.amount - a.price.amount);
+            filtered.sort((a, b) => priceSort === 'asc' ? a.price.amount - b.price.amount : b.price.amount - a.price.amount);
         } else {
-            // Firestore timestamps can be strings after serialization
             const getDate = (p: Property) => p.postedOn instanceof Date ? p.postedOn.getTime() : new Date(p.postedOn as string).getTime();
-            properties.sort((a, b) => {
+            filtered.sort((a, b) => {
                 const dateA = getDate(a);
                 const dateB = getDate(b);
                 return dateSort === 'asc' ? dateA - dateB : dateB - dateA;
             });
         }
-        return properties;
-    }, [initialProperties, filters, priceSort, dateSort]);
+        return filtered;
+    }, [properties, filters, priceSort, dateSort]);
 
     function onSubmit(values: z.infer<typeof searchSchema>) {
         setFilters(searchSchema.parse(values));
@@ -186,12 +217,30 @@ export function SearchClient({ initialProperties }: { initialProperties: Propert
 
     const handlePriceSort = (direction: SortDirection) => {
         setPriceSort(priceSort === direction ? 'none' : direction);
+        if (priceSort !== 'none') setDateSort('desc');
     };
 
     const handleDateSort = (direction: SortDirection) => {
         setPriceSort('none');
         setDateSort(direction);
     };
+
+    if (isLoading) {
+        return (
+             <div>
+                <h1 className="text-4xl font-bold tracking-tight mb-2">Search Properties</h1>
+                <p className="text-muted-foreground mb-8">Find your next home by searching and sorting.</p>
+                <Skeleton className="h-64 w-full mb-8" />
+                <div className="flex flex-col sm:flex-row gap-6 my-8">
+                    <Skeleton className="h-9 w-64" />
+                    <Skeleton className="h-9 w-52" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[...Array(6)].map((_, i) => <CardSkeleton key={i} />)}
+                </div>
+            </div>
+        )
+    }
 
     return (
         <div>

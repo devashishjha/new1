@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react';
 import type { Property, UserProfile } from '@/lib/types';
 import { Reel } from '@/components/reel';
 import { useAuth } from '@/hooks/use-auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from './ui/skeleton';
+import { dateToJSON } from '@/lib/utils';
 
 function ReelSkeleton() {
     return (
@@ -29,35 +30,44 @@ function ReelSkeleton() {
     )
 }
 
-export function ReelsClient({ initialProperties }: { initialProperties: Property[]}) {
+export function ReelsClient() {
     const { user } = useAuth();
+    const [properties, setProperties] = useState<Property[]>([]);
     const [userSearchCriteria, setUserSearchCriteria] = useState<string>('');
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         if (user) {
-            const fetchSeekerCriteria = async () => {
+            const fetchData = async () => {
                 setIsLoading(true);
-                const userDocRef = doc(db, 'users', user.uid);
-                const userDocSnap = await getDoc(userDocRef);
-                if (userDocSnap.exists()) {
-                    const userData = userDocSnap.data() as UserProfile;
-                    if (userData.type === 'seeker' && userData.searchCriteria) {
-                        setUserSearchCriteria(userData.searchCriteria);
-                    } else {
-                        setUserSearchCriteria('');
+                try {
+                    // Fetch user criteria
+                    const userDocRef = doc(db, 'users', user.uid);
+                    const userDocSnap = await getDoc(userDocRef);
+                    if (userDocSnap.exists()) {
+                        const userData = userDocSnap.data() as UserProfile;
+                        if (userData.type === 'seeker' && userData.searchCriteria) {
+                            setUserSearchCriteria(userData.searchCriteria);
+                        }
                     }
-                } else {
-                     setUserSearchCriteria('');
+
+                    // Fetch properties
+                    const propertiesCol = collection(db, 'properties');
+                    const q = query(propertiesCol, orderBy('postedOn', 'desc'));
+                    const snapshot = await getDocs(q);
+                    const fetchedProperties = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Property));
+                    setProperties(fetchedProperties.map(p => dateToJSON(p)) as Property[]);
+                } catch (error) {
+                    console.error("Error fetching data:", error);
+                } finally {
+                    setIsLoading(false);
                 }
-                setIsLoading(false);
             };
-            fetchSeekerCriteria();
-        } else {
-            setUserSearchCriteria('');
-            setIsLoading(false);
+            fetchData();
+        } else if (!user && !isLoading) {
+            // AuthProvider will redirect, no need to do anything here.
         }
-    }, [user]);
+    }, [user, isLoading]);
 
     if (isLoading) {
         return (
@@ -69,7 +79,7 @@ export function ReelsClient({ initialProperties }: { initialProperties: Property
 
     return (
         <main className="h-full w-full overflow-y-auto snap-y snap-mandatory scroll-smooth">
-            {initialProperties.map((property) => (
+            {properties.map((property) => (
                 <Reel key={property.id} property={property} userSearchCriteria={userSearchCriteria} />
             ))}
         </main>

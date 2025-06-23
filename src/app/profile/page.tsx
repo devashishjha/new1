@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -144,37 +143,38 @@ export default function ProfilePage() {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        if (user) {
-            const userDocRef = doc(db, 'users', user.uid);
-            getDoc(userDocRef).then(docSnap => {
-                if (docSnap.exists()) {
-                    const profile = docSnap.data() as UserProfile;
-                    setUserProfile(profile);
-                    setUserType(profile.type);
-                } else {
-                    // Create a default profile if one doesn't exist
-                    const defaultProfile: SeekerProfile = {
-                        id: user.uid,
-                        name: user.displayName || 'New User',
-                        email: user.email || '',
-                        phone: user.phoneNumber || '',
-                        bio: 'Welcome to LOKALITY!',
-                        type: 'seeker',
-                        searchCriteria: 'I am looking for a new property.',
-                        avatar: user.photoURL || `https://placehold.co/100x100.png`,
-                    };
-                    setDoc(userDocRef, defaultProfile).then(() => {
-                        setUserProfile(defaultProfile);
-                        setUserType('seeker');
-                    });
-                }
-                setIsLoading(false);
-            }).catch(error => {
-                console.error("Error fetching user profile:", error);
-                setIsLoading(false);
-                toast({ variant: 'destructive', title: "Error", description: "Could not load your profile." });
+        if (!user) {
+            setIsLoading(false);
+            return;
+        };
+
+        const userDocRef = doc(db, 'users', user.uid);
+        getDoc(userDocRef).then(docSnap => {
+            if (docSnap.exists()) {
+                const profile = docSnap.data() as UserProfile;
+                setUserProfile(profile);
+                setUserType(profile.type);
+            } else {
+                // This can happen if the profile creation during sign-up failed or is delayed.
+                // We guide the user to sign out and back in, which should re-trigger profile creation.
+                console.error("Authenticated user has no profile document in Firestore.");
+                toast({
+                    variant: 'destructive',
+                    title: "Profile Not Found",
+                    description: "We couldn't find your profile. Please try signing out and signing back in.",
+                    duration: 5000,
+                });
+            }
+            setIsLoading(false);
+        }).catch(error => {
+            console.error("Error fetching user profile:", error);
+            setIsLoading(false);
+            toast({
+                variant: 'destructive',
+                title: "Could not load profile",
+                description: "An error occurred while fetching your data. Please check your network connection.",
             });
-        }
+        });
     }, [user, toast]);
     
     const handleProfileUpdate = (updatedProfile: UserProfile) => {

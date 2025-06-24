@@ -40,20 +40,20 @@ const searchSchema = z.object({
     housesOnSameFloor: z.number().optional(),
     mainDoorDirection: z.array(z.string()).default([]),
     openSides: z.array(z.string()).default([]),
-    kitchenUtility: z.boolean().default(false),
-    hasBalcony: z.boolean().default(false),
-    sunlightEntersHome: z.boolean().default(false),
-    has2WheelerParking: z.boolean().default(false),
-    has4WheelerParking: z.boolean().default(false),
-    hasLift: z.boolean().default(false),
-    hasChildrenPlayArea: z.boolean().default(false),
-    hasDoctorClinic: z.boolean().default(false),
-    hasPlaySchool: z.boolean().default(false),
-    hasSuperMarket: z.boolean().default(false),
-    hasPharmacy: z.boolean().default(false),
-    hasClubhouse: z.boolean().default(false),
-    hasWaterMeter: z.boolean().default(false),
-    hasGasPipeline: z.boolean().default(false),
+    kitchenUtility: z.boolean().optional(),
+    hasBalcony: z.boolean().optional(),
+    sunlightEntersHome: z.boolean().optional(),
+    has2WheelerParking: z.boolean().optional(),
+    has4WheelerParking: z.boolean().optional(),
+    hasLift: z.boolean().optional(),
+    hasChildrenPlayArea: z.boolean().optional(),
+    hasDoctorClinic: z.boolean().optional(),
+    hasPlaySchool: z.boolean().optional(),
+    hasSuperMarket: z.boolean().optional(),
+    hasPharmacy: z.boolean().optional(),
+    hasClubhouse: z.boolean().optional(),
+    hasWaterMeter: z.boolean().optional(),
+    hasGasPipeline: z.boolean().optional(),
 });
 
 const defaultValues = searchSchema.parse({});
@@ -72,7 +72,7 @@ export function SearchClient() {
     const [isLoading, setIsLoading] = useState(true);
     const [filters, setFilters] = useState<z.infer<typeof searchSchema>>(defaultValues);
     const [priceSort, setPriceSort] = useState<'asc' | 'desc' | 'none'>('none');
-    const [dateSort, setDateSort = useState<'asc' | 'desc'>('desc');
+    const [dateSort, setDateSort] = useState<'asc' | 'desc'>('desc');
 
     const form = useForm<z.infer<typeof searchSchema>>({
         resolver: zodResolver(searchSchema),
@@ -215,7 +215,7 @@ export function SearchClient() {
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0">
                      <FormControl>
                         <Checkbox
-                            checked={field.value}
+                            checked={!!field.value}
                             onCheckedChange={field.onChange}
                         />
                     </FormControl>
@@ -224,6 +224,23 @@ export function SearchClient() {
             )}
         />
     );
+    
+    const amenities: { [K in keyof z.infer<typeof searchSchema>]?: string } = {
+        kitchenUtility: 'Kitchen Utility',
+        hasBalcony: 'Balcony',
+        sunlightEntersHome: 'Sunlight',
+        has2WheelerParking: '2-Wheeler Parking',
+        has4WheelerParking: '4-Wheeler Parking',
+        hasLift: 'Lift',
+        hasChildrenPlayArea: "Play Area",
+        hasDoctorClinic: "Doctor's Clinic",
+        hasPlaySchool: 'Play School',
+        hasSuperMarket: 'Super Market',
+        hasPharmacy: 'Pharmacy',
+        hasClubhouse: 'Clubhouse',
+        hasWaterMeter: 'Water Meter',
+        hasGasPipeline: 'Gas Pipeline',
+    };
 
     const handlePriceSort = (direction: SortDirection) => {
         setPriceSort(priceSort === direction ? 'none' : direction);
@@ -264,7 +281,7 @@ export function SearchClient() {
                                     <AccordionTrigger className="p-6"><CardTitle>Advanced Search</CardTitle></AccordionTrigger>
                                     <AccordionContent className="p-6 pt-0 space-y-6">
                                         <div className="grid md:grid-cols-2 gap-6">
-                                            <FormField control={form.control} name="lookingTo" render={({ field }) => ( <FormItem><FormLabel>Looking to</FormLabel><Select onValueChange={(value) => { field.onChange(value); form.setValue('priceRange', [0, value === 'rent' ? MAX_PRICE_RENT : MAX_PRICE_BUY]); }} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="rent">Rent</SelectItem><SelectItem value="buy">Buy</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
+                                            <FormField control={form.control} name="lookingTo" render={({ field }) => ( <FormItem><FormLabel>Looking to</FormLabel><Select onValueChange={(value) => { field.onChange(value); form.setValue('priceRange', [0, value === 'rent' ? MAX_PRICE_RENT : MAX_PRICE_BUY]); }} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="rent">Rent</SelectItem><SelectItem value="sale">Sale</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
                                             <FormField control={form.control} name="location" render={({ field }) => ( <FormItem><FormLabel>Location</FormLabel><FormControl><Input placeholder="e.g. Koramangala" {...field} /></FormControl><FormMessage /></FormItem> )}/>
                                             <FormField control={form.control} name="societyName" render={({ field }) => ( <FormItem><FormLabel>Society Name</FormLabel><FormControl><Input placeholder="e.g. Prestige Acropolis" {...field} /></FormControl><FormMessage /></FormItem> )}/>
                                         </div>
@@ -335,20 +352,9 @@ export function SearchClient() {
                                         <div>
                                             <h3 className="mb-4 text-lg font-medium">Features & Amenities</h3>
                                             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                                {renderBooleanField('kitchenUtility', 'Kitchen Utility')}
-                                                {renderBooleanField('hasBalcony', 'Balcony')}
-                                                {renderBooleanField('sunlightEntersHome', 'Sunlight')}
-                                                {renderBooleanField('has2WheelerParking', '2-Wheeler Parking')}
-                                                {renderBooleanField('has4WheelerParking', '4-Wheeler Parking')}
-                                                {renderBooleanField('hasLift', 'Lift')}
-                                                {renderBooleanField('hasChildrenPlayArea', "Play Area")}
-                                                {renderBooleanField('hasDoctorClinic', "Doctor's Clinic")}
-                                                {renderBooleanField('hasPlaySchool', 'Play School')}
-                                                {renderBooleanField('hasSuperMarket', 'Super Market')}
-                                                {renderBooleanField('hasPharmacy', 'Pharmacy')}
-                                                {renderBooleanField('hasClubhouse', 'Clubhouse')}
-                                                {renderBooleanField('hasWaterMeter', 'Water Meter')}
-                                                {renderBooleanField('hasGasPipeline', 'Gas Pipeline')}
+                                                {Object.entries(amenities).map(([key, label]) => (
+                                                   label && renderBooleanField(key as keyof z.infer<typeof searchSchema>, label)
+                                                ))}
                                             </div>
                                         </div>
                                     </AccordionContent>
@@ -395,5 +401,3 @@ export function SearchClient() {
         </div>
     );
 }
-
-    

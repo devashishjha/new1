@@ -163,11 +163,20 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
         setIsGenerating(true);
         const values = form.getValues();
 
-        if (!values.location || !values.societyName || !values.superBuiltUpArea || values.priceAmount <= 0) {
+        const requiredForAi = {
+            priceType: values.priceType,
+            priceAmount: values.priceAmount,
+            location: values.location,
+            societyName: values.societyName,
+            propertyType: values.propertyType,
+            configuration: values.configuration,
+        }
+
+        if (Object.values(requiredForAi).some(v => !v || (typeof v === 'number' && v <= 0) )) {
             toast({
                 variant: 'destructive',
-                title: "Missing Details",
-                description: "Please provide Location, Society Name, Price, and Area before generating a description with AI.",
+                title: "Missing Key Details",
+                description: "Please provide Price, Location, Society, Type, and Configuration before generating a description with AI.",
             });
             setIsGenerating(false);
             return;
@@ -203,7 +212,7 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
                 throw new Error("AI did not return a description.");
             }
         } catch (error) {
-             toast({ variant: 'destructive', title: "Generation Failed", description: "Could not generate a description. Please ensure all key details are filled correctly." });
+             toast({ variant: 'destructive', title: "Generation Failed", description: "Could not generate a description. Please try again or write your own." });
         } finally {
             setIsGenerating(false);
         }
@@ -348,33 +357,6 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
                 </Card>
 
                 <Accordion type="multiple" className="w-full space-y-4" defaultValue={['item-1', 'item-5']}>
-                    <AccordionItem value="item-5" asChild><Card><AccordionTrigger className="p-6"><h3 className="text-2xl font-semibold leading-none tracking-tight">Description & Media</h3></AccordionTrigger><AccordionContent className="p-6 pt-0 grid gap-6">
-                        <FormField control={form.control} name="description" render={({ field }) => ( <FormItem> <div className="flex items-center justify-between"> <FormLabel>Property Description</FormLabel> <Button type="button" variant="outline" size="sm" onClick={handleGenerateDescription} disabled={isGenerating}> <Wand2 className="mr-2 h-4 w-4" /> {isGenerating ? 'Generating...' : 'Generate with AI'} </Button> </div> <FormControl><Textarea rows={5} placeholder="A compelling description of your property..." {...field} className="text-black" /></FormControl> <FormDescription> You can write your own or use the AI generator based on the details you've provided. </FormDescription> <FormMessage /> </FormItem> )} />
-                        
-                        <FormField
-                            control={form.control}
-                            name="video"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Property Video</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="file"
-                                            accept="video/*"
-                                            className="text-black"
-                                            onChange={(e) => field.onChange(e.target.files)}
-                                        />
-                                    </FormControl>
-                                    <FormDescription>
-                                        {mode === 'edit' && property?.video ? 'A video is already uploaded. Upload a new one to replace it.' : 'Upload a short video of your property for the reel.'}
-                                    </FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                    </AccordionContent></Card></AccordionItem>
-
                     <AccordionItem value="item-1" asChild><Card><AccordionTrigger className="p-6"><h3 className="text-2xl font-semibold leading-none tracking-tight">Property Details</h3></AccordionTrigger><AccordionContent className="p-6 pt-0 grid md:grid-cols-2 gap-6">
                         <FormField control={form.control} name="propertyType" render={({ field }) => ( <FormItem><FormLabel>Property Type</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger className="text-black"><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="apartment">Apartment</SelectItem><SelectItem value="villa">Villa</SelectItem><SelectItem value="row house">Row House</SelectItem><SelectItem value="penthouse">Penthouse</SelectItem><SelectItem value="independent house">Independent House</SelectItem><SelectItem value="builder floor">Builder Floor</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
                         <FormField control={form.control} name="configuration" render={({ field }) => ( <FormItem><FormLabel>Configuration</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger className="text-black"><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="studio">Studio</SelectItem><SelectItem value="1bhk">1BHK</SelectItem><SelectItem value="2bhk">2BHK</SelectItem><SelectItem value="3bhk">3BHK</SelectItem><SelectItem value="4bhk">4BHK</SelectItem><SelectItem value="5bhk+">5BHK+</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
@@ -413,6 +395,33 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
                         <FormField control={form.control} name="securityDeposit" render={({ field }) => ( <FormItem><FormLabel>Security Deposit</FormLabel><FormControl><Input type="number" placeholder="5000" {...field} className="text-black" /></FormControl><FormMessage /></FormItem> )}/>
                          <FormField control={form.control} name="brokerage" render={({ field }) => ( <FormItem><FormLabel>Brokerage (if any)</FormLabel><FormControl><Input type="number" placeholder="0" {...field} className="text-black" /></FormControl><FormMessage /></FormItem> )}/>
                         <FormField control={form.control} name="moveInCharges" render={({ field }) => ( <FormItem><FormLabel>Move-in Charges</FormLabel><FormControl><Input type="number" placeholder="2000" {...field} className="text-black" /></FormControl><FormMessage /></FormItem> )}/>
+                    </AccordionContent></Card></AccordionItem>
+
+                    <AccordionItem value="item-5" asChild><Card><AccordionTrigger className="p-6"><h3 className="text-2xl font-semibold leading-none tracking-tight">Description & Media</h3></AccordionTrigger><AccordionContent className="p-6 pt-0 grid gap-6">
+                        <FormField control={form.control} name="description" render={({ field }) => ( <FormItem> <div className="flex items-center justify-between"> <FormLabel>Property Description</FormLabel> <Button type="button" variant="outline" size="sm" onClick={handleGenerateDescription} disabled={isGenerating}> <Wand2 className="mr-2 h-4 w-4" /> {isGenerating ? 'Generating...' : 'Generate with AI'} </Button> </div> <FormControl><Textarea rows={5} placeholder="A compelling description of your property..." {...field} className="text-black" /></FormControl> <FormDescription> You can write your own or use the AI generator based on the details you've provided. </FormDescription> <FormMessage /> </FormItem> )} />
+                        
+                        <FormField
+                            control={form.control}
+                            name="video"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Property Video</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            type="file"
+                                            accept="video/*"
+                                            className="text-black"
+                                            onChange={(e) => field.onChange(e.target.files)}
+                                        />
+                                    </FormControl>
+                                    <FormDescription>
+                                        {mode === 'edit' && property?.video ? 'A video is already uploaded. Upload a new one to replace it.' : 'Upload a short video of your property for the reel.'}
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
                     </AccordionContent></Card></AccordionItem>
                 </Accordion>
                 <Button type="submit" size="lg" className="w-full" disabled={isSubmitting || isGenerating}>

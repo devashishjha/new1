@@ -109,21 +109,21 @@ function ProfileForm({ userProfile, userType, onProfileUpdate }: { userProfile: 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <FormField name="name" control={form.control} render={({ field }) => ( <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="John Doe" {...field} /></FormControl><FormMessage /></FormItem> )}/>
-        <FormField name="email" control={form.control} render={({ field }) => ( <FormItem><FormLabel>Email Address</FormLabel><FormControl><Input type="email" placeholder="you@example.com" {...field} disabled /></FormControl><FormMessage /></FormItem> )}/>
-        <FormField name="phone" control={form.control} render={({ field }) => ( <FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input type="tel" placeholder="+91 12345 67890" {...field} /></FormControl><FormMessage /></FormItem> )}/>
-        <FormField name="bio" control={form.control} render={({ field }) => ( <FormItem><FormLabel>Short Bio</FormLabel><FormControl><Textarea placeholder="Tell us a little about yourself" {...field} /></FormControl><FormMessage /></FormItem> )}/>
+        <FormField name="name" control={form.control} render={({ field }) => ( <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="John Doe" {...field} className="text-black" /></FormControl><FormMessage /></FormItem> )}/>
+        <FormField name="email" control={form.control} render={({ field }) => ( <FormItem><FormLabel>Email Address</FormLabel><FormControl><Input type="email" placeholder="you@example.com" {...field} disabled className="text-black" /></FormControl><FormMessage /></FormItem> )}/>
+        <FormField name="phone" control={form.control} render={({ field }) => ( <FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input type="tel" placeholder="+91 12345 67890" {...field} className="text-black" /></FormControl><FormMessage /></FormItem> )}/>
+        <FormField name="bio" control={form.control} render={({ field }) => ( <FormItem><FormLabel>Short Bio</FormLabel><FormControl><Textarea placeholder="Tell us a little about yourself" {...field} className="text-black" /></FormControl><FormMessage /></FormItem> )}/>
         
         {userType === 'seeker' && (
-          <FormField name="searchCriteria" control={form.control} render={({ field }) => ( <FormItem><FormLabel>Your Search Criteria</FormLabel><FormControl><Textarea rows={4} placeholder="e.g., Looking for a 3BHK apartment in a quiet neighborhood..." {...field} /></FormControl><FormMessage /></FormItem> )}/>
+          <FormField name="searchCriteria" control={form.control} render={({ field }) => ( <FormItem><FormLabel>Your Search Criteria</FormLabel><FormControl><Textarea rows={4} placeholder="e.g., Looking for a 3BHK apartment in a quiet neighborhood..." {...field} className="text-black" /></FormControl><FormMessage /></FormItem> )}/>
         )}
 
         {(userType === 'dealer' || userType === 'developer') && (
-          <FormField name="companyName" control={form.control} render={({ field }) => ( <FormItem><FormLabel>Company Name</FormLabel><FormControl><Input placeholder="Real Estate Inc." {...field} /></FormControl><FormMessage /></FormItem> )}/>
+          <FormField name="companyName" control={form.control} render={({ field }) => ( <FormItem><FormLabel>Company Name</FormLabel><FormControl><Input placeholder="Real Estate Inc." {...field} className="text-black" /></FormControl><FormMessage /></FormItem> )}/>
         )}
 
         {(userType === 'dealer' || userType === 'developer') && (
-          <FormField name="reraId" control={form.control} render={({ field }) => ( <FormItem><FormLabel>RERA ID {userType === 'dealer' && '(Optional)'}</FormLabel><FormControl><Input placeholder="PRM/KA/RERA/..." {...field} /></FormControl><FormMessage /></FormItem> )}/>
+          <FormField name="reraId" control={form.control} render={({ field }) => ( <FormItem><FormLabel>RERA ID {userType === 'dealer' && '(Optional)'}</FormLabel><FormControl><Input placeholder="PRM/KA/RERA/..." {...field} className="text-black" /></FormControl><FormMessage /></FormItem> )}/>
         )}
         
         <Button type="submit" className="w-full" disabled={isSaving}>
@@ -305,7 +305,7 @@ export default function ProfilePage() {
                             <CardHeader>
                                 <CardTitle>Edit <span className="capitalize text-primary">{userType}</span> Profile</CardTitle>
                                 <CardDescription>Fill in your details below.</CardDescription>
-                            </CardHeader>
+                            </Header>
                             <CardContent>
                                 <ProfileForm userProfile={userProfile} userType={userType} onProfileUpdate={handleProfileUpdate} />
                             </CardContent>

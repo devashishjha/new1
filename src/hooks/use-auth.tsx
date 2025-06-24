@@ -35,15 +35,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
 
   useEffect(() => {
-    // If Firebase isn't configured, we are not loading and have no user.
-    // This handles the production environment before env vars are set, preventing crashes.
+    // This effect runs once on mount to set up the auth listener.
     if (!isFirebaseEnabled || !auth) {
       setLoading(false);
       setUser(null);
       return;
     }
 
-    // Otherwise, listen for auth state changes.
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
@@ -53,14 +51,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    // Don't perform redirects until the initial authentication check is complete.
+    // This effect handles redirection after the initial auth check is complete.
     if (loading) {
-      return;
+      return; // Do nothing while initial auth state is being determined.
     }
 
     const isAuthPage = pathname === '/';
 
-    // If a logged-in user is on the auth page, redirect them to the main app.
+    // If a logged-in user is on the auth page, redirect them to the app.
     if (user && isAuthPage) {
       router.replace('/reels');
     }
@@ -71,14 +69,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user, loading, pathname, router]);
 
-  // While the initial authentication check is running, show a full-screen loader.
-  if (loading) {
+  const isAuthPage = pathname === '/';
+  
+  // This logic determines if the user is on the correct type of page for their auth state.
+  // A redirect might be in progress if this is false.
+  const isCorrectPage = (user && !isAuthPage) || (!user && isAuthPage);
+
+  // Show a loader during the initial check or while a redirect is pending.
+  // This prevents rendering the wrong page and causing the redirect loop.
+  if (loading || !isCorrectPage) {
     return <FullScreenLoader />;
   }
 
-  // After the initial load, render the children.
-  // The useEffect above will handle redirecting if the user is on the wrong page.
-  // This prevents the infinite redirect loop.
+  // If we've passed all checks, the user is on the right page. Render the app.
   return (
     <AuthContext.Provider value={{ user, loading }}>
       {children}

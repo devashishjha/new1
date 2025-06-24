@@ -26,6 +26,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import type { UserProfile, SeekerProfile, DealerProfile, DeveloperProfile } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Badge } from '@/components/ui/badge';
 
 type UserType = 'seeker' | 'owner' | 'dealer' | 'developer';
 
@@ -284,9 +285,29 @@ export default function ProfilePage() {
                             <h1 className="text-4xl font-bold tracking-tight">Your Profile</h1>
                             <p className="text-muted-foreground mt-2">Manage your account settings and profile type.</p>
                         </div>
+                        
+                        <Card className="mb-8 border-primary/50">
+                            <CardHeader>
+                                <CardTitle>Your Active Profile</CardTitle>
+                                <CardDescription>This is your current public profile. Use the forms below to switch or update your details.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                <div className="flex items-center justify-between text-sm">
+                                    <span className="text-muted-foreground">Name</span>
+                                    <span className="font-semibold">{userProfile.name}</span>
+                                </div>
+                                <Separator/>
+                                <div className="flex items-center justify-between text-sm">
+                                    <span className="text-muted-foreground">Active Role</span>
+                                    <Badge variant="secondary" className="capitalize">{userProfile.type}</Badge>
+                                </div>
+                                <Separator/>
+                                <p className="text-sm text-muted-foreground pt-2">{userProfile.bio || 'No bio provided.'}</p>
+                            </CardContent>
+                        </Card>
 
                         <Card className="mb-8">
-                            <CardHeader><CardTitle>Select Your Profile Type</CardTitle><CardDescription>Choose the profile that best describes you.</CardDescription></CardHeader>
+                            <CardHeader><CardTitle>Create or Edit a Profile</CardTitle><CardDescription>Choose the profile that best describes you.</CardDescription></CardHeader>
                             <CardContent>
                                 <RadioGroup value={userType} onValueChange={(v) => handleTypeChange(v as UserType)} className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                     {['seeker', 'owner', 'dealer', 'developer'].map(type => (
@@ -303,8 +324,8 @@ export default function ProfilePage() {
 
                         <Card>
                             <CardHeader>
-                                <CardTitle>Edit <span className="capitalize text-primary">{userType}</span> Profile</CardTitle>
-                                <CardDescription>Fill in your details below.</CardDescription>
+                                <CardTitle>Edit <span className="capitalize text-primary">{userType}</span> Profile Details</CardTitle>
+                                <CardDescription>Fill in your details below. Saving will set this as your active profile.</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <ProfileForm userProfile={userProfile} userType={userType} onProfileUpdate={handleProfileUpdate} />

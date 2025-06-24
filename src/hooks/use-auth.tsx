@@ -51,33 +51,51 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const isAuthPage = pathname === '/';
-  const isProtected = !isAuthPage;
+  const isProtectedPage = !isAuthPage;
 
-  // Determine if a redirect is necessary AFTER loading is complete.
-  const needsRedirect = !loading && ((!user && isProtected) || (user && isAuthPage));
+  // Determine if we are ready to make a decision.
+  // This is true only when the initial auth check is complete.
+  const canMakeRedirectDecision = !loading;
+
+  let shouldRedirect = false;
+  let redirectPath = '';
+
+  if (canMakeRedirectDecision) {
+    const userIsLoggedIn = !!user;
+
+    // Scenario 1: User is logged OUT but trying to access a protected page.
+    if (!userIsLoggedIn && isProtectedPage) {
+      shouldRedirect = true;
+      redirectPath = '/';
+    }
+    
+    // Scenario 2: User is logged IN but is on the auth page.
+    if (userIsLoggedIn && isAuthPage) {
+      shouldRedirect = true;
+      redirectPath = '/reels';
+    }
+  }
 
   useEffect(() => {
     // This effect handles the actual redirection.
-    // It only runs when `needsRedirect` becomes true.
-    if (needsRedirect) {
-      if (!user && isProtected) {
-        router.replace('/');
-      } else if (user && isAuthPage) {
-        router.replace('/reels');
-      }
+    // It only runs when a redirect is needed and the path is set.
+    if (shouldRedirect && redirectPath) {
+      router.replace(redirectPath);
     }
-  }, [needsRedirect, user, isProtected, isAuthPage, router]);
+  }, [shouldRedirect, redirectPath, router]);
 
 
-  // If we are loading, or if we are about to redirect, show the loader.
-  // This prevents flashing the wrong page content.
-  if (loading || needsRedirect) {
+  // If we are still waiting for the initial auth check, or if we have
+  // determined that a redirect is necessary, show the loader.
+  // This prevents flashing the wrong page content before the redirect happens.
+  if (loading || shouldRedirect) {
     return <FullScreenLoader />;
   }
 
-  // If everything is stable, provide the context and render the children.
+  // If everything is stable and no redirect is needed, provide the context
+  // and render the children.
   return (
-    <AuthContext.Provider value={{ user, loading: false }}>
+    <AuthContext.Provider value={{ user, loading }}>
       {children}
     </AuthContext.Provider>
   );
@@ -90,3 +108,5 @@ export const useAuth = () => {
     }
     return context;
 };
+
+    

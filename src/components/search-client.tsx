@@ -123,20 +123,21 @@ export function SearchClient() {
                 const housesOnFloorMatch = !filters.housesOnSameFloor || p.features.housesOnSameFloor === filters.housesOnSameFloor;
                 const directionMatch = filters.mainDoorDirection.length === 0 || filters.mainDoorDirection.includes(p.mainDoorDirection);
                 const openSidesMatch = filters.openSides.length === 0 || filters.openSides.includes(p.openSides);
-                const kitchenMatch = !filters.kitchenUtility || p.kitchenUtility;
-                const balconyMatch = !filters.hasBalcony || p.hasBalcony;
-                const sunlightMatch = !filters.sunlightEntersHome || p.features.sunlightEntersHome;
-                const parking2WMatch = !filters.has2WheelerParking || p.parking.has2Wheeler;
-                const parking4WMatch = !filters.has4WheelerParking || p.parking.has4Wheeler;
-                const liftMatch = !filters.hasLift || p.amenities.hasLift;
-                const playAreaMatch = !filters.hasChildrenPlayArea || p.amenities.hasChildrenPlayArea;
-                const clinicMatch = !filters.hasDoctorClinic || p.amenities.hasDoctorClinic;
-                const playSchoolMatch = !filters.hasPlaySchool || p.amenities.hasPlaySchool;
-                const marketMatch = !filters.hasSuperMarket || p.amenities.hasSuperMarket;
-                const pharmacyMatch = !filters.hasPharmacy || p.amenities.hasPharmacy;
-                const clubhouseMatch = !filters.hasClubhouse || p.amenities.hasClubhouse;
-                const waterMeterMatch = !filters.hasWaterMeter || p.amenities.hasWaterMeter;
-                const gasMatch = !filters.hasGasPipeline || p.amenities.hasGasPipeline;
+
+                const kitchenMatch = filters.kitchenUtility === undefined || filters.kitchenUtility === null || p.kitchenUtility === filters.kitchenUtility;
+                const balconyMatch = filters.hasBalcony === undefined || filters.hasBalcony === null || p.hasBalcony === filters.hasBalcony;
+                const sunlightMatch = filters.sunlightEntersHome === undefined || filters.sunlightEntersHome === null || p.features.sunlightEntersHome === filters.sunlightEntersHome;
+                const parking2WMatch = filters.has2WheelerParking === undefined || filters.has2WheelerParking === null || p.parking.has2Wheeler === filters.has2WheelerParking;
+                const parking4WMatch = filters.has4WheelerParking === undefined || filters.has4WheelerParking === null || p.parking.has4Wheeler === filters.has4WheelerParking;
+                const liftMatch = filters.hasLift === undefined || filters.hasLift === null || p.amenities.hasLift === filters.hasLift;
+                const playAreaMatch = filters.hasChildrenPlayArea === undefined || filters.hasChildrenPlayArea === null || p.amenities.hasChildrenPlayArea === filters.hasChildrenPlayArea;
+                const clinicMatch = filters.hasDoctorClinic === undefined || filters.hasDoctorClinic === null || p.amenities.hasDoctorClinic === filters.hasDoctorClinic;
+                const playSchoolMatch = filters.hasPlaySchool === undefined || filters.hasPlaySchool === null || p.amenities.hasPlaySchool === filters.hasPlaySchool;
+                const marketMatch = filters.hasSuperMarket === undefined || filters.hasSuperMarket === null || p.amenities.hasSuperMarket === filters.hasSuperMarket;
+                const pharmacyMatch = filters.hasPharmacy === undefined || filters.hasPharmacy === null || p.amenities.hasPharmacy === filters.hasPharmacy;
+                const clubhouseMatch = filters.hasClubhouse === undefined || filters.hasClubhouse === null || p.amenities.hasClubhouse === filters.hasClubhouse;
+                const waterMeterMatch = filters.hasWaterMeter === undefined || filters.hasWaterMeter === null || p.amenities.hasWaterMeter === filters.hasWaterMeter;
+                const gasMatch = filters.hasGasPipeline === undefined || filters.hasGasPipeline === null || p.amenities.hasGasPipeline === filters.hasGasPipeline;
 
                 return priceTypeMatch && priceRangeMatch && locationMatch && societyMatch && propertyTypeMatch && configMatch && floorMatch && totalFloorMatch && housesOnFloorMatch && directionMatch && openSidesMatch && kitchenMatch && balconyMatch && sunlightMatch && parking2WMatch && parking4WMatch && liftMatch && playAreaMatch && clinicMatch && playSchoolMatch && marketMatch && pharmacyMatch && clubhouseMatch && waterMeterMatch && gasMatch;
             });
@@ -202,24 +203,6 @@ export function SearchClient() {
                         ))}
                     </div>
                     <FormMessage />
-                </FormItem>
-            )}
-        />
-    );
-    
-    const renderBooleanField = (name: keyof z.infer<typeof searchSchema>, label: string) => (
-        <FormField
-            control={form.control}
-            name={name}
-            render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                     <FormControl>
-                        <Checkbox
-                            checked={!!field.value}
-                            onCheckedChange={field.onChange}
-                        />
-                    </FormControl>
-                    <FormLabel className="font-normal">{label}</FormLabel>
                 </FormItem>
             )}
         />
@@ -352,9 +335,28 @@ export function SearchClient() {
                                         <div>
                                             <h3 className="mb-4 text-lg font-medium">Features & Amenities</h3>
                                             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                                {Object.entries(amenities).map(([key, label]) => (
-                                                   label && renderBooleanField(key as keyof z.infer<typeof searchSchema>, label)
-                                                ))}
+                                                {Object.entries(amenities).map(([key, label]) => {
+                                                    if (!label) return null;
+                                                    const name = key as keyof z.infer<typeof searchSchema>;
+                                                    return (
+                                                        <FormField
+                                                            key={name}
+                                                            control={form.control}
+                                                            name={name}
+                                                            render={({ field }) => (
+                                                                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                                                                    <FormControl>
+                                                                        <Checkbox
+                                                                            checked={!!field.value}
+                                                                            onCheckedChange={field.onChange}
+                                                                        />
+                                                                    </FormControl>
+                                                                    <FormLabel className="font-normal">{label}</FormLabel>
+                                                                </FormItem>
+                                                            )}
+                                                        />
+                                                    );
+                                                })}
                                             </div>
                                         </div>
                                     </AccordionContent>

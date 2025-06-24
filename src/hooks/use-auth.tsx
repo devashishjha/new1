@@ -50,38 +50,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    // This effect handles redirection after the initial auth check is complete.
-    if (loading) {
-      return; // Do nothing while initial auth state is being determined.
-    }
-
-    const isAuthPage = pathname === '/';
-
-    // If a logged-in user is on the auth page, redirect them to the app.
-    if (user && isAuthPage) {
-      router.replace('/reels');
-    }
-    
-    // If a logged-out user tries to access a protected page, redirect them to the auth page.
-    if (!user && !isAuthPage) {
-      router.replace('/');
-    }
-  }, [user, loading, pathname, router]);
-
   const isAuthPage = pathname === '/';
   
-  // This logic determines if the user is on the correct type of page for their auth state.
-  // A redirect might be in progress if this is false.
-  const isCorrectPage = (user && !isAuthPage) || (!user && isAuthPage);
+  // A redirect is needed if the user is in the wrong place for their auth state.
+  // e.g., a logged-in user on the login page, or a logged-out user on a protected page.
+  const requiresRedirect = !loading && ((user && isAuthPage) || (!user && !isAuthPage));
 
-  // Show a loader during the initial check or while a redirect is pending.
-  // This prevents rendering the wrong page and causing the redirect loop.
-  if (loading || !isCorrectPage) {
+  useEffect(() => {
+    if (requiresRedirect) {
+      if (user && isAuthPage) {
+        router.replace('/reels');
+      }
+      if (!user && !isAuthPage) {
+        router.replace('/');
+      }
+    }
+  }, [requiresRedirect, user, isAuthPage, router]);
+
+
+  // Show a loader during the initial auth check OR while a redirect is being processed.
+  // This prevents rendering children and causing the infinite loop.
+  if (loading || requiresRedirect) {
     return <FullScreenLoader />;
   }
 
-  // If we've passed all checks, the user is on the right page. Render the app.
+  // If we get here, no loading is happening and no redirect is required.
+  // The user is on the right page for their auth state, so render the app.
   return (
     <AuthContext.Provider value={{ user, loading }}>
       {children}

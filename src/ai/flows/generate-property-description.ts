@@ -49,9 +49,7 @@ The tone should be professional yet inviting. Highlight the key selling points w
 
 Focus on creating a narrative that helps a potential buyer or renter envision themselves living in the property.
 
-**CRITICAL INSTRUCTIONS:**
-- Your entire response MUST be only the description text. Do NOT include any JSON formatting, markdown, or other explanatory text.
-- Even if details are sparse, create the best possible description. If no details are provided at all, you can write something like: "A property with great potential. Contact the lister for more details."
+Even if details are sparse, create the best possible description. If no details are provided at all, you can write something like: "A property with great potential. Contact the lister for more details."
 
 Here are the available property details to use:
 {{#if priceType}}- Listing for: {{{priceType}}}{{/if}}
@@ -76,17 +74,15 @@ const generatePropertyDescriptionFlow = ai.defineFlow(
     inputSchema: GeneratePropertyDescriptionInputSchema,
     outputSchema: GeneratePropertyDescriptionOutputSchema,
   },
-  async input => {
+  async (input) => {
     try {
-        const response = await prompt(input);
-        const description = response.text;
-
-        // If the AI returns a valid description, use it.
-        if (description) {
-            return { description };
+        const { output } = await prompt(input);
+        // If the AI returns a valid, parsed output, return it directly.
+        if (output?.description) {
+            return output;
         }
         // Log if the output is malformed but an error wasn't thrown.
-        console.warn("AI output was empty, generating fallback.", { response });
+        console.warn("AI output was empty or malformed, generating fallback.", { output });
     } catch (e) {
         // Log any error from the AI prompt call for debugging purposes.
         console.error("AI prompt call failed, generating fallback description.", e);

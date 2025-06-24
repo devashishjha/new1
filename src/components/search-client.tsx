@@ -37,7 +37,7 @@ const searchSchema = z.object({
     configuration: z.array(z.string()).default([]),
     floorRange: z.array(z.number()).default([0, 50]),
     totalFloorRange: z.array(z.number()).default([0, 50]),
-    housesOnSameFloor: z.number().optional(),
+    housesOnSameFloor: z.coerce.number().optional(),
     mainDoorDirection: z.array(z.string()).default([]),
     openSides: z.array(z.string()).default([]),
     kitchenUtility: z.boolean().optional(),
@@ -403,3 +403,5 @@ export function SearchClient() {
         </div>
     );
 }
+
+    

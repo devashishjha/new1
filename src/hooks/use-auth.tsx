@@ -16,15 +16,24 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
 });
 
+function LoadingScreen() {
+    return (
+        <div className="h-dvh w-screen flex items-center justify-center bg-gradient-to-br from-black to-blue-950">
+          <div className="w-full max-w-sm space-y-6 flex flex-col items-center">
+              <h1 className="text-4xl font-black text-white tracking-tighter mx-auto">LOKALITY</h1>
+              <p className="text-muted-foreground animate-pulse">Loading...</p>
+          </div>
+        </div>
+    );
+}
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
   
-
   useEffect(() => {
-    // If firebase is not configured, we don't need to check for a user.
     if (!isFirebaseEnabled || !auth) {
       setUser(null);
       setLoading(false);
@@ -40,7 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
   
   useEffect(() => {
-      // Don't run redirection logic until authentication is resolved
+      // Don't run redirect logic until authentication is resolved
       if (loading) return;
 
       const isAuthPage = pathname === '/';
@@ -56,19 +65,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
   }, [user, loading, pathname, router]);
 
-  // Show a loading indicator only while auth state is being determined.
-  // The redirects will be handled by the useEffect above.
+  // Initial loading state while we wait for Firebase auth to resolve.
   if (loading) {
-    return (
-        <div className="h-dvh w-screen flex items-center justify-center">
-          <div className="w-full max-w-sm space-y-6 flex flex-col items-center">
-              <h1 className="text-4xl font-black text-white tracking-tighter mx-auto">LOKALITY</h1>
-              <p className="text-muted-foreground animate-pulse">Loading...</p>
-          </div>
-        </div>
-    );
+    return <LoadingScreen />;
   }
 
+  const isAuthPage = pathname === '/';
+  
+  // If user is logged in but on the auth page, show loader while redirecting to prevent content flash.
+  if (user && isAuthPage) {
+      return <LoadingScreen />;
+  }
+
+  // If user is not logged in but on a protected page, show loader while redirecting.
+  if (!user && !isAuthPage) {
+      return <LoadingScreen />;
+  }
+  
+  // If we are here, it means we are on the correct page for the current auth state, so we can render the content.
   return (
     <AuthContext.Provider value={{ user, loading }}>
       {children}

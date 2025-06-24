@@ -24,6 +24,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { addDoc, collection, doc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import type { UserProfile } from '@/lib/types';
+import { Label } from '@/components/ui/label';
 
 
 const propertySchema = z.object({
@@ -268,32 +269,25 @@ export function AddPropertyForm() {
                     <AccordionItem value="item-5" asChild><Card><AccordionTrigger className="p-6"><h3 className="text-2xl font-semibold leading-none tracking-tight">Description & Media</h3></AccordionTrigger><AccordionContent className="p-6 pt-0 grid gap-6">
                         <FormField control={form.control} name="description" render={({ field }) => ( <FormItem> <div className="flex items-center justify-between"> <FormLabel>Property Description</FormLabel> <Button type="button" variant="outline" size="sm" onClick={handleGenerateDescription} disabled={isGenerating}> <Wand2 className="mr-2 h-4 w-4" /> {isGenerating ? 'Generating...' : 'Generate with AI'} </Button> </div> <FormControl> <Textarea rows={5} placeholder="A compelling description of your property..." {...field} className="text-black" /> </FormControl> <FormDescription> You can write your own or use the AI generator based on the details you've provided. </FormDescription> <FormMessage /> </FormItem> )} />
                         
-                        <FormField
-                            control={form.control}
-                            name="video"
-                            render={({ field }) => {
-                                // We are handling the file input manually, so we don't need the value from the field.
-                                // We only need onChange, onBlur, name, and ref.
-                                const { value, ...rest } = field;
-                                return (
-                                    <FormItem>
-                                        <FormLabel>Property Video</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                type="file"
-                                                accept="video/*"
-                                                className="text-black"
-                                                {...rest}
-                                            />
-                                        </FormControl>
-                                        <FormDescription>
-                                            Upload a short video of your property for the reel.
-                                        </FormDescription>
-                                        <FormMessage />
-                                    </FormItem>
-                                );
-                            }}
-                        />
+                        {/* Using form.register for the file input to avoid controller/slot issues */}
+                        <div className="space-y-2">
+                            <Label htmlFor="video">Property Video</Label>
+                            <Input
+                                id="video"
+                                type="file"
+                                accept="video/*"
+                                className="text-black"
+                                {...form.register("video")}
+                            />
+                            <p className="text-sm text-muted-foreground">
+                                Upload a short video of your property for the reel.
+                            </p>
+                            {form.formState.errors.video && (
+                                <p className="text-sm font-medium text-destructive">
+                                    {typeof form.formState.errors.video.message === 'string' ? form.formState.errors.video.message : 'An error occurred'}
+                                </p>
+                            )}
+                        </div>
 
                     </AccordionContent></Card></AccordionItem>
 

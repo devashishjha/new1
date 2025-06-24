@@ -25,18 +25,28 @@ export function ShortlistedPropertyCard({ property }: { property: Property }) {
             <Card className="overflow-hidden flex flex-col bg-card/80 backdrop-blur-sm border-border/20 h-full hover:ring-2 hover:ring-primary transition-all">
                 <button onClick={() => setIsDetailsOpen(true)} className="block w-full text-left focus:outline-none focus:ring-2 focus:ring-primary rounded-t-lg">
                     <CardHeader className="p-0 relative">
-                        <Image
-                            src={property.image}
-                            alt={property.title}
-                            width={400}
-                            height={300}
-                            className="w-full h-48 object-cover"
-                            data-ai-hint="apartment exterior"
-                        />
-                        {property.video && (
-                            <div className="absolute top-2 right-2 bg-black/50 p-1.5 rounded-full backdrop-blur-sm">
-                                <Video className="w-5 h-5 text-white" />
-                            </div>
+                        {property.video ? (
+                            <>
+                                <video
+                                    src={`${property.video}#t=0.1`} // Fetch first frame for thumbnail
+                                    className="w-full h-48 object-cover bg-black"
+                                    preload="metadata"
+                                    muted
+                                    playsInline
+                                />
+                                <div className="absolute top-2 right-2 bg-black/50 p-1.5 rounded-full backdrop-blur-sm">
+                                    <Video className="w-5 h-5 text-white" />
+                                </div>
+                            </>
+                        ) : (
+                            <Image
+                                src={property.image}
+                                alt={property.title}
+                                width={400}
+                                height={300}
+                                className="w-full h-48 object-cover"
+                                data-ai-hint="apartment exterior"
+                            />
                         )}
                     </CardHeader>
                     <CardContent className="p-4 flex-grow">

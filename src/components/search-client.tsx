@@ -303,7 +303,7 @@ export function SearchClient() {
                                                 </FormControl>
                                                 <div className="flex justify-between text-sm text-muted-foreground pt-2">
                                                     <span>{floorRange[0]}</span>
-                                                    <span>{floorRange[1]}</span>
+                                                    <span>{totalFloorRange[1]}</span>
                                                 </div>
                                             </FormItem>
                                         )} />

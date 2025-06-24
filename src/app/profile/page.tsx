@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -69,9 +68,9 @@ function ProfileForm({ userProfile, userType, onProfileUpdate }: { userProfile: 
       email: userProfile.email || '',
       phone: userProfile.phone || '',
       bio: userProfile.bio || '',
-      searchCriteria: userProfile.type === 'seeker' ? userProfile.searchCriteria : '',
-      companyName: (userProfile.type === 'dealer' || userProfile.type === 'developer') ? userProfile.companyName : '',
-      reraId: (userProfile.type === 'dealer' || userProfile.type === 'developer') ? userProfile.reraId : '',
+      searchCriteria: userProfile.type === 'seeker' ? (userProfile as SeekerProfile).searchCriteria : '',
+      companyName: (userProfile.type === 'dealer' || userProfile.type === 'developer') ? (userProfile as DealerProfile | DeveloperProfile).companyName : '',
+      reraId: (userProfile.type === 'dealer' || userProfile.type === 'developer') ? (userProfile as DealerProfile | DeveloperProfile).reraId : '',
     },
     // This resets the form when the userType changes, ensuring validation is re-run
     key: userType, 
@@ -305,7 +304,7 @@ export default function ProfilePage() {
                             <CardHeader>
                                 <CardTitle>Edit <span className="capitalize text-primary">{userType}</span> Profile</CardTitle>
                                 <CardDescription>Fill in your details below.</CardDescription>
-                            </Header>
+                            </CardHeader>
                             <CardContent>
                                 <ProfileForm userProfile={userProfile} userType={userType} onProfileUpdate={handleProfileUpdate} />
                             </CardContent>

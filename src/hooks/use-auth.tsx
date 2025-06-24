@@ -35,6 +35,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
 
   useEffect(() => {
+    // This effect only handles setting the user and loading state
+    // It runs once on mount.
     if (!isFirebaseEnabled || !auth) {
       setUser(null);
       setLoading(false);
@@ -44,30 +46,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(user);
       setLoading(false);
     });
+
     return () => unsubscribe();
   }, []);
 
   const isAuthPage = pathname === '/';
-  
   const isProtected = !isAuthPage;
-  
+
+  // Determine if a redirect is necessary AFTER loading is complete.
+  const needsRedirect = !loading && ((!user && isProtected) || (user && isAuthPage));
+
   useEffect(() => {
-    if (!loading) {
+    // This effect handles the actual redirection.
+    // It only runs when `needsRedirect` becomes true.
+    if (needsRedirect) {
       if (!user && isProtected) {
         router.replace('/');
       } else if (user && isAuthPage) {
         router.replace('/reels');
       }
     }
-  }, [loading, user, isProtected, isAuthPage, router]);
+  }, [needsRedirect, user, isProtected, isAuthPage, router]);
 
 
-  if(loading || (!user && isProtected) || (user && isAuthPage)) {
+  // If we are loading, or if we are about to redirect, show the loader.
+  // This prevents flashing the wrong page content.
+  if (loading || needsRedirect) {
     return <FullScreenLoader />;
   }
 
+  // If everything is stable, provide the context and render the children.
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, loading: false }}>
       {children}
     </AuthContext.Provider>
   );

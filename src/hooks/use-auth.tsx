@@ -17,7 +17,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
 });
 
-function LoadingScreen() {
+function FullScreenLoader() {
     return (
         <div className="h-dvh w-screen flex items-center justify-center bg-gradient-to-br from-black to-blue-950">
           <div className="w-full max-w-sm space-y-6 flex flex-col items-center">
@@ -33,14 +33,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
-  
+
   useEffect(() => {
     // If Firebase isn't configured, we are not loading and have no user.
+    // This handles the production environment before env vars are set, preventing crashes.
     if (!isFirebaseEnabled || !auth) {
       setLoading(false);
       setUser(null);
       return;
     }
+
     // Otherwise, listen for auth state changes.
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
@@ -49,29 +51,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, []);
 
-  // While we wait for the initial auth state, show a loading screen.
-  if (loading) {
-    return <LoadingScreen />;
-  }
+  useEffect(() => {
+    // Don't run redirect logic until authentication state is resolved.
+    if (loading) {
+      return;
+    }
+
+    const isAuthPage = pathname === '/';
+
+    // If user is logged in but on the auth page, redirect to the main app.
+    if (user && isAuthPage) {
+      router.replace('/reels');
+    }
+    
+    // If user is not logged in but is trying to access a protected page, redirect to the auth page.
+    if (!user && !isAuthPage) {
+      router.replace('/');
+    }
+  }, [user, loading, pathname, router]);
 
   const isAuthPage = pathname === '/';
-  const isProtectedPage = !isAuthPage;
+  
+  // Determine if we should show the loader or the page content.
+  // Show the loader if:
+  // 1. We are still waiting for the initial auth state.
+  // 2. A redirect is about to happen (e.g., logged-in user on auth page).
+  const inRedirectState = (!loading && user && isAuthPage) || (!loading && !user && !isAuthPage);
 
-  // If user is logged in and trying to access the auth page...
-  if (user && isAuthPage) {
-    // ...redirect them to the main app page. Show a loader while redirecting.
-    router.replace('/reels');
-    return <LoadingScreen />;
+  if (loading || inRedirectState) {
+    return <FullScreenLoader />;
   }
-  
-  // If user is not logged in and trying to access a protected page...
-  if (!user && isProtectedPage) {
-    // ...redirect them to the auth page. Show a loader while redirecting.
-    router.replace('/');
-    return <LoadingScreen />;
-  }
-  
-  // If we get here, the user is on the correct page for their auth state.
+
+  // If we are on the correct page for the user's auth state, render the children.
   return (
     <AuthContext.Provider value={{ user, loading }}>
       {children}

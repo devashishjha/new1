@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
 
   useEffect(() => {
-    // This effect only handles setting the user and loading state
+    // This effect only handles setting the user and loading state.
     // It runs once on mount.
     if (!isFirebaseEnabled || !auth) {
       setUser(null);
@@ -53,47 +53,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isAuthPage = pathname === '/';
   const isProtectedPage = !isAuthPage;
 
-  // Determine if we are ready to make a decision.
-  // This is true only when the initial auth check is complete.
-  const canMakeRedirectDecision = !loading;
-
-  let shouldRedirect = false;
-  let redirectPath = '';
-
-  if (canMakeRedirectDecision) {
-    const userIsLoggedIn = !!user;
-
-    // Scenario 1: User is logged OUT but trying to access a protected page.
-    if (!userIsLoggedIn && isProtectedPage) {
-      shouldRedirect = true;
-      redirectPath = '/';
-    }
-    
-    // Scenario 2: User is logged IN but is on the auth page.
-    if (userIsLoggedIn && isAuthPage) {
-      shouldRedirect = true;
-      redirectPath = '/reels';
-    }
-  }
-
-  useEffect(() => {
-    // This effect handles the actual redirection.
-    // It only runs when a redirect is needed and the path is set.
-    if (shouldRedirect && redirectPath) {
-      router.replace(redirectPath);
-    }
-  }, [shouldRedirect, redirectPath, router]);
-
-
-  // If we are still waiting for the initial auth check, or if we have
-  // determined that a redirect is necessary, show the loader.
-  // This prevents flashing the wrong page content before the redirect happens.
-  if (loading || shouldRedirect) {
+  // If we are still waiting for the initial auth check, show a loader.
+  // This is the first gate to prevent any rendering before we know the user's status.
+  if (loading) {
     return <FullScreenLoader />;
   }
 
-  // If everything is stable and no redirect is needed, provide the context
-  // and render the children.
+  // At this point, `loading` is false. We know the user's auth status.
+  const userIsLoggedIn = !!user;
+
+  // Scenario 1: User is logged OUT but trying to access a protected page.
+  // We need to redirect them to the login page.
+  if (!userIsLoggedIn && isProtectedPage) {
+    router.replace('/');
+    // Show a loader while the redirect is in progress.
+    return <FullScreenLoader />;
+  }
+  
+  // Scenario 2: User is logged IN but is on the auth page.
+  // We need to redirect them to the main app content.
+  if (userIsLoggedIn && isAuthPage) {
+    router.replace('/reels');
+    // Show a loader while the redirect is in progress.
+    return <FullScreenLoader />;
+  }
+
+  // If neither of the above conditions are met, the user is in the correct state
+  // for the page they are on (e.g., logged in on a protected page, or logged out
+  // on the auth page). We can safely render the children.
   return (
     <AuthContext.Provider value={{ user, loading }}>
       {children}

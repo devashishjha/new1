@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -291,7 +292,7 @@ export default function ProfilePage() {
                                     {['seeker', 'owner', 'dealer', 'developer'].map(type => (
                                         <div key={type}>
                                             <RadioGroupItem value={type} id={type} className="peer sr-only" />
-                                            <Label htmlFor={type} className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover text-popover-foreground p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary capitalize cursor-pointer">
+                                            <Label htmlFor={type} className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground text-popover-foreground capitalize cursor-pointer">
                                                 {type}
                                             </Label>
                                         </div>

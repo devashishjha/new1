@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -127,8 +126,6 @@ export function AddPropertyForm() {
             brokerage: 0,
         },
     });
-
-    const videoRef = form.register("video");
 
     async function handleGenerateDescription() {
         setIsGenerating(true);
@@ -279,16 +276,30 @@ export function AddPropertyForm() {
                     <AccordionItem value="item-5" asChild><Card><AccordionTrigger className="p-6"><h3 className="text-2xl font-semibold leading-none tracking-tight">Description & Media</h3></AccordionTrigger><AccordionContent className="p-6 pt-0 grid gap-6">
                         <FormField control={form.control} name="description" render={({ field }) => ( <FormItem> <div className="flex items-center justify-between"> <FormLabel>Property Description</FormLabel> <Button type="button" variant="outline" size="sm" onClick={handleGenerateDescription} disabled={isGenerating}> <Wand2 className="mr-2 h-4 w-4" /> {isGenerating ? 'Generating...' : 'Generate with AI'} </Button> </div> <FormControl> <Textarea rows={5} placeholder="A compelling description of your property..." {...field} className="text-black" /> </FormControl> <FormDescription> You can write your own or use the AI generator based on the details you've provided. </FormDescription> <FormMessage /> </FormItem> )} />
                         
-                        <FormItem>
-                            <FormLabel>Property Video</FormLabel>
-                            <FormControl>
-                                <Input type="file" accept="video/*" className="text-black" {...videoRef} />
-                            </FormControl>
-                            <FormDescription>
-                                Upload a short video of your property for the reel.
-                            </FormDescription>
-                            <FormMessage />
-                        </FormItem>
+                        <FormField
+                            control={form.control}
+                            name="video"
+                            render={({ field: { onChange, onBlur, name, ref } }) => (
+                                <FormItem>
+                                    <FormLabel>Property Video</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            type="file"
+                                            accept="video/*"
+                                            className="text-black"
+                                            onBlur={onBlur}
+                                            name={name}
+                                            ref={ref}
+                                            onChange={(e) => onChange(e.target.files)}
+                                        />
+                                    </FormControl>
+                                    <FormDescription>
+                                        Upload a short video of your property for the reel.
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
 
                     </AccordionContent></Card></AccordionItem>
 

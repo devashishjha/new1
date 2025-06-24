@@ -557,5 +557,4 @@ export default function ProfilePage() {
             <BottomNavBar />
         </>
     );
-
-    
+}

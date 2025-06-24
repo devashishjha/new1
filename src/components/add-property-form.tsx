@@ -163,25 +163,6 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
         setIsGenerating(true);
         const values = form.getValues();
 
-        const requiredForAi = {
-            priceType: values.priceType,
-            priceAmount: values.priceAmount,
-            location: values.location,
-            societyName: values.societyName,
-            propertyType: values.propertyType,
-            configuration: values.configuration,
-        }
-
-        if (Object.values(requiredForAi).some(v => !v || (typeof v === 'number' && v <= 0) )) {
-            toast({
-                variant: 'destructive',
-                title: "Missing Key Details",
-                description: "Please provide Price, Location, Society, Type, and Configuration before generating a description with AI.",
-            });
-            setIsGenerating(false);
-            return;
-        }
-
         try {
             const amenities = [];
             if (values.hasLift) amenities.push('Lift');
@@ -191,19 +172,20 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
             
             const input: GeneratePropertyDescriptionInput = {
                 priceType: values.priceType,
-                priceAmount: values.priceAmount,
-                location: values.location,
-                societyName: values.societyName,
+                priceAmount: values.priceAmount || undefined,
+                location: values.location || undefined,
+                societyName: values.societyName || undefined,
                 propertyType: values.propertyType,
                 configuration: values.configuration,
-                floorNo: values.floorNo,
-                totalFloors: values.totalFloors,
-                superBuiltUpArea: values.superBuiltUpArea,
-                carpetArea: values.carpetArea,
+                floorNo: values.floorNo || undefined,
+                totalFloors: values.totalFloors || undefined,
+                superBuiltUpArea: values.superBuiltUpArea || undefined,
+                carpetArea: values.carpetArea || undefined,
                 mainDoorDirection: values.mainDoorDirection,
                 hasBalcony: values.hasBalcony,
-                amenities: amenities,
+                amenities: amenities.length > 0 ? amenities : undefined,
             };
+
             const result = await generatePropertyDescriptionAction(input);
             if (result?.description) {
                 form.setValue('description', result.description);

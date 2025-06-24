@@ -11,21 +11,21 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-// Using a subset of the full property schema for the AI prompt
+// All fields are optional to allow for generating a description with partial information.
 const GeneratePropertyDescriptionInputSchema = z.object({
-    priceType: z.enum(['rent', 'sale']),
-    priceAmount: z.number(),
-    location: z.string(),
-    societyName: z.string(),
-    propertyType: z.string(),
-    configuration: z.string(),
-    floorNo: z.number(),
-    totalFloors: z.number(),
-    superBuiltUpArea: z.number(),
-    carpetArea: z.number(),
-    mainDoorDirection: z.string(),
-    hasBalcony: z.boolean(),
-    amenities: z.array(z.string()).describe("A list of available amenities.")
+    priceType: z.enum(['rent', 'sale']).optional(),
+    priceAmount: z.number().optional(),
+    location: z.string().optional(),
+    societyName: z.string().optional(),
+    propertyType: z.string().optional(),
+    configuration: z.string().optional(),
+    floorNo: z.number().optional(),
+    totalFloors: z.number().optional(),
+    superBuiltUpArea: z.number().optional(),
+    carpetArea: z.number().optional(),
+    mainDoorDirection: z.string().optional(),
+    hasBalcony: z.boolean().optional(),
+    amenities: z.array(z.string()).describe("A list of available amenities.").optional(),
 });
 export type GeneratePropertyDescriptionInput = z.infer<typeof GeneratePropertyDescriptionInputSchema>;
 
@@ -42,6 +42,7 @@ export async function generatePropertyDescription(input: GeneratePropertyDescrip
 const prompt = ai.definePrompt({
   name: 'generatePropertyDescriptionPrompt',
   input: {schema: GeneratePropertyDescriptionInputSchema},
+  output: {schema: GeneratePropertyDescriptionOutputSchema},
   prompt: `You are an expert real estate copywriter. Your task is to generate a compelling and attractive property listing description based on the structured data provided.
 
 The tone should be professional yet inviting. Highlight the key selling points without being overly verbose. Aim for a description between 50 to 100 words.
@@ -50,21 +51,21 @@ Focus on creating a narrative that helps a potential buyer or renter envision th
 
 **CRITICAL INSTRUCTIONS:**
 - Your entire response MUST be only the description text. Do NOT include any JSON formatting, markdown, or other explanatory text.
-- Even if details are sparse, create the best possible description. If absolutely no appealing details are available, your description should state something like: "This property is a {{configuration}} available for {{priceType}} in {{location}}. Contact the lister for more details."
+- Even if details are sparse, create the best possible description. If no details are provided at all, you can write something like: "A property with great potential. Contact the lister for more details."
 
-Here are the actual property details to use:
-- Listing for: {{{priceType}}}
-- Price: {{{priceAmount}}}
-- Location: {{{location}}}
-- Society/Building: {{{societyName}}}
-- Property Type: {{{propertyType}}}
-- Configuration: {{{configuration}}}
-- Floor: {{{floorNo}}} out of {{{totalFloors}}}
-- Super Built-up Area: {{{superBuiltUpArea}}} sqft
-- Carpet Area: {{{carpetArea}}} sqft
-- Main Door Facing: {{{mainDoorDirection}}}
-- Has Balcony: {{{hasBalcony}}}
-- Key Amenities: {{#each amenities}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
+Here are the available property details to use:
+{{#if priceType}}- Listing for: {{{priceType}}}{{/if}}
+{{#if priceAmount}}- Price: {{{priceAmount}}}{{/if}}
+{{#if location}}- Location: {{{location}}}{{/if}}
+{{#if societyName}}- Society/Building: {{{societyName}}}{{/if}}
+{{#if propertyType}}- Property Type: {{{propertyType}}}{{/if}}
+{{#if configuration}}- Configuration: {{{configuration}}}{{/if}}
+{{#if floorNo}}- Floor: {{{floorNo}}}{{#if totalFloors}} out of {{{totalFloors}}}{{/if}}{{/if}}
+{{#if superBuiltUpArea}}- Super Built-up Area: {{{superBuiltUpArea}}} sqft{{/if}}
+{{#if carpetArea}}- Carpet Area: {{{carpetArea}}} sqft{{/if}}
+{{#if mainDoorDirection}}- Main Door Facing: {{{mainDoorDirection}}}{{/if}}
+{{#if hasBalcony}}- Has Balcony: Yes{{/if}}
+{{#if amenities}}- Key Amenities: {{#each amenities}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{/if}}
 
 Generate the description now.`,
 });
@@ -93,7 +94,8 @@ const generatePropertyDescriptionFlow = ai.defineFlow(
     
     // If the AI fails for any reason (error, invalid output, safety block, etc.),
     // construct a simple, reliable fallback description.
-    const fallbackDescription = `This is a ${input.configuration} ${input.propertyType} in ${input.societyName}, available for ${input.priceType} in ${input.location}. It features a super built-up area of ${input.superBuiltUpArea} sqft. For complete details, please contact the lister.`;
+    const fallbackDescription = `This is a ${input.configuration || 'property'} ${input.propertyType || ''} in ${input.societyName || 'a prime location'}, available for ${input.priceType || 'rent/sale'}${input.location ? ` in ${input.location}` : ''}. For complete details, please contact the lister.`;
+
     
     // Return the fallback description wrapped in the expected output schema.
     return {

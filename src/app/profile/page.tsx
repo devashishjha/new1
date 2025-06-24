@@ -15,7 +15,7 @@ import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Shield, FileText, LogOut, MessagesSquare, Loader2, Star, Handshake, Sparkles, KeyRound, ShoppingCart } from 'lucide-react';
+import { Shield, FileText, LogOut, MessagesSquare, Loader2, Star, Handshake, Sparkles, KeyRound, ShoppingCart, Pencil } from 'lucide-react';
 import { BottomNavBar } from '@/components/bottom-nav-bar';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -137,6 +137,13 @@ function ProfileForm({ userProfile, userType, onProfileUpdate }: { userProfile: 
     </Form>
   );
 }
+
+const DetailRow = ({ label, value }: { label: string, value: React.ReactNode }) => (
+    <div className="flex items-start justify-between text-sm gap-4">
+        <span className="text-muted-foreground">{label}</span>
+        <div className="font-semibold text-white text-right">{value}</div>
+    </div>
+);
 
 
 export default function ProfilePage() {
@@ -320,22 +327,55 @@ export default function ProfilePage() {
                         </div>
                         
                         <Card className="mb-8 border-primary/50">
-                            <CardHeader>
-                                <CardTitle>Your Active Profile</CardTitle>
-                                <CardDescription>This is your current public profile. Use the forms below to switch or update your details.</CardDescription>
+                             <CardHeader className="flex flex-row items-start justify-between gap-4">
+                                <div>
+                                    <CardTitle>Your Active Profile</CardTitle>
+                                    <CardDescription>This is your current public profile and information.</CardDescription>
+                                </div>
+                                <Button asChild variant="outline" size="sm">
+                                    <Link href="#edit-profile-section">
+                                        <Pencil className="mr-2 h-4 w-4" />
+                                        Edit Profile
+                                    </Link>
+                                </Button>
                             </CardHeader>
-                            <CardContent className="space-y-3">
-                                <div className="flex items-center justify-between text-sm">
-                                    <span className="text-muted-foreground">Name</span>
-                                    <span className="font-semibold">{userProfile.name}</span>
-                                </div>
+                            <CardContent className="space-y-4 pt-0">
+                                <DetailRow label="Name" value={userProfile.name} />
                                 <Separator/>
-                                <div className="flex items-center justify-between text-sm">
-                                    <span className="text-muted-foreground">Active Role</span>
-                                    <Badge variant="secondary" className="capitalize">{userProfile.type}</Badge>
-                                </div>
+                                <DetailRow label="Email" value={userProfile.email} />
                                 <Separator/>
-                                <p className="text-sm text-muted-foreground pt-2">{userProfile.bio || 'No bio provided.'}</p>
+                                <DetailRow label="Phone" value={userProfile.phone || 'Not provided'} />
+                                <Separator/>
+                                <DetailRow label="Active Role" value={<Badge variant="default" className="capitalize">{userProfile.type}</Badge>} />
+                                <Separator />
+                                <div className="space-y-1">
+                                    <span className="text-sm text-muted-foreground">Bio</span>
+                                    <p className="font-medium text-white">{userProfile.bio || 'No bio provided.'}</p>
+                                </div>
+
+                                {userProfile.type === 'seeker' && (userProfile as SeekerProfile).searchCriteria && (
+                                    <>
+                                        <Separator />
+                                        <div className="space-y-1 pt-3">
+                                            <span className="text-sm text-muted-foreground">Search Criteria</span>
+                                            <p className="font-medium text-white">{(userProfile as SeekerProfile).searchCriteria}</p>
+                                        </div>
+                                    </>
+                                )}
+                                {(userProfile.type === 'dealer' || userProfile.type === 'developer') && (
+                                    <>
+                                        <Separator />
+                                        <div className="pt-3 space-y-4">
+                                            <DetailRow label="Company Name" value={(userProfile as DealerProfile | DeveloperProfile).companyName || 'Not provided'} />
+                                            {(userProfile as DealerProfile | DeveloperProfile).reraId && (
+                                                <>
+                                                    <Separator/>
+                                                    <DetailRow label="RERA ID" value={(userProfile as DealerProfile | DeveloperProfile).reraId} />
+                                                </>
+                                            )}
+                                        </div>
+                                    </>
+                                )}
                             </CardContent>
                         </Card>
 
@@ -369,8 +409,8 @@ export default function ProfilePage() {
                             </Card>
                         )}
 
-                        <Card className="mb-8">
-                            <CardHeader><CardTitle>Create or Edit a Profile</CardTitle><CardDescription>Choose the profile that best describes you.</CardDescription></CardHeader>
+                        <Card className="mb-8" id="edit-profile-section">
+                            <CardHeader><CardTitle>Switch Role</CardTitle><CardDescription>Choose the profile that best describes you to update your details.</CardDescription></CardHeader>
                             <CardContent>
                                 <RadioGroup value={userType} onValueChange={(v) => handleTypeChange(v as UserType)} className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                     {['seeker', 'owner', 'dealer', 'developer'].map(type => (
@@ -517,4 +557,5 @@ export default function ProfilePage() {
             <BottomNavBar />
         </>
     );
-}
+
+    

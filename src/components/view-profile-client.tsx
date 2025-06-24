@@ -193,7 +193,7 @@ export function ViewProfileClient() {
               </div>
               <CardTitle className="text-3xl">{profile.name}</CardTitle>
               <CardDescription>
-                <Badge variant="outline" className="capitalize text-lg py-1 px-3 mt-2">{profile.type}</Badge>
+                <Badge variant="default" className="capitalize text-lg py-1 px-3 mt-2">{profile.type}</Badge>
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">

@@ -22,11 +22,13 @@ import { useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import type { UserProfile, SeekerProfile, DealerProfile, DeveloperProfile } from '@/lib/types';
+import { doc, getDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import type { UserProfile, SeekerProfile, DealerProfile, DeveloperProfile, Property } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
+import { ShortlistedPropertyCard } from '@/components/shortlisted-property-card';
+import { dateToJSON } from '@/lib/utils';
 
 type UserType = 'seeker' | 'owner' | 'dealer' | 'developer';
 
@@ -143,6 +145,8 @@ export default function ProfilePage() {
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [userType, setUserType] = useState<UserType>('seeker');
     const [isLoading, setIsLoading] = useState(true);
+    const [userProperties, setUserProperties] = useState<Property[]>([]);
+    const [isPropertiesLoading, setIsPropertiesLoading] = useState(true);
 
     useEffect(() => {
         if (!user) {
@@ -188,6 +192,35 @@ export default function ProfilePage() {
             setupFallbackAndNotify('destructive', 'Could Not Load Profile', 'There was an error fetching your data. We have set up a temporary profile for you.');
         });
     }, [user, toast]);
+
+    useEffect(() => {
+        if (!userProfile || !['owner', 'dealer', 'developer'].includes(userProfile.type)) {
+            setIsPropertiesLoading(false);
+            return;
+        }
+
+        const fetchProperties = async () => {
+            if (!db) {
+                setIsPropertiesLoading(false);
+                return;
+            }
+            setIsPropertiesLoading(true);
+            try {
+                const q = query(collection(db, "properties"), where("lister.id", "==", userProfile.id));
+                const querySnapshot = await getDocs(q);
+                const properties = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Property));
+                const serializableProperties = properties.map(p => dateToJSON(p)) as Property[];
+                setUserProperties(serializableProperties);
+            } catch (error) {
+                console.error("Error fetching user properties:", error);
+                setUserProperties([]);
+            } finally {
+                setIsPropertiesLoading(false);
+            }
+        };
+
+        fetchProperties();
+    }, [userProfile]);
     
     const handleProfileUpdate = (updatedProfile: UserProfile) => {
         setUserProfile(updatedProfile);
@@ -305,6 +338,36 @@ export default function ProfilePage() {
                                 <p className="text-sm text-muted-foreground pt-2">{userProfile.bio || 'No bio provided.'}</p>
                             </CardContent>
                         </Card>
+
+                        {['owner', 'dealer', 'developer'].includes(userProfile.type) && (
+                            <Card className="mb-8">
+                                <CardHeader>
+                                    <CardTitle>My Properties ({userProperties.length})</CardTitle>
+                                    <CardDescription>The properties you have listed on LOKALITY.</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    {isPropertiesLoading ? (
+                                        <div className="flex justify-center items-center py-10">
+                                            <Loader2 className="h-8 w-8 animate-spin" />
+                                        </div>
+                                    ) : userProperties.length > 0 ? (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            {userProperties.map(property => (
+                                                <ShortlistedPropertyCard key={property.id} property={property} />
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-10 border border-dashed rounded-lg">
+                                            <h3 className="text-lg font-semibold">You haven't listed any properties yet.</h3>
+                                            <p className="text-muted-foreground mt-2">Ready to find a buyer or renter?</p>
+                                            <Button asChild className="mt-4">
+                                                <Link href="/add-property">List a Property</Link>
+                                            </Button>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        )}
 
                         <Card className="mb-8">
                             <CardHeader><CardTitle>Create or Edit a Profile</CardTitle><CardDescription>Choose the profile that best describes you.</CardDescription></CardHeader>

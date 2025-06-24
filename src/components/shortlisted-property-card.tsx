@@ -4,7 +4,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { formatIndianCurrency } from '@/lib/utils';
-import { BedDouble, MapPin } from 'lucide-react';
+import { BedDouble, MapPin, Video } from 'lucide-react';
 import { PropertyDetailsSheet } from './property-details-sheet';
 import { useState } from 'react';
 
@@ -28,6 +28,11 @@ export function ShortlistedPropertyCard({ property }: { property: Property }) {
                             className="w-full h-48 object-cover"
                             data-ai-hint="apartment exterior"
                         />
+                        {property.video && (
+                            <div className="absolute top-2 right-2 bg-black/50 p-1.5 rounded-full backdrop-blur-sm">
+                                <Video className="w-5 h-5 text-white" />
+                            </div>
+                        )}
                     </CardHeader>
                     <CardContent className="p-4 flex-grow">
                         <CardTitle className="text-lg leading-tight mb-2 text-white">{property.title}</CardTitle>

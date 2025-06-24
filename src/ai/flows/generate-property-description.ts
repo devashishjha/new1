@@ -53,7 +53,7 @@ Focus on creating a narrative that helps a potential buyer or renter envision th
 - You MUST generate a description, even if some details are missing or have values like 0.
 - If a detail is not provided or is zero, omit it gracefully from the description. For example, don't mention the floor number if it is 0.
 - Use the available details to create the most appealing description possible.
-- **Your entire response MUST be a single JSON object, containing only the 'description' key.**
+- **Your entire response MUST be a single JSON object, containing only the 'description' key. Do NOT wrap the JSON in markdown backticks (e.g., \`\`\`json).**
 
 Here are the property details:
 - Listing for: {{{priceType}}}

@@ -37,7 +37,7 @@ const searchSchema = z.object({
     configuration: z.array(z.string()).default([]),
     floorRange: z.array(z.number()).default([0, 50]),
     totalFloorRange: z.array(z.number()).default([0, 50]),
-    housesOnSameFloor: z.number().optional(),
+    housesOnSameFloor: z.coerce.number().optional(),
     mainDoorDirection: z.array(z.string()).default([]),
     openSides: z.array(z.string()).default([]),
     kitchenUtility: z.boolean().optional(),
@@ -149,7 +149,7 @@ export function SearchClient() {
             if (priceSort !== 'none') {
                 const priceA = a.price.amount;
                 const priceB = b.price.amount;
-                const priceDiff = priceSort === 'asc' ? priceA - priceB : priceB - priceA;
+                const priceDiff = priceSort === 'asc' ? priceA - priceB : priceB - a.price.amount;
                 if (priceDiff !== 0) {
                     return priceDiff;
                 }
@@ -403,7 +403,5 @@ export function SearchClient() {
         </div>
     );
 }
-
-    
 
     

@@ -42,7 +42,6 @@ export async function generatePropertyDescription(input: GeneratePropertyDescrip
 const prompt = ai.definePrompt({
   name: 'generatePropertyDescriptionPrompt',
   input: {schema: GeneratePropertyDescriptionInputSchema},
-  output: {schema: GeneratePropertyDescriptionOutputSchema},
   prompt: `You are an expert real estate copywriter. Your task is to generate a compelling and attractive property listing description based on the structured data provided.
 
 The tone should be professional yet inviting. Highlight the key selling points without being overly verbose. Aim for a description between 50 to 100 words.
@@ -50,14 +49,8 @@ The tone should be professional yet inviting. Highlight the key selling points w
 Focus on creating a narrative that helps a potential buyer or renter envision themselves living in the property.
 
 **CRITICAL INSTRUCTIONS:**
-- Your entire response MUST be a single, valid JSON object that strictly matches the requested format, containing only the 'description' key. Do NOT include any other text, explanations, or markdown formatting like \`\`\`json.
-- Even if details are sparse, create the best possible description. If absolutely no appealing details are available, your description should state that more information is needed. For example: "This property is a {{configuration}} available for {{priceType}} in {{location}}. Contact the lister for more details."
-
-
-**Example Output Format:**
-{
-  "description": "Discover your new home in this charming 2BHK apartment at Serene Gardens. Located conveniently in Koramangala, this east-facing unit on the 5th floor offers ample natural light and a modern living experience. Spanning 1200 sqft, it's perfect for families seeking comfort and style."
-}
+- Your entire response MUST be only the description text. Do NOT include any JSON formatting, markdown, or other explanatory text.
+- Even if details are sparse, create the best possible description. If absolutely no appealing details are available, your description should state something like: "This property is a {{configuration}} available for {{priceType}} in {{location}}. Contact the lister for more details."
 
 Here are the actual property details to use:
 - Listing for: {{{priceType}}}
@@ -84,13 +77,15 @@ const generatePropertyDescriptionFlow = ai.defineFlow(
   },
   async input => {
     try {
-        const {output} = await prompt(input);
-        // If the AI returns a valid output with a description, use it.
-        if (output?.description) {
-            return output;
+        const response = await prompt(input);
+        const description = response.text;
+
+        // If the AI returns a valid description, use it.
+        if (description) {
+            return { description };
         }
         // Log if the output is malformed but an error wasn't thrown.
-        console.warn("AI output was malformed or empty, generating fallback.", {output});
+        console.warn("AI output was empty, generating fallback.", { response });
     } catch (e) {
         // Log any error from the AI prompt call for debugging purposes.
         console.error("AI prompt call failed, generating fallback description.", e);

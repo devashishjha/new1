@@ -48,41 +48,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(user);
       setLoading(false);
     });
+
     return () => unsubscribe();
   }, []);
 
   useEffect(() => {
-    // Don't run redirect logic until authentication state is resolved.
+    // Don't perform redirects until the initial authentication check is complete.
     if (loading) {
       return;
     }
 
     const isAuthPage = pathname === '/';
 
-    // If user is logged in but on the auth page, redirect to the main app.
+    // If a logged-in user is on the auth page, redirect them to the main app.
     if (user && isAuthPage) {
       router.replace('/reels');
     }
     
-    // If user is not logged in but is trying to access a protected page, redirect to the auth page.
+    // If a logged-out user tries to access a protected page, redirect them to the auth page.
     if (!user && !isAuthPage) {
       router.replace('/');
     }
   }, [user, loading, pathname, router]);
 
-  const isAuthPage = pathname === '/';
-  
-  // Determine if we should show the loader or the page content.
-  // Show the loader if:
-  // 1. We are still waiting for the initial auth state.
-  // 2. A redirect is about to happen (e.g., logged-in user on auth page).
-  const inRedirectState = (!loading && user && isAuthPage) || (!loading && !user && !isAuthPage);
-
-  if (loading || inRedirectState) {
+  // While the initial authentication check is running, show a full-screen loader.
+  if (loading) {
     return <FullScreenLoader />;
   }
 
-  // If we are on the correct page for the user's auth state, render the children.
+  // After the initial load, render the children.
+  // The useEffect above will handle redirecting if the user is on the wrong page.
+  // This prevents the infinite redirect loop.
   return (
     <AuthContext.Provider value={{ user, loading }}>
       {children}

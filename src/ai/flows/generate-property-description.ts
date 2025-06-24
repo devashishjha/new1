@@ -50,12 +50,16 @@ The tone should be professional yet inviting. Highlight the key selling points w
 Focus on creating a narrative that helps a potential buyer or renter envision themselves living in the property.
 
 **CRITICAL INSTRUCTIONS:**
-- You MUST generate a description, even if some details are missing or have values like 0.
-- If a detail is not provided or is zero, omit it gracefully from the description. For example, don't mention the floor number if it is 0.
-- Use the available details to create the most appealing description possible.
-- **Your entire response MUST be a single JSON object, containing only the 'description' key. Do NOT wrap the JSON in markdown backticks (e.g., \`\`\`json).**
+- You MUST generate a compelling description based on the provided details.
+- Even if details are sparse, create the best possible description. If absolutely no appealing details are available, your description should state that more information is needed. For example: "This property is a {{configuration}} available for {{priceType}} in {{location}}. Contact the lister for more details."
+- Your entire response MUST be a single, valid JSON object, containing only the 'description' key. Do NOT include any other text, explanations, or markdown backticks (e.g., \`\`\`json).
 
-Here are the property details:
+**Example Output Format:**
+{
+  "description": "Discover your new home in this charming 2BHK apartment at Serene Gardens. Located conveniently in Koramangala, this east-facing unit on the 5th floor offers ample natural light and a modern living experience. Spanning 1200 sqft, it's perfect for families seeking comfort and style."
+}
+
+Here are the actual property details to use:
 - Listing for: {{{priceType}}}
 - Price: {{{priceAmount}}}
 - Location: {{{location}}}

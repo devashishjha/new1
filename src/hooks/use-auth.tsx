@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
-  const isAuthPage = pathname === '/';
+  
 
   useEffect(() => {
     // If firebase is not configured, we don't need to check for a user.
@@ -43,6 +43,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Don't run redirection logic until authentication is resolved
       if (loading) return;
 
+      const isAuthPage = pathname === '/';
       const isProtectedPage = !isAuthPage;
 
       // If user is not logged in and is trying to access a protected page, redirect to login
@@ -53,11 +54,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (user && isAuthPage) {
           router.push('/reels');
       }
-  }, [user, loading, pathname, router, isAuthPage]);
+  }, [user, loading, pathname, router]);
 
-  // Show a loading indicator while auth state is being determined,
-  // or while redirecting the user. This prevents a flash of unstyled/unauthorized content.
-  if (loading || (!user && !isAuthPage) || (user && isAuthPage)) {
+  // Show a loading indicator only while auth state is being determined.
+  // The redirects will be handled by the useEffect above.
+  if (loading) {
     return (
         <div className="h-dvh w-screen flex items-center justify-center">
           <div className="w-full max-w-sm space-y-6 flex flex-col items-center">

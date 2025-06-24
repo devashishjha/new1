@@ -408,7 +408,3 @@ export function SearchClient() {
         </div>
     );
 }
-
-    
-
-    

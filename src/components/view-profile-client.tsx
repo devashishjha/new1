@@ -25,8 +25,8 @@ const DetailItem = ({ label, value, icon }: { label: string, value: React.ReactN
   <div className="flex items-start gap-4">
     {icon && <div className="flex-shrink-0 w-8 text-center"><div className="p-2 bg-secondary rounded-full inline-block">{React.createElement(icon, { className: 'w-5 h-5 text-primary' })}</div></div>}
     <div>
-      <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="font-semibold">{value}</p>
+      <p className="text-sm text-white/70">{label}</p>
+      <p className="font-semibold text-white">{value}</p>
     </div>
   </div>
 );
@@ -197,7 +197,7 @@ export function ViewProfileClient() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                <p className="text-center text-muted-foreground italic px-4">&quot;{profile.bio}&quot;</p>
+                <p className="text-center text-white/70 italic px-4">&quot;{profile.bio}&quot;</p>
                 <div className="space-y-6 pt-4 border-t border-white/10">
                     <DetailItem label="Email" value={profile.email} icon={AtSign} />
                     <DetailItem label="Phone" value={profile.phone || 'Not provided'} icon={Phone} />
@@ -206,8 +206,8 @@ export function ViewProfileClient() {
                 </div>
                 {profile.type === 'seeker' && (profile as SeekerProfile).searchCriteria && (
                     <div className="space-y-2 pt-4 border-t border-white/10">
-                        <h3 className="text-sm text-muted-foreground">Search Criteria</h3>
-                        <p className="font-mono text-sm bg-secondary p-4 rounded-md">{(profile as SeekerProfile).searchCriteria}</p>
+                        <h3 className="text-sm text-white/70">Search Criteria</h3>
+                        <p className="font-mono text-sm bg-secondary p-4 rounded-md text-secondary-foreground">{(profile as SeekerProfile).searchCriteria}</p>
                     </div>
                 )}
             </CardContent>
@@ -231,7 +231,7 @@ export function ViewProfileClient() {
                               ))}
                           </div>
                       ) : (
-                          <p className="text-muted-foreground text-center py-4">This user has not posted any properties yet.</p>
+                          <p className="text-white/70 text-center py-4">This user has not posted any properties yet.</p>
                       )}
                   </CardContent>
               </Card>
@@ -242,7 +242,7 @@ export function ViewProfileClient() {
                   <CardHeader><CardTitle>Recent Searches</CardTitle></CardHeader>
                   <CardContent className="space-y-3">
                       {profile.searchHistory.slice(0, 5).map((search, index) => (
-                          <div key={index} className="flex items-center gap-3 text-muted-foreground p-3 bg-secondary rounded-md">
+                          <div key={index} className="flex items-center gap-3 text-white/70 p-3 bg-secondary rounded-md">
                               <Clock className="w-4 h-4 flex-shrink-0" />
                               <span>{search}</span>
                           </div>

@@ -22,6 +22,7 @@ import {
     Zap,
     Loader2,
     Trash2,
+    Pencil,
 } from 'lucide-react';
 import { formatIndianCurrency } from '@/lib/utils';
 import * as React from 'react';
@@ -31,6 +32,7 @@ import { useChatNavigation } from '@/hooks/use-chat-navigation';
 import { AiMatchDialog } from './ai-match-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Button } from './ui/button';
 
 
 const InfoCard = ({ icon, label, value, children }: { icon: React.ElementType, label: string, value?: string | React.ReactNode, children?: React.ReactNode }) => (
@@ -93,7 +95,7 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
   useEffect(() => {
     async function fetchScore() {
       const amenitiesList = [
-        property.amenities.hasBalcony && 'Balcony', // Corrected from property.hasBalcony
+        property.hasBalcony && 'Balcony',
         property.amenities.hasLift && 'Lift',
         property.amenities.hasClubhouse && 'Clubhouse',
         property.amenities.hasChildrenPlayArea && "Children's Play Area",
@@ -203,7 +205,7 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
       onClick={() => setIsUIVisible(!isUIVisible)}
     >
       {property.video ? (
-          <video src={property.video} autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover transform rotate-180" />
+          <video src={property.video} autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover" />
       ) : (
         property.image && (
           <Image 
@@ -262,6 +264,13 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
                           </AlertDialogFooter>
                       </AlertDialogContent>
                   </AlertDialog>
+                )}
+                 {isLister && (
+                    <Button asChild size="icon" variant="ghost" className="flex-1 h-auto p-1 rounded-full hover:bg-white/10 text-white">
+                        <Link href={`/edit-property/${property.id}`} onClick={(e) => e.stopPropagation()}>
+                            <Pencil strokeWidth={2.5} className="h-6 w-6"/>
+                        </Link>
+                    </Button>
                 )}
             </div>
 

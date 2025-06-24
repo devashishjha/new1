@@ -61,7 +61,23 @@ const propertyMatchScoreFlow = ai.defineFlow(
     outputSchema: PropertyMatchScoreOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
-    return output!;
+    try {
+        const {output} = await prompt(input);
+        // Ensure we have a valid-looking output before returning
+        if (output?.matchScore !== undefined && output?.summary) {
+            return output;
+        }
+        console.warn("AI output was malformed or empty, generating fallback.", {output});
+    } catch (e) {
+        console.error("AI prompt call failed, generating fallback score.", e);
+    }
+
+    // Fallback response to prevent crashes and provide a neutral score
+    return {
+        matchScore: 50,
+        summary: "AI analysis is currently unavailable. The score shown is a neutral estimate.",
+        matches: ["Could not determine specific matches at this time."],
+        mismatches: ["Could not determine specific mismatches at this time."],
+    };
   }
 );

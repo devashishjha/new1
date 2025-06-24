@@ -21,10 +21,9 @@ import type { GeneratePropertyDescriptionInput } from '@/ai/flows/generate-prope
 import { useAuth } from '@/hooks/use-auth';
 import { db, storage } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { addDoc, collection, doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { addDoc, collection, doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
-import type { UserProfile } from '@/lib/types';
-import { Label } from '@/components/ui/label';
+import type { UserProfile, Property } from '@/lib/types';
 
 
 const propertySchema = z.object({
@@ -73,7 +72,7 @@ const propertySchema = z.object({
     brokerage: z.coerce.number().nonnegative().optional(),
 });
 
-export function AddPropertyForm() {
+export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'edit', property?: Property }) {
     const { toast } = useToast();
     const { user } = useAuth();
     const router = useRouter();
@@ -120,11 +119,50 @@ export function AddPropertyForm() {
         },
     });
 
+    React.useEffect(() => {
+        if (mode === 'edit' && property) {
+            form.reset({
+                priceType: property.price.type,
+                priceAmount: property.price.amount,
+                location: property.location,
+                societyName: property.societyName,
+                description: property.description,
+                propertyType: property.propertyType,
+                configuration: property.configuration,
+                floorNo: property.floorNo,
+                totalFloors: property.totalFloors,
+                mainDoorDirection: property.mainDoorDirection,
+                openSides: property.openSides,
+                housesOnSameFloor: property.features.housesOnSameFloor,
+                kitchenUtility: property.kitchenUtility,
+                hasBalcony: property.hasBalcony,
+                sunlightEntersHome: property.features.sunlightEntersHome,
+                sunlightPercentage: property.amenities.sunlightPercentage,
+                has2WheelerParking: property.parking.has2Wheeler,
+                has4WheelerParking: property.parking.has4Wheeler,
+                superBuiltUpArea: property.area.superBuiltUp,
+                carpetArea: property.area.carpet,
+                hasLift: property.amenities.hasLift,
+                hasChildrenPlayArea: property.amenities.hasChildrenPlayArea,
+                hasDoctorClinic: property.amenities.hasDoctorClinic,
+                hasPlaySchool: property.amenities.hasPlaySchool,
+                hasSuperMarket: property.amenities.hasSuperMarket,
+                hasPharmacy: property.amenities.hasPharmacy,
+                hasClubhouse: property.amenities.hasClubhouse,
+                hasWaterMeter: property.amenities.hasWaterMeter,
+                hasGasPipeline: property.amenities.hasGasPipeline,
+                maintenancePerMonth: property.charges.maintenancePerMonth,
+                securityDeposit: property.charges.securityDeposit,
+                moveInCharges: property.charges.moveInCharges,
+                brokerage: property.charges.brokerage,
+            });
+        }
+    }, [mode, property, form]);
+
     async function handleGenerateDescription() {
         setIsGenerating(true);
         const values = form.getValues();
 
-        // Basic validation before calling the AI
         if (!values.location || !values.societyName || !values.superBuiltUpArea || values.priceAmount <= 0) {
             toast({
                 variant: 'destructive',
@@ -179,7 +217,7 @@ export function AddPropertyForm() {
         setIsSubmitting(true);
 
         try {
-            let videoUrl: string | undefined = undefined;
+            let videoUrl: string | undefined = (mode === 'edit' && property?.video) ? property.video : undefined;
             const videoFile = values.video?.[0];
 
             if (videoFile) {
@@ -189,46 +227,13 @@ export function AddPropertyForm() {
                 videoUrl = await getDownloadURL(uploadResult.ref);
             }
 
-            const userDocRef = doc(db, 'users', user.uid);
-            const userDoc = await getDoc(userDocRef);
-            let userProfile: UserProfile;
-
-            if (userDoc.exists()) {
-                userProfile = userDoc.data() as UserProfile;
-            } else {
-                toast({
-                    title: "Finalizing Account Setup",
-                    description: "We're creating a default profile for you to post this property.",
-                });
-                const defaultProfile: UserProfile = {
-                    id: user.uid,
-                    name: user.displayName || user.email?.split('@')[0] || 'New User',
-                    email: user.email!,
-                    phone: user.phoneNumber || '',
-                    bio: 'Welcome to LOKALITY!',
-                    type: 'owner',
-                    avatar: user.photoURL || `https://placehold.co/100x100.png`
-                };
-                await setDoc(userDocRef, defaultProfile);
-                userProfile = defaultProfile;
-            }
-
-            const propertyData = {
+            const propertyDataForFirestore = {
                 title: `${values.configuration.toUpperCase()} in ${values.societyName}`,
                 description: values.description || '',
-                image: 'https://placehold.co/1080x1920.png',
                 video: videoUrl,
-                lister: {
-                    id: user.uid,
-                    name: userProfile.name,
-                    type: userProfile.type,
-                    avatar: userProfile.avatar,
-                    phone: userProfile.phone,
-                },
                 price: { type: values.priceType, amount: values.priceAmount },
                 location: values.location,
                 societyName: values.societyName,
-                postedOn: serverTimestamp(),
                 configuration: values.configuration,
                 propertyType: values.propertyType,
                 floorNo: values.floorNo,
@@ -260,14 +265,61 @@ export function AddPropertyForm() {
                 },
             };
 
-            await addDoc(collection(db, "properties"), propertyData);
-            
-            toast({
-                title: "Property Submitted!",
-                description: "Your property has been successfully listed.",
-            });
-            form.reset();
-            router.push('/reels');
+            if (mode === 'edit' && property) {
+                const propertyDocRef = doc(db, 'properties', property.id);
+                await updateDoc(propertyDocRef, propertyDataForFirestore);
+                toast({
+                    title: "Property Updated!",
+                    description: "Your property has been successfully updated.",
+                });
+                router.push('/profile');
+            } else {
+                const userDocRef = doc(db, 'users', user.uid);
+                const userDoc = await getDoc(userDocRef);
+                let userProfile: UserProfile;
+
+                if (userDoc.exists()) {
+                    userProfile = userDoc.data() as UserProfile;
+                } else {
+                    toast({
+                        title: "Finalizing Account Setup",
+                        description: "We're creating a default profile for you to post this property.",
+                    });
+                    const defaultProfile: UserProfile = {
+                        id: user.uid,
+                        name: user.displayName || user.email?.split('@')[0] || 'New User',
+                        email: user.email!,
+                        phone: user.phoneNumber || '',
+                        bio: 'Welcome to LOKALITY!',
+                        type: 'owner',
+                        avatar: user.photoURL || `https://placehold.co/100x100.png`
+                    };
+                    await setDoc(userDocRef, defaultProfile);
+                    userProfile = defaultProfile;
+                }
+
+                const finalData = {
+                    ...propertyDataForFirestore,
+                    lister: {
+                        id: user.uid,
+                        name: userProfile.name,
+                        type: userProfile.type,
+                        avatar: userProfile.avatar,
+                        phone: userProfile.phone,
+                    },
+                    postedOn: serverTimestamp(),
+                    image: 'https://placehold.co/1080x1920.png',
+                };
+    
+                await addDoc(collection(db, "properties"), finalData);
+                
+                toast({
+                    title: "Property Submitted!",
+                    description: "Your property has been successfully listed.",
+                });
+                form.reset();
+                router.push('/reels');
+            }
         } catch (error) {
             console.error("Error submitting property:", error);
             toast({
@@ -295,7 +347,7 @@ export function AddPropertyForm() {
                     </CardContent>
                 </Card>
 
-                <Accordion type="multiple" className="w-full space-y-4" defaultValue={['item-1']}>
+                <Accordion type="multiple" className="w-full space-y-4" defaultValue={['item-1', 'item-5']}>
                     <AccordionItem value="item-5" asChild><Card><AccordionTrigger className="p-6"><h3 className="text-2xl font-semibold leading-none tracking-tight">Description & Media</h3></AccordionTrigger><AccordionContent className="p-6 pt-0 grid gap-6">
                         <FormField control={form.control} name="description" render={({ field }) => ( <FormItem> <div className="flex items-center justify-between"> <FormLabel>Property Description</FormLabel> <Button type="button" variant="outline" size="sm" onClick={handleGenerateDescription} disabled={isGenerating}> <Wand2 className="mr-2 h-4 w-4" /> {isGenerating ? 'Generating...' : 'Generate with AI'} </Button> </div> <FormControl><Textarea rows={5} placeholder="A compelling description of your property..." {...field} className="text-black" /></FormControl> <FormDescription> You can write your own or use the AI generator based on the details you've provided. </FormDescription> <FormMessage /> </FormItem> )} />
                         
@@ -314,7 +366,7 @@ export function AddPropertyForm() {
                                         />
                                     </FormControl>
                                     <FormDescription>
-                                        Upload a short video of your property for the reel.
+                                        {mode === 'edit' && property?.video ? 'A video is already uploaded. Upload a new one to replace it.' : 'Upload a short video of your property for the reel.'}
                                     </FormDescription>
                                     <FormMessage />
                                 </FormItem>
@@ -364,7 +416,7 @@ export function AddPropertyForm() {
                     </AccordionContent></Card></AccordionItem>
                 </Accordion>
                 <Button type="submit" size="lg" className="w-full" disabled={isSubmitting || isGenerating}>
-                    {isSubmitting ? 'Submitting...' : 'Submit Property'}
+                    {isSubmitting ? (mode === 'edit' ? 'Updating...' : 'Submitting...') : (mode === 'edit' ? 'Update Property' : 'Submit Property')}
                 </Button>
             </form>
         </Form>

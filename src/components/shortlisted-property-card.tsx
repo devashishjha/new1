@@ -4,12 +4,17 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { formatIndianCurrency } from '@/lib/utils';
-import { BedDouble, MapPin, Video } from 'lucide-react';
+import { BedDouble, MapPin, Pencil, Video } from 'lucide-react';
 import { PropertyDetailsSheet } from './property-details-sheet';
 import { useState } from 'react';
+import { useAuth } from '@/hooks/use-auth';
+import { Button } from './ui/button';
+import Link from 'next/link';
 
 export function ShortlistedPropertyCard({ property }: { property: Property }) {
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+    const { user } = useAuth();
+    const isOwner = user?.uid === property.lister.id;
 
     const priceDisplay = property.price.type === 'rent'
         ? `₹ ${property.price.amount.toLocaleString('en-IN')}/mo`
@@ -50,7 +55,17 @@ export function ShortlistedPropertyCard({ property }: { property: Property }) {
                 </button>
                 <CardFooter className="p-4 bg-secondary/50 flex justify-between items-center mt-auto">
                     <span className="text-xl font-bold text-primary">{priceDisplay}</span>
-                    <Badge variant="secondary" className="capitalize">{property.propertyType}</Badge>
+                    <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="capitalize">{property.propertyType}</Badge>
+                        {isOwner && (
+                             <Button asChild size="icon" variant="outline">
+                                <Link href={`/edit-property/${property.id}`}>
+                                    <Pencil className="h-4 w-4" />
+                                    <span className="sr-only">Edit Property</span>
+                                </Link>
+                            </Button>
+                        )}
+                    </div>
                 </CardFooter>
             </Card>
             <PropertyDetailsSheet open={isDetailsOpen} onOpenChange={setIsDetailsOpen} property={property} />

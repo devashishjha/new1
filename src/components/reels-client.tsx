@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -42,6 +43,16 @@ export function ReelsClient() {
         
         const fetchData = async () => {
             setIsLoading(true);
+
+            // If Firebase is not configured, fall back to dummy data immediately.
+            if (!db) {
+                console.warn("Firebase is not configured. Falling back to dummy data.");
+                setProperties(dummyProperties.map(p => dateToJSON(p)) as Property[]);
+                setUserSearchCriteria("A great property with good amenities in a nice neighborhood.");
+                setIsLoading(false);
+                return;
+            }
+            
             try {
                 // The default criteria for non-seekers or logged-out users.
                 const defaultSearchCriteria = "A great property with good amenities in a nice neighborhood.";

@@ -154,7 +154,7 @@ export function SearchClient() {
             if (priceSort !== 'none') {
                 const priceA = a.price.amount;
                 const priceB = b.price.amount;
-                const priceDiff = priceSort === 'asc' ? priceA - priceB : priceB - priceA;
+                const priceDiff = priceSort === 'asc' ? priceA - priceB : priceB - a.price.amount;
                 if (priceDiff !== 0) {
                     return priceDiff;
                 }
@@ -408,5 +408,6 @@ export function SearchClient() {
         </div>
     );
 }
+    
 
     

@@ -85,6 +85,10 @@ export function SearchClient() {
         const fetchProperties = async () => {
             setIsLoading(true);
             try {
+                if (!db) {
+                    setProperties([]);
+                    return;
+                }
                 const propertiesCol = collection(db, 'properties');
                 const q = query(propertiesCol, orderBy('postedOn', 'desc'));
                 const snapshot = await getDocs(q);
@@ -92,6 +96,7 @@ export function SearchClient() {
                 setProperties(fetchedProperties.map(p => dateToJSON(p)) as Property[]);
             } catch (error) {
                 console.error("Error fetching properties:", error);
+                setProperties([]);
             } finally {
                 setIsLoading(false);
             }

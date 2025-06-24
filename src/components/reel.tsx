@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Property } from '@/lib/types';
@@ -202,7 +203,7 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
       onClick={() => setIsUIVisible(!isUIVisible)}
     >
       {property.video ? (
-          <video src={property.video} autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover" />
+          <video src={property.video} autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover transform rotate-180" />
       ) : (
         property.image && (
           <Image 

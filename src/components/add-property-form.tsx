@@ -21,7 +21,7 @@ import type { GeneratePropertyDescriptionInput } from '@/ai/flows/generate-prope
 import { useAuth } from '@/hooks/use-auth';
 import { db, storage } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { addDoc, collection, doc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import type { UserProfile } from '@/lib/types';
 import { Label } from '@/components/ui/label';
@@ -79,6 +79,7 @@ export function AddPropertyForm() {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = React.useState(false);
     const [isGenerating, setIsGenerating] = React.useState(false);
+    const videoFileRef = React.useRef<HTMLInputElement>(null);
 
     const form = useForm<z.infer<typeof propertySchema>>({
         resolver: zodResolver(propertySchema),
@@ -119,6 +120,7 @@ export function AddPropertyForm() {
             brokerage: 0,
         },
     });
+     const { register } = form;
 
     async function handleGenerateDescription() {
         setIsGenerating(true);
@@ -168,8 +170,7 @@ export function AddPropertyForm() {
 
         try {
             let videoUrl: string | undefined = undefined;
-            const videoFiles = values.video as FileList | undefined;
-            const videoFile = videoFiles?.[0];
+            const videoFile = videoFileRef.current?.files?.[0];
 
             if (videoFile) {
                 toast({ title: "Uploading Video...", description: "Please wait while we upload your property video." });
@@ -178,11 +179,29 @@ export function AddPropertyForm() {
                 videoUrl = await getDownloadURL(uploadResult.ref);
             }
 
-            const userDoc = await getDoc(doc(db, 'users', user.uid));
-            if (!userDoc.exists()) {
-                throw new Error("User profile not found.");
+            const userDocRef = doc(db, 'users', user.uid);
+            const userDoc = await getDoc(userDocRef);
+            let userProfile: UserProfile;
+
+            if (userDoc.exists()) {
+                userProfile = userDoc.data() as UserProfile;
+            } else {
+                toast({
+                    title: "Finalizing Account Setup",
+                    description: "We're creating a default profile for you to post this property.",
+                });
+                const defaultProfile: UserProfile = {
+                    id: user.uid,
+                    name: user.displayName || user.email?.split('@')[0] || 'New User',
+                    email: user.email!,
+                    phone: user.phoneNumber || '',
+                    bio: 'Welcome to LOKALITY!',
+                    type: 'owner',
+                    avatar: user.photoURL || `https://placehold.co/100x100.png`
+                };
+                await setDoc(userDocRef, defaultProfile);
+                userProfile = defaultProfile;
             }
-            const userProfile = userDoc.data() as UserProfile;
 
             const propertyData = {
                 title: `${values.configuration.toUpperCase()} in ${values.societyName}`,
@@ -251,7 +270,7 @@ export function AddPropertyForm() {
         }
     }
     
-    const renderCheckboxField = (name: keyof z.infer<typeof propertySchema>, label: string) => (<FormField control={form.control} name={name} render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><FormLabel>{label}</FormLabel><FormControl><Checkbox checked={field.value as boolean} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />);
+    const renderCheckboxField = (name: keyof z.infer<typeof propertySchema>, label: string) => (<FormField control={form.control} name={name} render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><FormLabel>{label}</FormLabel><FormControl><Checkbox checked={field.value as boolean} onCheckedChange={field.onChange}/></FormControl></FormItem>)} />);
 
     return (
         <Form {...form}>
@@ -270,30 +289,23 @@ export function AddPropertyForm() {
                     <AccordionItem value="item-5" asChild><Card><AccordionTrigger className="p-6"><h3 className="text-2xl font-semibold leading-none tracking-tight">Description & Media</h3></AccordionTrigger><AccordionContent className="p-6 pt-0 grid gap-6">
                         <FormField control={form.control} name="description" render={({ field }) => ( <FormItem> <div className="flex items-center justify-between"> <FormLabel>Property Description</FormLabel> <Button type="button" variant="outline" size="sm" onClick={handleGenerateDescription} disabled={isGenerating}> <Wand2 className="mr-2 h-4 w-4" /> {isGenerating ? 'Generating...' : 'Generate with AI'} </Button> </div> <FormControl><Textarea rows={5} placeholder="A compelling description of your property..." {...field} className="text-black" /></FormControl> <FormDescription> You can write your own or use the AI generator based on the details you've provided. </FormDescription> <FormMessage /> </FormItem> )} />
                         
-                        <FormField
-                            control={form.control}
-                            name="video"
-                            render={({ field: { onChange, onBlur, name, ref } }) => (
-                                <FormItem>
-                                    <FormLabel>Property Video</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="file"
-                                            accept="video/*"
-                                            className="text-black"
-                                            onBlur={onBlur}
-                                            name={name}
-                                            onChange={(e) => onChange(e.target.files)}
-                                            ref={ref}
-                                        />
-                                    </FormControl>
-                                    <FormDescription>
-                                        Upload a short video of your property for the reel.
-                                    </FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                         <FormItem>
+                            <FormLabel>Property Video</FormLabel>
+                            <FormControl>
+                                <Input
+                                    type="file"
+                                    accept="video/*"
+                                    className="text-black"
+                                    {...register('video', {
+                                        ref: videoFileRef
+                                    })}
+                                />
+                            </FormControl>
+                            <FormDescription>
+                                Upload a short video of your property for the reel.
+                            </FormDescription>
+                            <FormMessage />
+                        </FormItem>
 
                     </AccordionContent></Card></AccordionItem>
 
@@ -315,7 +327,7 @@ export function AddPropertyForm() {
                         {renderCheckboxField('has4WheelerParking', '4-Wheeler Parking')}
                         <FormField control={form.control} name="superBuiltUpArea" render={({ field }) => ( <FormItem><FormLabel>Super Built-up Area (sqft)</FormLabel><FormControl><Input type="number" placeholder="1200" {...field} className="text-black" /></FormControl><FormMessage /></FormItem> )}/>
                         <FormField control={form.control} name="carpetArea" render={({ field }) => ( <FormItem><FormLabel>Carpet Area (sqft)</FormLabel><FormControl><Input type="number" placeholder="950" {...field} className="text-black" /></FormControl><FormMessage /></FormItem> )}/>
-                        <FormField control={form.control} name="sunlightPercentage" render={({ field }) => (<FormItem><FormLabel>Sunlight Percentage ({field.value}%)</FormLabel><FormControl><Slider min={0} max={100} step={5} value={[field.value]} onValueChange={(value) => field.onChange(value[0])} /></FormControl></FormItem>)} />
+                        <FormField control={form.control} name="sunlightPercentage" render={({ field }) => (<FormItem><FormLabel>Sunlight Percentage ({field.value}%)</FormLabel><FormControl><Slider min={0} max={100} step={5} value={[field.value]} onValueChange={(value) => field.onChange(value[0])}/></FormControl></FormItem>)} />
                     </AccordionContent></Card></AccordionItem>
 
                      <AccordionItem value="item-3" asChild><Card><AccordionTrigger className="p-6"><h3 className="text-2xl font-semibold leading-none tracking-tight">Amenities</h3></AccordionTrigger><AccordionContent className="p-6 pt-0 grid md:grid-cols-2 gap-x-6 gap-y-4">

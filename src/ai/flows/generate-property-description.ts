@@ -50,9 +50,9 @@ The tone should be professional yet inviting. Highlight the key selling points w
 Focus on creating a narrative that helps a potential buyer or renter envision themselves living in the property.
 
 **CRITICAL INSTRUCTIONS:**
-- You MUST generate a compelling description based on the provided details.
+- Your entire response MUST be a single, valid JSON object that strictly matches the requested format, containing only the 'description' key. Do NOT include any other text, explanations, or markdown formatting like \`\`\`json.
 - Even if details are sparse, create the best possible description. If absolutely no appealing details are available, your description should state that more information is needed. For example: "This property is a {{configuration}} available for {{priceType}} in {{location}}. Contact the lister for more details."
-- Your entire response MUST be a single, valid JSON object, containing only the 'description' key. Do NOT include any other text, explanations, or markdown backticks (e.g., \`\`\`json).
+
 
 **Example Output Format:**
 {
@@ -83,10 +83,26 @@ const generatePropertyDescriptionFlow = ai.defineFlow(
     outputSchema: GeneratePropertyDescriptionOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
-    if (!output || !output.description) {
-        throw new Error("The AI model failed to produce a valid description. The output was null or empty.");
+    try {
+        const {output} = await prompt(input);
+        // If the AI returns a valid output with a description, use it.
+        if (output?.description) {
+            return output;
+        }
+        // Log if the output is malformed but an error wasn't thrown.
+        console.warn("AI output was malformed or empty, generating fallback.", {output});
+    } catch (e) {
+        // Log any error from the AI prompt call for debugging purposes.
+        console.error("AI prompt call failed, generating fallback description.", e);
     }
-    return output;
+    
+    // If the AI fails for any reason (error, invalid output, safety block, etc.),
+    // construct a simple, reliable fallback description.
+    const fallbackDescription = `This is a ${input.configuration} ${input.propertyType} in ${input.societyName}, available for ${input.priceType} in ${input.location}. It features a super built-up area of ${input.superBuiltUpArea} sqft. For complete details, please contact the lister.`;
+    
+    // Return the fallback description wrapped in the expected output schema.
+    return {
+        description: fallbackDescription
+    };
   }
 );

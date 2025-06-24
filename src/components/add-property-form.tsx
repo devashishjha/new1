@@ -79,7 +79,6 @@ export function AddPropertyForm() {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = React.useState(false);
     const [isGenerating, setIsGenerating] = React.useState(false);
-    const videoFileRef = React.useRef<HTMLInputElement>(null);
 
     const form = useForm<z.infer<typeof propertySchema>>({
         resolver: zodResolver(propertySchema),
@@ -120,12 +119,23 @@ export function AddPropertyForm() {
             brokerage: 0,
         },
     });
-     const { register } = form;
 
     async function handleGenerateDescription() {
         setIsGenerating(true);
+        const values = form.getValues();
+
+        // Basic validation before calling the AI
+        if (!values.location || !values.societyName || !values.superBuiltUpArea || values.priceAmount <= 0) {
+            toast({
+                variant: 'destructive',
+                title: "Missing Details",
+                description: "Please provide Location, Society Name, Price, and Area before generating a description with AI.",
+            });
+            setIsGenerating(false);
+            return;
+        }
+
         try {
-            const values = form.getValues();
             const amenities = [];
             if (values.hasLift) amenities.push('Lift');
             if (values.hasClubhouse) amenities.push('Clubhouse');
@@ -155,7 +165,7 @@ export function AddPropertyForm() {
                 throw new Error("AI did not return a description.");
             }
         } catch (error) {
-             toast({ variant: 'destructive', title: "Generation Failed", description: "Could not generate a description." });
+             toast({ variant: 'destructive', title: "Generation Failed", description: "Could not generate a description. Please ensure all key details are filled correctly." });
         } finally {
             setIsGenerating(false);
         }
@@ -170,7 +180,7 @@ export function AddPropertyForm() {
 
         try {
             let videoUrl: string | undefined = undefined;
-            const videoFile = videoFileRef.current?.files?.[0];
+            const videoFile = values.video?.[0];
 
             if (videoFile) {
                 toast({ title: "Uploading Video...", description: "Please wait while we upload your property video." });
@@ -289,23 +299,27 @@ export function AddPropertyForm() {
                     <AccordionItem value="item-5" asChild><Card><AccordionTrigger className="p-6"><h3 className="text-2xl font-semibold leading-none tracking-tight">Description & Media</h3></AccordionTrigger><AccordionContent className="p-6 pt-0 grid gap-6">
                         <FormField control={form.control} name="description" render={({ field }) => ( <FormItem> <div className="flex items-center justify-between"> <FormLabel>Property Description</FormLabel> <Button type="button" variant="outline" size="sm" onClick={handleGenerateDescription} disabled={isGenerating}> <Wand2 className="mr-2 h-4 w-4" /> {isGenerating ? 'Generating...' : 'Generate with AI'} </Button> </div> <FormControl><Textarea rows={5} placeholder="A compelling description of your property..." {...field} className="text-black" /></FormControl> <FormDescription> You can write your own or use the AI generator based on the details you've provided. </FormDescription> <FormMessage /> </FormItem> )} />
                         
-                         <FormItem>
-                            <FormLabel>Property Video</FormLabel>
-                            <FormControl>
-                                <Input
-                                    type="file"
-                                    accept="video/*"
-                                    className="text-black"
-                                    {...register('video', {
-                                        ref: videoFileRef
-                                    })}
-                                />
-                            </FormControl>
-                            <FormDescription>
-                                Upload a short video of your property for the reel.
-                            </FormDescription>
-                            <FormMessage />
-                        </FormItem>
+                        <FormField
+                            control={form.control}
+                            name="video"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Property Video</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            type="file"
+                                            accept="video/*"
+                                            className="text-black"
+                                            onChange={(e) => field.onChange(e.target.files)}
+                                        />
+                                    </FormControl>
+                                    <FormDescription>
+                                        Upload a short video of your property for the reel.
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
 
                     </AccordionContent></Card></AccordionItem>
 

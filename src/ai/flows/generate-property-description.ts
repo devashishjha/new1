@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview An AI agent for generating property descriptions.
@@ -48,6 +49,11 @@ The tone should be professional yet inviting. Highlight the key selling points w
 
 Focus on creating a narrative that helps a potential buyer or renter envision themselves living in the property.
 
+**CRITICAL INSTRUCTIONS:**
+- You MUST generate a description, even if some details are missing or have values like 0.
+- If a detail is not provided or is zero, omit it gracefully from the description. For example, don't mention the floor number if it is 0.
+- Use the available details to create the most appealing description possible.
+
 Here are the property details:
 - Listing for: {{{priceType}}}
 - Price: {{{priceAmount}}}
@@ -73,6 +79,9 @@ const generatePropertyDescriptionFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    return output!;
+    if (!output || !output.description) {
+        throw new Error("The AI model failed to produce a valid description. The output was null or empty.");
+    }
+    return output;
   }
 );

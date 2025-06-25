@@ -21,6 +21,18 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  webpack: (config, { isServer }) => {
+    // These packages are required by Genkit, but are not used in the client-side
+    // bundle. This prevents webpack from trying to bundle them, which would
+    // cause a build failure.
+    if (!isServer) {
+        config.externals.push(
+            '@opentelemetry/exporter-jaeger',
+            'handlebars'
+        );
+    }
+    return config;
+  }
 };
 
 export default nextConfig;

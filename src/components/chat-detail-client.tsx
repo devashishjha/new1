@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -12,11 +13,13 @@ import { useAuth } from '@/hooks/use-auth';
 import type { ChatConversation, UserProfile } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { doc, onSnapshot, updateDoc, arrayUnion, serverTimestamp, getDoc, Timestamp } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 export function ChatDetailClient() {
   const { user } = useAuth();
   const params = useParams();
   const chatId = params.id as string;
+  const { toast } = useToast();
   
   const [conversation, setConversation] = useState<ChatConversation | null>(null);
   const [otherUser, setOtherUser] = useState<UserProfile | null>(null);
@@ -27,6 +30,18 @@ export function ChatDetailClient() {
   
   useEffect(() => {
     if (!user || !chatId) return;
+
+    if (!db) {
+        console.error("Firestore not configured.");
+        toast({
+            variant: 'destructive',
+            title: 'Chat Error',
+            description: 'The database is not available. Please check your connection or configuration.',
+            duration: 9000
+        });
+        setIsLoading(false);
+        return;
+    }
 
     const chatDocRef = doc(db, 'chats', chatId);
     const unsubscribe = onSnapshot(chatDocRef, async (docSnap) => {
@@ -61,7 +76,7 @@ export function ChatDetailClient() {
     });
 
     return () => unsubscribe();
-  }, [user, chatId, otherUser]);
+  }, [user, chatId, otherUser, toast]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -70,6 +85,15 @@ export function ChatDetailClient() {
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !user || !chatId || isSending) return;
+
+    if (!db) {
+        toast({
+            variant: 'destructive',
+            title: "Send Error",
+            description: "Cannot send message, database not available.",
+        });
+        return;
+    }
 
     setIsSending(true);
     const textToSend = newMessage;

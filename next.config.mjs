@@ -1,19 +1,28 @@
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  webpack: (config, { isServer }) => {
-    // These packages are server-side dependencies of genkit and should not be
-    // bundled into the client-side application, as they can cause build errors.
-    if (!isServer) {
-      // By marking them as external, we tell Webpack to ignore them for the client bundle.
-      config.externals.push(
-        '@opentelemetry/exporter-jaeger',
-        'require-in-the-middle',
-        'handlebars'
-      );
-    }
-
-    return config;
+  experimental: {
+    // This is the key to preventing server-only dependencies from being
+    // bundled into client-side code. This resolves the build instability.
+    serverComponentsExternalPackages: [
+      'genkit',
+      '@genkit-ai/core',
+      '@genkit-ai/googleai',
+      'firebase-admin',
+      'long',
+      'protobufjs',
+      'handlebars',
+      'require-in-the-middle',
+      // All @opentelemetry packages are server-only
+      '@opentelemetry/api',
+      '@opentelemetry/core',
+      '@opentelemetry/exporter-jaeger',
+      '@opentelemetry/instrumentation',
+      '@opentelemetry/resources',
+      '@opentelemetry/sdk-node',
+      '@opentelemetry/sdk-trace-base',
+      '@opentelemetry/sdk-trace-node',
+      '@opentelemetry/semantic-conventions',
+    ],
   },
 };
 

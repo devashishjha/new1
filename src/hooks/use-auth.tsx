@@ -48,31 +48,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const isAuthPage = pathname === '/';
-
-  // While the initial auth state is being determined, show a full-screen loader.
-  // This prevents any "flicker" or rendering of incorrect pages.
-  if (loading) {
-    return <FullScreenLoader />;
-  }
-
   const userIsLoggedIn = !!user;
 
-  // If user is NOT logged in and trying to access a protected page, redirect to login.
-  if (!userIsLoggedIn && !isAuthPage) {
-    router.replace('/');
-    // Return the loader to prevent rendering the page content while redirecting.
+  useEffect(() => {
+    // Don't run redirect logic until the initial auth state is resolved.
+    if (loading) {
+      return;
+    }
+
+    // If user is NOT logged in and is trying to access a protected page, redirect to login.
+    if (!userIsLoggedIn && !isAuthPage) {
+      router.replace('/');
+    }
+
+    // If user IS logged in and is trying to access the login page, redirect to the app's main page.
+    if (userIsLoggedIn && isAuthPage) {
+      router.replace('/reels');
+    }
+  }, [loading, userIsLoggedIn, isAuthPage, router]);
+
+
+  // Determine if we should show a loader.
+  // We show a loader if:
+  // 1. We are still waiting for the initial auth state to be determined.
+  // 2. A redirect is needed and about to happen (to prevent a flash of incorrect content).
+  const shouldShowLoader = loading || (!userIsLoggedIn && !isAuthPage) || (userIsLoggedIn && isAuthPage);
+  
+  if (shouldShowLoader) {
     return <FullScreenLoader />;
   }
 
-  // If user IS logged in and trying to access the login page, redirect to the app's main page.
-  if (userIsLoggedIn && isAuthPage) {
-    router.replace('/reels');
-    // Return the loader to prevent rendering the auth form while redirecting.
-    return <FullScreenLoader />;
-  }
-
-  // If none of the above conditions are met, it's safe to render the requested page.
-  // (e.g., user is logged in and on a protected page, or not logged in and on the login page).
+  // If no loader is needed, it's safe to render the children.
   return (
     <AuthContext.Provider value={{ user, loading }}>
       {children}
@@ -87,5 +93,3 @@ export const useAuth = () => {
     }
     return context;
 };
-
-    

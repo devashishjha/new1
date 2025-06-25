@@ -1,20 +1,20 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  webpack: (config) => {
+    // This is to fix a build error with genkit
+    // https://github.com/firebase/genkit/issues/118
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      'async_hooks': false,
+    };
+    return config;
+  },
   experimental: {
-    // This is the key to preventing server-only dependencies from being
-    // bundled into client-side code. This resolves the build instability.
+    // These packages are server-side only and should not be bundled
     serverComponentsExternalPackages: [
-      'genkit',
       '@genkit-ai/core',
       '@genkit-ai/googleai',
-      'firebase-admin',
-      'long',
-      'protobufjs',
-      'handlebars',
-      'require-in-the-middle',
-      // All @opentelemetry packages are server-only
       '@opentelemetry/api',
-      '@opentelemetry/core',
       '@opentelemetry/exporter-jaeger',
       '@opentelemetry/instrumentation',
       '@opentelemetry/resources',
@@ -22,6 +22,14 @@ const nextConfig = {
       '@opentelemetry/sdk-trace-base',
       '@opentelemetry/sdk-trace-node',
       '@opentelemetry/semantic-conventions',
+      'dotenv',
+      'express',
+      'firebase-admin',
+      'handlebars',
+      'long',
+      'require-in-the-middle',
+      'undici',
+      'zod',
     ],
   },
 };

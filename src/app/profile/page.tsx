@@ -86,7 +86,7 @@ function ProfileForm({ userProfile, userType, onProfileUpdate }: { userProfile: 
     if (!user) return;
     setIsSaving(true);
     
-    const updatedProfileData: UserProfile = {
+    const updatedProfileData = {
         ...userProfile,
         ...values,
         type: userType, // Make sure the type is correctly set
@@ -94,7 +94,7 @@ function ProfileForm({ userProfile, userType, onProfileUpdate }: { userProfile: 
     
     try {
         await setDoc(doc(db, 'users', user.uid), updatedProfileData, { merge: true });
-        onProfileUpdate(updatedProfileData); // Notify parent component of the update
+        onProfileUpdate(updatedProfileData as UserProfile); // Notify parent component of the update
         toast({
             title: "Profile Saved!",
             description: `Your ${userType} profile has been updated.`,

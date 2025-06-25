@@ -2,19 +2,21 @@
 const nextConfig = {
   webpack: (config, { isServer, webpack }) => {
     if (!isServer) {
-      // These are server-side dependencies that should not be bundled on the client.
-      // We can ignore them with a mock.
-      config.plugins.push(
-        new webpack.IgnorePlugin({
-          resourceRegExp: /@opentelemetry\/exporter-jaeger/,
-        })
-      );
-       config.plugins.push(
-        new webpack.IgnorePlugin({
-          resourceRegExp: /require-in-the-middle/,
-        })
-      );
+      // Exclude server-only packages from client-side bundle
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        'firebase-admin': false,
+        'require-in-the-middle': false,
+        'express': false,
+        '@opentelemetry/exporter-jaeger': false,
+        'handlebars': false,
+      };
     }
+
+    // Workaround for https://github.com/firebase/genkit/issues/238
+    config.plugins.push(new webpack.IgnorePlugin({
+        resourceRegExp: /^pre-compiled-content$/
+    }));
 
     return config;
   },

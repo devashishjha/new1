@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -21,6 +22,12 @@ export function ChatsListClient() {
         setIsLoading(false); // If no user, stop loading
         return;
     };
+
+    if (!db) {
+        console.error("Firestore not initialized.");
+        setIsLoading(false);
+        return;
+    }
 
     const q = query(
         collection(db, "chats"), 

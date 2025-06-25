@@ -1,36 +1,20 @@
+/** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* config options here */
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'placehold.co',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'lh3.googleusercontent.com',
-        port: '',
-        pathname: '/**',
-      },
-    ],
-  },
   webpack: (config, { isServer }) => {
-    // These packages are required by Genkit, but are not used in the client-side
-    // bundle. This prevents webpack from trying to bundle them, which would
-    // cause a build failure.
+    // Genkit and its dependencies include server-side code that should not be bundled
+    // in the client-side build. This configuration prevents them from being processed
+    // by Webpack for the browser, resolving the silent startup crash.
     if (!isServer) {
-        config.externals.push(
-            '@opentelemetry/exporter-jaeger',
-            'handlebars'
-        );
+      config.externals.push('@genkit-ai/googleai');
+      config.externals.push('firebase-admin');
     }
+
+    // The 'handlebars' package, a dependency of Genkit, requires a specific alias
+    // to be resolved correctly by Webpack during the build process.
+    config.resolve.alias.handlebars = 'handlebars/dist/handlebars.js';
+    
     return config;
-  }
+  },
 };
 
 export default nextConfig;

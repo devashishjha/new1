@@ -205,6 +205,12 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
             toast({ variant: 'destructive', title: "Not Authenticated", description: "You must be logged in to add a property." });
             return;
         }
+
+        if (!db || !storage) {
+            toast({ variant: 'destructive', title: "Service Unavailable", description: "Cannot submit property. Please ensure Firebase is configured." });
+            return;
+        }
+
         setIsSubmitting(true);
 
         try {

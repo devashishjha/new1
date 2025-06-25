@@ -1,18 +1,21 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  webpack: (config, { isServer }) => {
-    // Genkit and its dependencies include server-side code that should not be bundled
-    // in the client-side build. This configuration prevents them from being processed
-    // by Webpack for the browser, resolving the silent startup crash.
+  webpack: (config, { isServer, webpack }) => {
     if (!isServer) {
-      config.externals.push('@genkit-ai/googleai');
-      config.externals.push('firebase-admin');
+      // These are server-side dependencies that should not be bundled on the client.
+      // We can ignore them with a mock.
+      config.plugins.push(
+        new webpack.IgnorePlugin({
+          resourceRegExp: /@opentelemetry\/exporter-jaeger/,
+        })
+      );
+       config.plugins.push(
+        new webpack.IgnorePlugin({
+          resourceRegExp: /require-in-the-middle/,
+        })
+      );
     }
 
-    // The 'handlebars' package, a dependency of Genkit, requires a specific alias
-    // to be resolved correctly by Webpack during the build process.
-    config.resolve.alias.handlebars = 'handlebars/dist/handlebars.js';
-    
     return config;
   },
 };

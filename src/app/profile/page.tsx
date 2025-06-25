@@ -1,6 +1,7 @@
 
 'use client';
 
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -65,22 +66,23 @@ function ProfileForm({ userProfile, userType, onProfileUpdate }: { userProfile: 
   const { user } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
 
-  const form = useForm({
-    resolver: zodResolver(formSchemas[userType]),
-    values: { // Use `values` to pre-fill the form and react to changes
+  const currentSchema = React.useMemo(() => formSchemas[userType], [userType]);
+  type FormValues = z.infer<typeof currentSchema>;
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(currentSchema),
+    values: {
       name: userProfile.name || '',
       email: userProfile.email || '',
       phone: userProfile.phone || '',
       bio: userProfile.bio || '',
-      searchCriteria: userProfile.type === 'seeker' ? (userProfile as SeekerProfile).searchCriteria : '',
-      companyName: (userProfile.type === 'dealer' || userProfile.type === 'developer') ? (userProfile as DealerProfile | DeveloperProfile).companyName : '',
-      reraId: (userProfile.type === 'dealer' || userProfile.type === 'developer') ? (userProfile as DealerProfile | DeveloperProfile).reraId : '',
-    },
-    // This resets the form when the userType changes, ensuring validation is re-run
-    key: userType, 
+      ...(userType === 'seeker' && { searchCriteria: (userProfile as SeekerProfile).searchCriteria || '' }),
+      ...((userType === 'dealer' || userType === 'developer') && { companyName: (userProfile as DealerProfile | DeveloperProfile).companyName || '' }),
+      ...((userType === 'dealer' || userType === 'developer') && { reraId: (userProfile as DealerProfile | DeveloperProfile).reraId || '' }),
+    } as FormValues,
   });
 
-  async function onSubmit(values: any) {
+  async function onSubmit(values: FormValues) {
     if (!user) return;
     setIsSaving(true);
     
@@ -431,7 +433,7 @@ export default function ProfilePage() {
                                 <CardDescription>Fill in your details below. Saving will set this as your active profile.</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <ProfileForm userProfile={userProfile} userType={userType} onProfileUpdate={handleProfileUpdate} />
+                                <ProfileForm key={userType} userProfile={userProfile} userType={userType} onProfileUpdate={handleProfileUpdate} />
                             </CardContent>
                         </Card>
 

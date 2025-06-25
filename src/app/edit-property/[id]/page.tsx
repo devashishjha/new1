@@ -37,6 +37,9 @@ export default function EditPropertyPage() {
 
       const fetchProperty = async () => {
           setIsLoading(true);
+          if (!db) {
+            throw new Error('Firestore not initialized');
+          }
           const docRef = doc(db, 'properties', propertyId);
           const docSnap = await getDoc(docRef);
 

@@ -17,7 +17,16 @@ let auth: Auth | null = null;
 let db: Firestore | null = null;
 let storage: FirebaseStorage | null = null;
 // Export a flag to check if Firebase is configured.
-export const isFirebaseEnabled = !!firebaseConfig.apiKey;
+// It's true if and only if all the public Firebase keys are present.
+export const isFirebaseEnabled = !!(
+    firebaseConfig.apiKey &&
+    firebaseConfig.authDomain &&
+    firebaseConfig.projectId &&
+    firebaseConfig.storageBucket &&
+    firebaseConfig.messagingSenderId &&
+    firebaseConfig.appId
+);
+
 
 if (isFirebaseEnabled) {
   // Initialize Firebase only if the API key is provided.

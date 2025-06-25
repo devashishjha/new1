@@ -53,6 +53,15 @@ export function AuthForm() {
 
     const handleGoogleSignIn = async () => {
         setIsGoogleLoading(true);
+        if (!auth) {
+            toast({
+                variant: 'destructive',
+                title: 'Authentication Error',
+                description: 'Firebase is not configured correctly.',
+            });
+            setIsGoogleLoading(false);
+            return;
+        }
         const provider = new GoogleAuthProvider();
         try {
             const userCredential = await signInWithPopup(auth, provider);
@@ -89,6 +98,15 @@ export function AuthForm() {
     const handleEmailAuth = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
+        if (!auth) {
+            toast({
+                variant: 'destructive',
+                title: 'Authentication Error',
+                description: 'Firebase is not configured correctly.',
+            });
+            setIsLoading(false);
+            return;
+        }
         try {
             if (isLogin) {
                 await signInWithEmailAndPassword(auth, email, password);
@@ -137,6 +155,15 @@ export function AuthForm() {
             return;
         }
         setIsLoading(true);
+        if (!auth) {
+            toast({
+                variant: 'destructive',
+                title: 'Authentication Error',
+                description: 'Firebase is not configured correctly.',
+            });
+            setIsLoading(false);
+            return;
+        }
         try {
             await sendPasswordResetEmail(auth, email);
             toast({

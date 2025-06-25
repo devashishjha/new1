@@ -312,4 +312,4 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
   );
 }
 
-export const Reel = React.memo(ReelComponent);
+export const Reel = ReelComponent;

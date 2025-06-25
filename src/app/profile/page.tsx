@@ -85,6 +85,16 @@ function ProfileForm({ userProfile, userType, onProfileUpdate }: { userProfile: 
   async function onSubmit(values: FormValues) {
     if (!user) return;
     setIsSaving(true);
+
+    if (!db) {
+        toast({
+            variant: 'destructive',
+            title: "Database Not Available",
+            description: "Cannot save profile. Please check your Firebase configuration.",
+        });
+        setIsSaving(false);
+        return;
+    }
     
     const updatedProfileData = {
         ...userProfile,
@@ -183,6 +193,12 @@ export default function ProfilePage() {
                 description,
                 duration: 7000,
             });
+        }
+        
+        if (!db) {
+            console.error("Firestore not initialized.");
+            setupFallbackAndNotify('destructive', 'Could Not Load Profile', 'Database is not configured.');
+            return;
         }
 
         const userDocRef = doc(db, 'users', user.uid);

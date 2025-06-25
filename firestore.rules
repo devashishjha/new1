@@ -1,0 +1,32 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Properties are publicly readable, but writes are restricted.
+    match /properties/{propertyId} {
+      allow read: if true;
+      
+      // Allow creating a property if the user is authenticated.
+      allow create: if request.auth != null;
+      
+      // Allow updating or deleting a property only if the user is the lister.
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.lister.id;
+    }
+    
+    // User profiles are publicly readable, but only the user can write to their own profile.
+    match /users/{userId} {
+      allow read: if true;
+      
+      // Allow creating and updating a profile only if the user is authenticated and matches the document ID.
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Chats are only accessible by the participants of the chat.
+    match /chats/{chatId} {
+      // Allow read/write only if the requesting user's ID is in the participantIds array.
+      allow read, write: if request.auth != null && request.auth.uid in resource.data.participantIds;
+    }
+  }
+}

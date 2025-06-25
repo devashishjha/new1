@@ -25,6 +25,7 @@ export function ChatDetailClient() {
   const [otherUser, setOtherUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {

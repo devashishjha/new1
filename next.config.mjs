@@ -1,27 +1,24 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    // This is the key to preventing server-only dependencies from being bundled
-    // into the client-side code, which can cause build failures.
-    // We are explicitly listing packages that should only be on the server.
+    // This option instructs Next.js to keep these packages on the server side
+    // and not bundle them for the client. This is essential for libraries like
+    // Genkit that have server-only dependencies.
     serverComponentsExternalPackages: [
-      'genkit',
       '@genkit-ai/googleai',
-      'firebase-admin',
-      'google-auth-library',
       '@google-cloud/functions-framework',
+      'express',
+      'firebase-admin',
       'long',
-      '@grpc/grpc-js',
       'protobufjs',
-      'undici',
-      'yargs',
+      '@grpc/grpc-js',
+      'gaxios',
+      'google-auth-library',
+      'googleapis',
+      'googleapis-common',
       '@opentelemetry/api',
       '@opentelemetry/core',
-      '@opentelemetry/exporter-trace-otlp-http',
-      '@opentelemetry/resources',
       '@opentelemetry/sdk-trace-base',
-      '@opentelemetry/sdk-trace-node',
-      '@opentelemetry/semantic-conventions',
       'handlebars',
     ],
   },

@@ -23,7 +23,6 @@ export function ChatDetailClient() {
   
   const [conversation, setConversation] = useState<ChatConversation | null>(null);
   const [otherUser, setOtherUser] = useState<UserProfile | null>(null);
-  const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -60,6 +59,7 @@ export function ChatDetailClient() {
         if (!otherUser) {
             const otherUserId = convoData.participantIds.find(id => id !== user.uid);
             if (otherUserId) {
+                if (!db) return; // Guard clause for TypeScript
                 const userDocRef = doc(db, 'users', otherUserId);
                 const userDocSnap = await getDoc(userDocRef);
                 if (userDocSnap.exists()) {

@@ -32,6 +32,7 @@ export function AuthForm() {
     const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
     const createNewUserProfile = async (user: User) => {
+        if (!db) return;
         const userDocRef = doc(db, "users", user.uid);
         const docSnap = await getDoc(userDocRef);
 

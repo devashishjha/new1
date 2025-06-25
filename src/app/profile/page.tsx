@@ -255,30 +255,58 @@ export default function ProfilePage() {
     const handleTypeChange = (newType: UserType) => {
         if (!userProfile) return;
 
-        // Create a new profile object, preserving all existing fields,
-        // and just updating the type. This prevents data loss on switching.
-        const newProfile = {
-            ...userProfile,
-            type: newType,
-        } as UserProfile;
+        // Preserve base properties and try to preserve relevant specific properties
+        const baseProfileData = {
+            id: userProfile.id,
+            name: userProfile.name,
+            email: userProfile.email,
+            phone: userProfile.phone,
+            bio: userProfile.bio,
+            avatar: userProfile.avatar,
+        };
 
-        // Ensure the new profile has the necessary fields for its type, even if empty
+        let newProfile: UserProfile;
+
+        // Create the new profile object based on the selected type,
+        // carrying over existing data if applicable.
         switch (newType) {
             case 'seeker':
-                if (!('searchCriteria' in newProfile)) {
-                    (newProfile as SeekerProfile).searchCriteria = '';
-                }
+                newProfile = {
+                    ...baseProfileData,
+                    type: 'seeker',
+                    searchCriteria: 'searchCriteria' in userProfile ? userProfile.searchCriteria : '',
+                    searchHistory: 'searchHistory' in userProfile ? userProfile.searchHistory : [],
+                };
+                break;
+            case 'owner':
+                newProfile = {
+                    ...baseProfileData,
+                    type: 'owner',
+                };
                 break;
             case 'dealer':
-            case 'developer':
-                if (!('companyName' in newProfile)) {
-                    (newProfile as DealerProfile | DeveloperProfile).companyName = '';
-                }
-                if (!('reraId' in newProfile)) {
-                    (newProfile as DealerProfile | DeveloperProfile).reraId = '';
-                }
+                newProfile = {
+                    ...baseProfileData,
+                    type: 'dealer',
+                    companyName: 'companyName' in userProfile ? userProfile.companyName : '',
+                    reraId: ('reraId' in userProfile && userProfile.reraId) ? userProfile.reraId : '',
+                };
                 break;
-            // 'owner' has no extra fields to initialize
+            case 'developer':
+                 newProfile = {
+                    ...baseProfileData,
+                    type: 'developer',
+                    companyName: 'companyName' in userProfile ? userProfile.companyName : '',
+                    reraId: ('reraId' in userProfile && userProfile.reraId) ? userProfile.reraId : '',
+                };
+                break;
+            default:
+                // Fallback to a safe default (seeker profile)
+                newProfile = {
+                    ...baseProfileData,
+                    type: 'seeker',
+                    searchCriteria: '',
+                };
         }
 
         setUserProfile(newProfile);

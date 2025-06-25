@@ -257,10 +257,10 @@ export default function ProfilePage() {
 
         // Create a new profile object, preserving all existing fields,
         // and just updating the type. This prevents data loss on switching.
-        const newProfile: UserProfile = {
+        const newProfile = {
             ...userProfile,
             type: newType,
-        };
+        } as UserProfile;
 
         // Ensure the new profile has the necessary fields for its type, even if empty
         switch (newType) {
@@ -286,6 +286,7 @@ export default function ProfilePage() {
     };
 
     const handleLogout = async () => {
+        if (!auth) { return; }
         await signOut(auth);
         toast({ title: "Logged Out", description: "You have been successfully logged out." });
     };

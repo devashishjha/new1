@@ -4,42 +4,60 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions to make rules clearer
+    // Helper function to check if a user is signed in
     function isSignedIn() {
       return request.auth != null;
     }
 
-    function isUser(userId) {
+    // Helper function to check if the requesting user is the owner of a document
+    function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // --- Users Collection ---
-    // Anyone can view a user's public profile.
-    // Only the user themselves can create or update their own profile document.
+    // Rules for the 'users' collection
     match /users/{userId} {
-      allow read: if true;
-      allow create: if isUser(userId);
-      allow update: if isUser(userId);
-      allow delete: if false; // Disallow deleting user profiles for app integrity
+      // Anyone can view a user's profile.
+      allow get: if true;
+
+      // A user can only create their own profile document.
+      allow create: if isOwner(userId);
+
+      // A user can only update their own profile document.
+      allow update: if isOwner(userId);
+
+      // Disallow deleting user profiles from the client.
+      allow delete: if false;
     }
 
-    // --- Properties Collection ---
-    // Anyone can view all property listings.
-    // Only signed-in users can create a new property, and they must be the lister.
-    // Only the original lister is allowed to update or delete their property.
+    // Rules for the 'properties' collection
     match /properties/{propertyId} {
-      allow read: if true;
+      // Anyone can view (get) or list properties.
+      allow get, list: if true;
+
+      // A user must be signed in to create a property, and the 'lister.id'
+      // in the new document must match their own user ID.
       allow create: if isSignedIn() && request.resource.data.lister.id == request.auth.uid;
+
+      // Only the original lister can update their own property.
+      // We check the 'lister.id' of the document that already exists in the database.
       allow update: if isSignedIn() && resource.data.lister.id == request.auth.uid;
+      
+      // Only the original lister can delete their own property.
       allow delete: if isSignedIn() && resource.data.lister.id == request.auth.uid;
     }
 
-    // --- Chats Collection ---
-    // A user can only interact with a chat if they are a participant.
+    // Rules for the 'chats' collection
     match /chats/{chatId} {
-      allow read, update: if isSignedIn() && request.auth.uid in resource.data.participantIds;
+      // A user can only get or update a chat document if their user ID
+      // is present in the 'participantIds' array of that document.
+      allow get, update: if isSignedIn() && request.auth.uid in resource.data.participantIds;
+
+      // A user can create a new chat document if they are signed in and
+      // their user ID is included in the 'participantIds' of the new chat.
       allow create: if isSignedIn() && request.auth.uid in request.resource.data.participantIds;
-      allow delete: if false; // Disallow deleting chat history
+
+      // Disallow deleting chat documents from the client.
+      allow delete: if false;
     }
   }
 }

@@ -5,25 +5,22 @@ runConfig:
   # Increase this value if you'd like to automatically spin up
   # more instances in response to increased traffic.
   maxInstances: 10
+
+# This section maps secrets from Google Secret Manager to the environment variables
+# that will be available to your Next.js application during its build and runtime.
+# This is the crucial configuration that allows your live site to exit "offline mode".
 environmentVariables:
-  # Secret for Genkit AI features.
-  GOOGLE_API_KEY:
+  - variable: GOOGLE_API_KEY
     secret: GOOGLE_API_KEY
-  # Secret for Firebase client-side API key.
-  NEXT_PUBLIC_FIREBASE_API_KEY:
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
     secret: NEXT_PUBLIC_FIREBASE_API_KEY
-  # Secret for Firebase client-side auth domain.
-  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN:
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
     secret: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-  # Secret for Firebase client-side project ID.
-  NEXT_PUBLIC_FIREBASE_PROJECT_ID:
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
     secret: NEXT_PUBLIC_FIREBASE_PROJECT_ID
-  # Secret for Firebase client-side storage bucket.
-  NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET:
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
     secret: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-  # Secret for Firebase client-side messaging sender ID.
-  NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID:
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
     secret: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
-  # Secret for Firebase client-side app ID.
-  NEXT_PUBLIC_FIREBASE_APP_ID:
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
     secret: NEXT_PUBLIC_FIREBASE_APP_ID

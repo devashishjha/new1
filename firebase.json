@@ -15,10 +15,8 @@
     "site": "lokal-reels-f40ff",
     "rewrites": [
       {
-        "source": "**",
-        "apphosting": {
-          "backendId": "newlokality"
-        }
+ "source": "**",
+        "backend": "newlokality"
       }
     ]
   }

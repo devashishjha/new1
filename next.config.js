@@ -7,6 +7,7 @@ const nextConfig = {
     // By marking them as "external", we tell Next.js not to bundle them, which cleans up the build output.
     config.externals.push(
       '@opentelemetry/exporter-jaeger',
+      '@opentelemetry/instrumentation',
       'handlebars'
     );
     return config;

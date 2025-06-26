@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { AuthProvider } from '@/hooks/use-auth';
+import { EnvDebugger } from '@/components/env-debugger';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -24,6 +25,7 @@ export default function RootLayout({
           {children}
         </AuthProvider>
         <Toaster />
+        <EnvDebugger />
       </body>
     </html>
   );

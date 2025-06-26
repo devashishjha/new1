@@ -32,6 +32,12 @@ export function ShortlistedClient() {
             return;
         }
 
+        if (!db) {
+            console.error("Firestore not initialized.");
+            setIsLoading(false);
+            return;
+        }
+
         try {
             // Firestore 'in' query is limited to 30 elements. 
             // For larger lists, you'd fetch documents one by one or batch them.

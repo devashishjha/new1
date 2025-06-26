@@ -47,7 +47,7 @@ const InfoCard = ({ icon, label, value, children }: { icon: React.ElementType, l
 );
 
 
-function ReelComponent({ property, userSearchCriteria, onDelete }: { property: Property; userSearchCriteria: string; onDelete: (propertyId: string) => void }) {
+function ReelComponent({ property, userSearchCriteria, onDelete }: { property: Property; userSearchCriteria: string; onDelete?: (propertyId: string) => void }) {
   const [matchInfo, setMatchInfo] = useState<PropertyMatchScoreOutput | null | undefined>(undefined);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isAiMatchDialogOpen, setIsAiMatchDialogOpen] = useState(false);
@@ -170,6 +170,7 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
   };
   
   const handleDeleteConfirm = async () => {
+    if (!onDelete) return;
     setIsDeleting(true);
     const result = await deletePropertyAction(property.id);
     if (result.success) {
@@ -241,7 +242,7 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
                 <button onClick={(e) => handleInteraction(e, openDetailsSheet)} className="flex-1 flex flex-col items-center gap-1 p-1 rounded-full hover:bg-white/10 transition-colors">
                     <Info strokeWidth={2.5} className="h-6 w-6"/>
                 </button>
-                {isLister && (
+                {isLister && onDelete && (
                   <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                       <AlertDialogTrigger asChild>
                            <button onClick={(e) => e.stopPropagation()} className="flex-1 flex flex-col items-center gap-1 p-1 rounded-full hover:bg-destructive/80 transition-colors text-destructive">

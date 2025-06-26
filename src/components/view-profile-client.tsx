@@ -47,6 +47,39 @@ export function ViewProfileClient() {
 
     const fetchData = async () => {
       setIsLoading(true);
+
+      const handleFallback = () => {
+        const dummyLister = dummyProperties.find(p => p.lister.id === userId)?.lister;
+        if (dummyLister) {
+          const baseProfile = {
+            id: dummyLister.id,
+            name: dummyLister.name,
+            email: `${dummyLister.name.toLowerCase().replace(/\s/g, '.')}@example.com`,
+            phone: dummyLister.phone || '',
+            bio: `A passionate ${dummyLister.type} helping people find their dream homes.`,
+            avatar: dummyLister.avatar || 'https://placehold.co/100x100.png',
+          };
+          let fullDummyProfile: UserProfile | null = null;
+          switch (dummyLister.type) {
+            case 'owner': fullDummyProfile = { ...baseProfile, type: 'owner' }; break;
+            case 'dealer': fullDummyProfile = { ...baseProfile, type: 'dealer', companyName: `${dummyLister.name}'s Realty`, reraId: '' } as DealerProfile; break;
+            case 'developer': fullDummyProfile = { ...baseProfile, type: 'developer', companyName: `${dummyLister.name} Corp`, reraId: 'DUMMY/RERA/12345' } as DeveloperProfile; break;
+          }
+          setProfile(fullDummyProfile);
+          if (fullDummyProfile) {
+            const propertiesByDummyLister = dummyProperties.filter(p => p.lister.id === userId);
+            setUserProperties(propertiesByDummyLister.map(p => dateToJSON(p)) as Property[]);
+          }
+        } else {
+          setProfile(null);
+        }
+      };
+
+      if (!db) {
+        handleFallback();
+        setIsLoading(false);
+        return;
+      }
       
       const userDocRef = doc(db, 'users', userId);
       const userDocSnap = await getDoc(userDocRef);
@@ -62,53 +95,7 @@ export function ViewProfileClient() {
           setUserProperties(properties.map(p => dateToJSON(p)) as Property[]);
         }
       } else {
-        // Fallback to dummy data if user is not in Firestore
-        const dummyLister = dummyProperties.find(p => p.lister.id === userId)?.lister;
-        
-        if (dummyLister) {
-          // Create a FULL, VALID UserProfile from the dummy data
-          const baseProfile = {
-            id: dummyLister.id,
-            name: dummyLister.name,
-            email: `${dummyLister.name.toLowerCase().replace(/\s/g, '.')}@example.com`,
-            phone: dummyLister.phone || '',
-            bio: `A passionate ${dummyLister.type} helping people find their dream homes.`,
-            avatar: dummyLister.avatar || 'https://placehold.co/100x100.png',
-          };
-
-          let fullDummyProfile: UserProfile | null = null;
-          switch (dummyLister.type) {
-            case 'owner':
-              fullDummyProfile = { ...baseProfile, type: 'owner' };
-              break;
-            case 'dealer':
-              fullDummyProfile = {
-                ...baseProfile,
-                type: 'dealer',
-                companyName: `${dummyLister.name}'s Realty`,
-                reraId: '', // Ensure all required fields are present
-              } as DealerProfile;
-              break;
-            case 'developer':
-              fullDummyProfile = {
-                ...baseProfile,
-                type: 'developer',
-                companyName: `${dummyLister.name} Corp`,
-                reraId: 'DUMMY/RERA/12345',
-              } as DeveloperProfile;
-              break;
-          }
-          
-          setProfile(fullDummyProfile);
-          
-          if (fullDummyProfile) {
-            const propertiesByDummyLister = dummyProperties.filter(p => p.lister.id === userId);
-            setUserProperties(propertiesByDummyLister.map(p => dateToJSON(p)) as Property[]);
-          }
-          
-        } else {
-          setProfile(null);
-        }
+        handleFallback();
       }
       setIsLoading(false);
     };
@@ -256,3 +243,5 @@ export function ViewProfileClient() {
     </>
   );
 }
+
+    

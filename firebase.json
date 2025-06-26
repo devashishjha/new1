@@ -14,13 +14,10 @@
   "hosting": {
     "site": "lokal-reels-f40ff",
     "rewrites": [
-      {
-        "source": "**",
-        "apphosting": {
-          "backendId": "newlokality",
-          "region": "asia-east1"
-        }
-      }
+ {
+ "source": "**",
+ "apphosting": "newlokality"
+ }
     ]
   }
 }

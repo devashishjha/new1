@@ -1,3 +1,4 @@
+
 import { AuthForm } from '@/components/auth-form';
 import { isFirebaseEnabled } from '@/lib/firebase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +14,9 @@ function FirebaseWarning() {
         "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID",
         "NEXT_PUBLIC_FIREBASE_APP_ID",
     ];
+
+    // This logic runs on the server and checks the actual environment.
+    const missingSecrets = requiredSecrets.filter(secret => !process.env[secret]);
 
     return (
         <Card className="w-full max-w-2xl shadow-2xl bg-black/20 backdrop-blur-lg border border-destructive/50">
@@ -32,11 +36,16 @@ function FirebaseWarning() {
                 </div>
                  <div className="bg-black/30 p-4 rounded-md font-mono space-y-2">
                     <p><span className="text-primary font-semibold">For Production:</span></p>
-                    <p>This live version of the app is missing one or more required secrets. Please go to Google Secret Manager and ensure the following secrets exist with the correct values:</p>
-                    <ul className="list-disc pl-5 pt-2 text-xs text-white/80 space-y-1">
-                        {requiredSecrets.map(secret => <li key={secret}>{secret}</li>)}
-                    </ul>
-                     <p className="pt-2">After adding/correcting the secrets, you must <span className="text-primary font-semibold">re-deploy</span> the application.</p>
+                    <p>This live version of the app is missing the following required secrets. Please go to Google Secret Manager and ensure they exist with the correct names and values:</p>
+                    
+                    {missingSecrets.length > 0 ? (
+                      <ul className="list-disc pl-5 pt-2 text-xs text-white/80 space-y-1">
+                          {missingSecrets.map(secret => <li key={secret} className="text-destructive font-semibold">{secret}</li>)}
+                      </ul>
+                    ) : (
+                      <p className="pt-2 text-white/80">All secret names appear to be defined, but one or more might have an incorrect value or the app may lack permissions to read them.</p>
+                    )}
+                     <p className="pt-2">After adding/correcting the secrets (and ensuring the app has the 'Secret Manager Secret Accessor' role), you must <span className="text-primary font-semibold">re-deploy</span> the application.</p>
                 </div>
             </CardContent>
         </Card>

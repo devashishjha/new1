@@ -1,14 +1,5 @@
-# Settings to manage and configure a Firebase App Hosting backend.
-# https://firebase.google.com/docs/app-hosting/configure
-
 runConfig:
-  # Increase this value if you'd like to automatically spin up
-  # more instances in response to increased traffic.
   maxInstances: 10
-
-# This section maps secrets from Google Secret Manager to the environment variables
-# that will be available to your Next.js application during its build and runtime.
-# This is the crucial configuration that allows your live site to exit "offline mode".
 env:
   - variable: GOOGLE_API_KEY
     secret: GOOGLE_API_KEY

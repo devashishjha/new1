@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from "@/hooks/use-auth";
@@ -26,6 +27,12 @@ export function useChatNavigation() {
         }
 
         setIsNavigating(true);
+
+        if (!db) {
+            toast({ variant: 'destructive', title: "Database Error", description: "Firebase is not configured. Cannot start chat." });
+            setIsNavigating(false);
+            return;
+        }
 
         try {
             const chatsRef = collection(db, 'chats');

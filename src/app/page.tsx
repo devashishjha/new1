@@ -12,13 +12,12 @@ function FirebaseWarning() {
                 </div>
                 <CardTitle className="mt-4 text-center">Action Required: Configure Firebase</CardTitle>
                 <CardDescription className="text-center">
-                    Your application is running in offline mode. To enable user sign-in and all other features, you must add your Firebase project credentials to the `.env` file.
+                    The application is running in offline mode because it's missing its Firebase credentials. User sign-in and database features are disabled.
                 </CardDescription>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground bg-black/30 p-4 rounded-md font-mono space-y-2">
-                <p>1. Open the file named <span className="text-primary font-semibold">.env</span> in the file explorer.</p>
-                <p>2. Fill in the placeholder values with the keys from your Firebase project settings.</p>
-                <p>3. Restart the development server.</p>
+                <p><span className="text-primary font-semibold">For Local Development:</span> Ensure your <span className="text-primary font-semibold">.env</span> file is correctly filled with your Firebase project's web app configuration.</p>
+                <p><span className="text-primary font-semibold">For Production:</span> Make sure all required secrets have been created in Google Secret Manager and the app has been redeployed.</p>
             </CardContent>
         </Card>
     )

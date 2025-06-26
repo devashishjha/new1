@@ -12,7 +12,7 @@
     "alwaysDeployFromSource": true
   },
   "hosting": {
-    "site": "lokal-reels-f40ff",
+    "site": "lokal-reels",
     "rewrites": [
       {
         "source": "**",

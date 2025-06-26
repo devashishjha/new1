@@ -15,8 +15,11 @@
     "site": "lokal-reels-f40ff",
     "rewrites": [
       {
- "source": "**",
-        "backend": "newlokality"
+        "source": "**",
+        "run": {
+          "serviceId": "newlokality",
+          "region": "asia-east1"
+        }
       }
     ]
   }

@@ -1,5 +1,6 @@
 
 runConfig:
+  minInstances: 1
   maxInstances: 10
 env:
   - variable: GOOGLE_API_KEY

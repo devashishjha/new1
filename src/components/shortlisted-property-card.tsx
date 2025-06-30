@@ -29,7 +29,8 @@ export function ShortlistedPropertyCard({ property }: { property: Property }) {
                             <>
                                 <video
                                     src={`${property.video}#t=0.1`} // Fetch first frame for thumbnail
-                                    className="w-full h-48 object-cover bg-black video-force-normal"
+                                    className="w-full h-48 object-cover bg-black"
+                                    style={{ transform: 'none' }}
                                     preload="metadata"
                                     muted
                                     playsInline

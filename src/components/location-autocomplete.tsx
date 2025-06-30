@@ -28,6 +28,10 @@ export function LocationAutocomplete({ value, onChange, isTextarea, placeholder 
     autocompleteRef.current = autocomplete;
   };
 
+  const onUnmount = () => {
+    autocompleteRef.current = null;
+  };
+
   const onPlaceChanged = () => {
     if (autocompleteRef.current !== null) {
       const place = autocompleteRef.current.getPlace();
@@ -62,6 +66,7 @@ export function LocationAutocomplete({ value, onChange, isTextarea, placeholder 
     <Autocomplete
       onLoad={onLoad}
       onPlaceChanged={onPlaceChanged}
+      onUnmount={onUnmount}
       options={{
         types: ['geocode'],
         componentRestrictions: { country: 'in' }, // Restrict to India

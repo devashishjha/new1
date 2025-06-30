@@ -212,7 +212,7 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
             loop 
             playsInline 
             className="absolute inset-0 w-full h-full object-cover" 
-            style={{ transform: 'none' }}
+            style={{ transform: 'rotateX(180deg)' }}
           />
       ) : (
         property.image && (

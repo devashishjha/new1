@@ -31,7 +31,7 @@ const propertySchema = z.object({
     // Basic Info
     priceType: z.enum(['rent', 'sale']),
     priceAmount: z.coerce.number().min(1, { message: 'Please enter a valid price.' }),
-    location: z.string().min(5, { message: 'Please enter a valid location.' }),
+    location: z.string().min(3, { message: 'Location must be at least 3 characters.' }),
     societyName: z.string().min(2, { message: 'Please enter a society name.' }),
     description: z.string().max(500, "Description must be 500 characters or less.").optional(),
     video: z.any().optional(),

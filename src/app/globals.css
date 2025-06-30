@@ -66,4 +66,7 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+  .force-no-transform {
+    transform: none !important;
+  }
 }

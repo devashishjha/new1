@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useMemo } from 'react';
 import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -41,6 +41,13 @@ export function LocationAutocomplete({ value, onChange, isTextarea, placeholder 
     }
   }, [onChange]);
 
+  // Memoize the options object to prevent it from being recreated on every render.
+  // This stabilizes the component and prevents the internal error.
+  const autocompleteOptions = useMemo(() => ({
+    types: ['geocode'],
+    componentRestrictions: { country: 'in' }, // Restrict to India
+  }), []);
+
   const inputProps = {
     value: value,
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onChange(e.target.value),
@@ -67,10 +74,7 @@ export function LocationAutocomplete({ value, onChange, isTextarea, placeholder 
       onLoad={onLoad}
       onPlaceChanged={onPlaceChanged}
       onUnmount={onUnmount}
-      options={{
-        types: ['geocode'],
-        componentRestrictions: { country: 'in' }, // Restrict to India
-      }}
+      options={autocompleteOptions}
     >
       <InputComponent {...inputProps} />
     </Autocomplete>

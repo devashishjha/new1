@@ -5,7 +5,6 @@ import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Wand2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -14,10 +13,7 @@ import { Checkbox } from './ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 import { useToast } from '@/hooks/use-toast';
-import { Textarea } from './ui/textarea';
 import { Slider } from './ui/slider';
-import { generatePropertyDescriptionAction } from '@/app/actions';
-import type { GeneratePropertyDescriptionInput } from '@/ai/flows/generate-property-description';
 import { useAuth } from '@/hooks/use-auth';
 import { db, storage } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -33,7 +29,6 @@ const propertySchema = z.object({
     priceAmount: z.coerce.number().min(1, { message: 'Please enter a valid price.' }),
     location: z.string().min(3, { message: 'Location must be at least 3 characters.' }),
     societyName: z.string().min(2, { message: 'Please enter a society name.' }),
-    description: z.string().max(500, "Description must be 500 characters or less.").optional(),
     video: z.any().optional(),
 
     // Property Details
@@ -78,7 +73,6 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
     const { user } = useAuth();
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = React.useState(false);
-    const [isGenerating, setIsGenerating] = React.useState(false);
 
     const form = useForm<z.infer<typeof propertySchema>>({
         resolver: zodResolver(propertySchema),
@@ -87,7 +81,6 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
             priceAmount: 0,
             location: '',
             societyName: '',
-            description: '',
             video: null,
             propertyType: 'apartment',
             configuration: '2bhk',
@@ -127,7 +120,6 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
                 priceAmount: property.price.amount,
                 location: property.location,
                 societyName: property.societyName,
-                description: property.description,
                 propertyType: property.propertyType,
                 configuration: property.configuration,
                 floorNo: property.floorNo,
@@ -160,47 +152,6 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
         }
     }, [mode, property, form]);
 
-    async function handleGenerateDescription() {
-        setIsGenerating(true);
-        const values = form.getValues();
-
-        try {
-            const amenities = [];
-            if (values.hasLift) amenities.push('Lift');
-            if (values.hasClubhouse) amenities.push('Clubhouse');
-            if (values.hasChildrenPlayArea) amenities.push("Children's Play Area");
-            if (values.hasSuperMarket) amenities.push("Super Market");
-            
-            const input: GeneratePropertyDescriptionInput = {
-                priceType: values.priceType,
-                priceAmount: values.priceAmount || undefined,
-                location: values.location || undefined,
-                societyName: values.societyName || undefined,
-                propertyType: values.propertyType,
-                configuration: values.configuration,
-                floorNo: values.floorNo || undefined,
-                totalFloors: values.totalFloors || undefined,
-                superBuiltUpArea: values.superBuiltUpArea || undefined,
-                carpetArea: values.carpetArea || undefined,
-                mainDoorDirection: values.mainDoorDirection,
-                hasBalcony: values.hasBalcony,
-                amenities: amenities.length > 0 ? amenities : undefined,
-            };
-
-            const result = await generatePropertyDescriptionAction(input);
-            if (result?.description) {
-                form.setValue('description', result.description);
-                toast({ title: "Description Generated!", description: "The AI has written a description for you." });
-            } else {
-                throw new Error("AI did not return a description.");
-            }
-        } catch (error) {
-             toast({ variant: 'destructive', title: "Generation Failed", description: "Could not generate a description. Please try again or write your own." });
-        } finally {
-            setIsGenerating(false);
-        }
-    }
-
     async function onSubmit(values: z.infer<typeof propertySchema>) {
         if (!user) {
             toast({ variant: 'destructive', title: "Not Authenticated", description: "You must be logged in to add a property." });
@@ -224,10 +175,12 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
                 const uploadResult = await uploadBytes(storageRef, videoFile);
                 videoUrl = await getDownloadURL(uploadResult.ref);
             }
+            
+            const autoDescription = `A ${values.configuration} ${values.propertyType} in ${values.societyName}, available for ${values.priceType}. Located at ${values.location}.`;
 
             const propertyDataForFirestore = {
                 title: `${values.configuration.toUpperCase()} in ${values.societyName}`,
-                description: values.description || '',
+                description: autoDescription,
                 video: videoUrl,
                 price: { type: values.priceType, amount: values.priceAmount },
                 location: values.location,
@@ -386,9 +339,7 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
                         <FormField control={form.control} name="moveInCharges" render={({ field }) => ( <FormItem><FormLabel>Move-in Charges</FormLabel><FormControl><Input type="number" placeholder="2000" {...field} /></FormControl><FormMessage /></FormItem> )}/>
                     </AccordionContent></Card></AccordionItem>
 
-                    <AccordionItem value="item-5" asChild><Card><AccordionTrigger className="p-6"><h3 className="text-2xl font-semibold leading-none tracking-tight">Description & Media</h3></AccordionTrigger><AccordionContent className="p-6 pt-0 grid gap-6">
-                        <FormField control={form.control} name="description" render={({ field }) => ( <FormItem> <div className="flex items-center justify-between"> <FormLabel>Property Description</FormLabel> <Button type="button" variant="outline" size="sm" onClick={handleGenerateDescription} disabled={isGenerating}> <Wand2 className="mr-2 h-4 w-4" /> {isGenerating ? 'Generating...' : 'Generate with AI'} </Button> </div> <FormControl><Textarea rows={5} placeholder="A compelling description of your property..." {...field} /></FormControl> <FormDescription> You can write your own or use the AI generator based on the details you've provided. </FormDescription> <FormMessage /> </FormItem> )} />
-                        
+                    <AccordionItem value="item-5" asChild><Card><AccordionTrigger className="p-6"><h3 className="text-2xl font-semibold leading-none tracking-tight">Property Media</h3></AccordionTrigger><AccordionContent className="p-6 pt-0 grid gap-6">
                         <FormField
                             control={form.control}
                             name="video"
@@ -409,10 +360,9 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
                                 </FormItem>
                             )}
                         />
-
                     </AccordionContent></Card></AccordionItem>
                 </Accordion>
-                <Button type="submit" size="lg" className="w-full" disabled={isSubmitting || isGenerating}>
+                <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
                     {isSubmitting ? (mode === 'edit' ? 'Updating...' : 'Submitting...') : (mode === 'edit' ? 'Update Property' : 'Submit Property')}
                 </Button>
             </form>

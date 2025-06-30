@@ -42,7 +42,7 @@ export function LocationAutocomplete({ value, onChange, isTextarea, placeholder 
   }, [onChange]);
 
   // Memoize the options object to prevent it from being recreated on every render.
-  // This stabilizes the component and prevents the internal error.
+  // This stabilizes the component and prevents the internal Google Maps error.
   const autocompleteOptions = useMemo(() => ({
     types: ['geocode'],
     componentRestrictions: { country: 'in' }, // Restrict to India

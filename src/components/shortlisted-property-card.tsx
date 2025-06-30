@@ -33,6 +33,7 @@ export function ShortlistedPropertyCard({ property }: { property: Property }) {
                                     preload="metadata"
                                     muted
                                     playsInline
+                                    style={{ transform: 'none' }}
                                 />
                                 <div className="absolute top-2 right-2 bg-black/50 p-1.5 rounded-full backdrop-blur-sm">
                                     <Video className="w-5 h-5 text-white" />

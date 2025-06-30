@@ -27,6 +27,7 @@ export function AuthForm() {
     const { toast } = useToast();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [isLogin, setIsLogin] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
     const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -98,6 +99,28 @@ export function AuthForm() {
     const handleEmailAuth = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
+
+        if (!isLogin) {
+            if (password.length < 6) {
+                toast({
+                    variant: 'destructive',
+                    title: 'Password Too Short',
+                    description: 'Your password must be at least 6 characters long.',
+                });
+                setIsLoading(false);
+                return;
+            }
+            if (password !== confirmPassword) {
+                toast({
+                    variant: 'destructive',
+                    title: 'Passwords Do Not Match',
+                    description: 'Please ensure both passwords are the same.',
+                });
+                setIsLoading(false);
+                return;
+            }
+        }
+
         if (!auth) {
             toast({
                 variant: 'destructive',
@@ -202,12 +225,29 @@ export function AuthForm() {
                 <form onSubmit={handleEmailAuth} className="grid gap-4">
                     <div className="grid gap-2">
                         <Label htmlFor="email" className="text-white">Email</Label>
-                        <Input id="email" type="email" placeholder="Enter your email" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading || isGoogleLoading} className="bg-white/10 border-white/20 text-white placeholder:text-white/60" />
+                        <Input id="email" type="email" placeholder="Enter your email" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading || isGoogleLoading} className="bg-white/10 border-white/20 text-white placeholder:text-white/60" autoComplete="email" />
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="password" className="text-white">Password</Label>
-                        <Input id="password" type="password" placeholder="Enter your password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading || isGoogleLoading} className="bg-white/10 border-white/20 text-white placeholder:text-white/60" />
+                        <Input id="password" type="password" placeholder="Enter your password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading || isGoogleLoading} className="bg-white/10 border-white/20 text-white placeholder:text-white/60" autoComplete={isLogin ? 'current-password' : 'new-password'} />
                     </div>
+
+                    {!isLogin && (
+                        <div className="grid gap-2">
+                            <Label htmlFor="confirm-password" className="text-white">Confirm Password</Label>
+                            <Input
+                                id="confirm-password"
+                                type="password"
+                                placeholder="Re-enter your password"
+                                required
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                disabled={isLoading || isGoogleLoading}
+                                className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
+                                autoComplete="new-password"
+                            />
+                        </div>
+                    )}
                     
                     {isLogin && (
                         <div className="text-right -mt-2">
@@ -240,3 +280,5 @@ export function AuthForm() {
         </Card>
     );
 }
+
+    

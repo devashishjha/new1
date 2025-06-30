@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useRef, useCallback } from 'react';
 import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -24,22 +24,22 @@ export function LocationAutocomplete({ value, onChange, isTextarea, placeholder 
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const InputComponent = isTextarea ? Textarea : Input;
 
-  const onLoad = (autocomplete: google.maps.places.Autocomplete) => {
+  const onLoad = useCallback((autocomplete: google.maps.places.Autocomplete) => {
     autocompleteRef.current = autocomplete;
-  };
+  }, []);
 
-  const onUnmount = () => {
+  const onUnmount = useCallback((autocomplete: google.maps.places.Autocomplete) => {
     autocompleteRef.current = null;
-  };
+  }, []);
 
-  const onPlaceChanged = () => {
+  const onPlaceChanged = useCallback(() => {
     if (autocompleteRef.current !== null) {
       const place = autocompleteRef.current.getPlace();
       onChange(place.formatted_address || '');
     } else {
       console.log('Autocomplete is not loaded yet!');
     }
-  };
+  }, [onChange]);
 
   const inputProps = {
     value: value,

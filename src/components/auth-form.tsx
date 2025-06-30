@@ -76,7 +76,9 @@ export function AuthForm() {
             console.error("Google Sign-In Error Code:", error.code);
             console.error("Google Sign-In Error Message:", error.message);
             let description = `An unknown error occurred. (Code: ${error.code})`;
-             if (error.code === 'auth/popup-closed-by-user') {
+             if (error.code === 'auth/popup-blocked') {
+                description = "The sign-in popup was blocked by your browser. Please allow popups for this site and try again.";
+            } else if (error.code === 'auth/popup-closed-by-user') {
                 description = "The sign-in window was closed. Please try again.";
             } else if (error.code === 'auth/unauthorized-domain') {
                 description = "This app's domain is not authorized for Google Sign-In. Please add it to the 'Authorized domains' list in your Firebase project's Authentication settings.";

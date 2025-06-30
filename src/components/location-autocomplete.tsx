@@ -16,7 +16,7 @@ interface LocationAutocompleteProps {
 const libraries: ('places')[] = ['places'];
 
 export function LocationAutocomplete({ value, onChange, isTextarea, placeholder }: LocationAutocompleteProps) {
-  const { isLoaded } = useJsApiLoader({
+  const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
     libraries,
   });
@@ -41,16 +41,19 @@ export function LocationAutocomplete({ value, onChange, isTextarea, placeholder 
     value: value,
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onChange(e.target.value),
     placeholder: placeholder,
-    className: "text-black"
   };
+  
+  if (loadError) {
+      console.error("Google Maps API failed to load: ", loadError)
+      return <InputComponent {...inputProps} placeholder={placeholder ? `${placeholder} (Maps error)` : "Location (Maps error)"} />
+  }
 
   if (!isLoaded) {
-    // Render a normal input/textarea if the API isn't loaded.
-    // The placeholder will indicate that autocomplete is unavailable.
     return (
       <InputComponent
         {...inputProps}
-        placeholder={placeholder ? `${placeholder} (Maps unavailable)` : "Location (Maps unavailable)"}
+        placeholder={placeholder ? `${placeholder} (Loading Maps...)` : "Loading Maps..."}
+        disabled
       />
     );
   }

@@ -26,7 +26,7 @@ export type Property = {
   totalFloors: number;
   kitchenUtility: boolean;
   propertyType: 'apartment' | 'villa' | 'row house' | 'penthouse' | 'independent house' | 'builder floor';
-  mainDoorDirection: 'north' | 'south' | 'east' | 'west' | 'north-east' | 'north-west' | 'south-east' | 'south-west';
+  mainDoorDirection: 'north-east' | 'north-west' | 'south-east' | 'south-west';
   openSides: '1' | '2' | '3' | '4';
   hasBalcony: boolean;
   

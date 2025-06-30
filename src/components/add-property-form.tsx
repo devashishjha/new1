@@ -40,7 +40,7 @@ const propertySchema = z.object({
     configuration: z.enum(['studio', '1bhk', '2bhk', '3bhk', '4bhk', '5bhk+']),
     floorNo: z.coerce.number().int(),
     totalFloors: z.coerce.number().int().min(0),
-    mainDoorDirection: z.enum(['north', 'south', 'east', 'west', 'north-east', 'north-west', 'south-east', 'south-west']),
+    mainDoorDirection: z.enum(['north-east', 'north-west', 'south-east', 'south-west']),
     openSides: z.enum(['1', '2', '3', '4']),
     housesOnSameFloor: z.coerce.number().int().min(1),
 
@@ -92,7 +92,7 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
             configuration: '2bhk',
             floorNo: 0,
             totalFloors: 0,
-            mainDoorDirection: 'east',
+            mainDoorDirection: 'north-east',
             openSides: '1',
             housesOnSameFloor: 1,
             kitchenUtility: false,
@@ -350,7 +350,7 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
                         <FormField control={form.control} name="configuration" render={({ field }) => ( <FormItem><FormLabel>Configuration</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger className="text-black"><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="studio">Studio</SelectItem><SelectItem value="1bhk">1BHK</SelectItem><SelectItem value="2bhk">2BHK</SelectItem><SelectItem value="3bhk">3BHK</SelectItem><SelectItem value="4bhk">4BHK</SelectItem><SelectItem value="5bhk+">5BHK+</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
                         <FormField control={form.control} name="floorNo" render={({ field }) => ( <FormItem><FormLabel>Floor Number</FormLabel><FormControl><Input type="number" placeholder="10" {...field} className="text-black" /></FormControl><FormMessage /></FormItem> )}/>
                         <FormField control={form.control} name="totalFloors" render={({ field }) => ( <FormItem><FormLabel>Total Floors in Building</FormLabel><FormControl><Input type="number" placeholder="20" {...field} className="text-black" /></FormControl><FormMessage /></FormItem> )}/>
-                        <FormField control={form.control} name="mainDoorDirection" render={({ field }) => ( <FormItem><FormLabel>Main Door Direction</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger className="text-black"><SelectValue /></SelectTrigger></FormControl><SelectContent> {['north', 'south', 'east', 'west', 'north-east', 'north-west', 'south-east', 'south-west'].map(d => <SelectItem key={d} value={d} className='capitalize'>{d.replace('-', ' ')}</SelectItem>)} </SelectContent></Select><FormMessage /></FormItem> )}/>
+                        <FormField control={form.control} name="mainDoorDirection" render={({ field }) => ( <FormItem><FormLabel>Main Door Direction</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger className="text-black"><SelectValue /></SelectTrigger></FormControl><SelectContent> {['north-east', 'north-west', 'south-east', 'south-west'].map(d => <SelectItem key={d} value={d} className='capitalize'>{d.replace('-', ' ')}</SelectItem>)} </SelectContent></Select><FormMessage /></FormItem> )}/>
                         <FormField control={form.control} name="openSides" render={({ field }) => ( <FormItem><FormLabel>Open Sides</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger className="text-black"><SelectValue /></SelectTrigger></FormControl><SelectContent> {['1', '2', '3', '4'].map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)} </SelectContent></Select><FormMessage /></FormItem> )}/>
                         <FormField control={form.control} name="housesOnSameFloor" render={({ field }) => ( <FormItem><FormLabel>Houses on Same Floor</FormLabel><FormControl><Input type="number" placeholder="4" {...field} className="text-black" /></FormControl><FormMessage /></FormItem> )}/>
                     </AccordionContent></Card></AccordionItem>

@@ -25,7 +25,7 @@ type SortDirection = 'asc' | 'desc';
 
 const propertyTypes = ['apartment', 'villa', 'row house', 'penthouse', 'independent house', 'builder floor'] as const;
 const configurations = ['studio', '1bhk', '2bhk', '3bhk', '4bhk', '5bhk+'] as const;
-const mainDoorDirections = ['north', 'south', 'east', 'west', 'north-east', 'north-west', 'south-east', 'south-west'] as const;
+const mainDoorDirections = ['north-east', 'north-west', 'south-east', 'south-west'] as const;
 const openSides = ['1', '2', '3', '4'] as const;
 
 const searchSchema = z.object({

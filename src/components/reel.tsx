@@ -161,7 +161,6 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
           toast({ title: "Added to shortlist" });
       }
       localStorage.setItem('shortlistedProperties', JSON.stringify(shortlisted));
-      setIsShortlisted(!currentlyShortlisted);
       window.dispatchEvent(new CustomEvent('shortlist-updated'));
     } catch (error) {
       console.error("Failed to update shortlisted properties in localStorage", error);
@@ -206,7 +205,7 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
       onClick={() => setIsUIVisible(!isUIVisible)}
     >
       {property.video ? (
-          <video src={property.video} autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover" style={{ transform: 'none' }} />
+          <video src={property.video} autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover video-force-normal" />
       ) : (
         property.image && (
           <Image 

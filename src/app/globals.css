@@ -59,6 +59,9 @@
 }
 
 @layer utilities {
+  .video-force-normal {
+    transform: none !important;
+  }
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }

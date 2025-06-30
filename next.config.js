@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    allowedDevOrigins: ["*.cloudworkstations.dev"],
+  },
   webpack: (config) => {
     // This configuration helps suppress warnings from 'genkit' and its dependencies.
     // These warnings are related to optional features (like specific tracing exporters)

@@ -7,6 +7,7 @@ import { AlertTriangle } from 'lucide-react';
 function FirebaseWarning() {
     const requiredSecrets = [
         "GOOGLE_API_KEY",
+        "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY",
         "NEXT_PUBLIC_FIREBASE_API_KEY",
         "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
         "NEXT_PUBLIC_FIREBASE_PROJECT_ID",

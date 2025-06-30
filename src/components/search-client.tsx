@@ -20,6 +20,7 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/use-auth';
+import { LocationAutocomplete } from './location-autocomplete';
 
 type SortDirection = 'asc' | 'desc';
 
@@ -270,7 +271,7 @@ export function SearchClient() {
                                     <AccordionContent className="p-6 pt-0 space-y-6">
                                         <div className="grid md:grid-cols-2 gap-6">
                                             <FormField control={form.control} name="lookingTo" render={({ field }) => ( <FormItem><FormLabel>Looking to</FormLabel><Select onValueChange={(value) => { field.onChange(value); form.setValue('priceRange', [0, value === 'rent' ? MAX_PRICE_RENT : MAX_PRICE_BUY]); }} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="rent">Rent</SelectItem><SelectItem value="sale">Sale</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
-                                            <FormField control={form.control} name="location" render={({ field }) => ( <FormItem><FormLabel>Location</FormLabel><FormControl><Input placeholder="e.g. Koramangala" {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                                            <FormField control={form.control} name="location" render={({ field }) => ( <FormItem><FormLabel>Location</FormLabel><FormControl><LocationAutocomplete placeholder="e.g. Koramangala" value={field.value || ''} onChange={field.onChange} /></FormControl><FormMessage /></FormItem> )}/>
                                             <FormField control={form.control} name="societyName" render={({ field }) => ( <FormItem><FormLabel>Society Name</FormLabel><FormControl><Input placeholder="e.g. Prestige Acropolis" {...field} /></FormControl><FormMessage /></FormItem> )}/>
                                         </div>
 

@@ -3,6 +3,7 @@
 
 import type { Property } from '@/lib/types';
 import type { PropertyMatchScoreOutput } from '@/ai/flows/property-match-score';
+import * as React from 'react';
 import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import { PropertyDetailsSheet } from '@/components/property-details-sheet';
@@ -27,7 +28,6 @@ import {
     VolumeX,
 } from 'lucide-react';
 import { formatIndianCurrency } from '@/lib/utils';
-import * as React from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from './ui/skeleton';
 import { useChatNavigation } from '@/hooks/use-chat-navigation';
@@ -65,6 +65,9 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
   const reelRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+  
+  const pressTimer = useRef<NodeJS.Timeout | null>(null);
+  const isLongPress = useRef(false);
 
   const isLister = user?.uid === property.lister.id;
 
@@ -211,11 +214,52 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
     }
   };
 
+  const handlePressStart = () => {
+    isLongPress.current = false;
+    pressTimer.current = setTimeout(() => {
+      isLongPress.current = true;
+      if (videoRef.current) {
+        videoRef.current.pause();
+      }
+    }, 200); // 200ms threshold for a hold
+  };
+
+  const handlePressEnd = () => {
+    if (pressTimer.current) {
+      clearTimeout(pressTimer.current);
+    }
+    
+    if (isLongPress.current) {
+      if (videoRef.current) {
+        videoRef.current.play();
+      }
+    } else {
+      // This was a tap, not a hold.
+      handleVideoTap();
+    }
+  };
+  
+  // This is to handle the case where the user holds down, then moves the cursor off the reel before releasing.
+  const handleMouseLeave = () => {
+      if (pressTimer.current) {
+          clearTimeout(pressTimer.current);
+      }
+      if (isLongPress.current) {
+          if (videoRef.current) {
+              videoRef.current.play();
+          }
+      }
+  };
+
   return (
     <section 
       ref={reelRef}
       className="h-full w-full snap-start relative text-white overflow-hidden"
-      onClick={handleVideoTap}
+      onMouseDown={handlePressStart}
+      onMouseUp={handlePressEnd}
+      onMouseLeave={handleMouseLeave}
+      onTouchStart={handlePressStart}
+      onTouchEnd={handlePressEnd}
     >
         <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none transition-opacity duration-300" style={{ opacity: showMuteIndicator ? 1 : 0 }}>
             <div className="bg-black/50 p-4 rounded-full">

@@ -47,26 +47,6 @@ export function PropertyDetailsSheet({ open, onOpenChange, property, variant = '
     ? `₹ ${property.price.amount.toLocaleString('en-IN')}/mo`
     : formatIndianCurrency(property.price.amount);
     
-  const descriptionAndAreaCards = (
-    <>
-      <Card className="bg-black/40 border-white/10">
-          <CardHeader><CardTitle className="text-lg flex items-center gap-2"><FileText className="w-6 h-6" strokeWidth={2.5} />Description</CardTitle></CardHeader>
-          <CardContent>
-              <p className="text-sm text-white/80 whitespace-pre-wrap">{property.description}</p>
-          </CardContent>
-      </Card>
-      <Card className="bg-black/40 border-white/10">
-          <CardHeader><CardTitle className="text-lg flex items-center gap-2"><AreaChart className="w-6 h-6" strokeWidth={2.5} />Area & Sunlight</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-              <DetailItem label="Super Built-up Area" value={`${property.area.superBuiltUp} sqft`} />
-              <DetailItem label="Carpet Area" value={`${property.area.carpet} sqft`} />
-              <DetailItem label="Sunlight Enters" value={property.features.sunlightEntersHome ? 'Yes' : 'No'} icon={Sun} />
-              <DetailItem label="Sunlight %" value={`${property.amenities.sunlightPercentage}%`} />
-          </CardContent>
-      </Card>
-    </>
-  );
-
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-xl md:max-w-2xl p-0 bg-black/50 backdrop-blur-lg border-l border-white/20 text-white">
@@ -100,11 +80,15 @@ export function PropertyDetailsSheet({ open, onOpenChange, property, variant = '
                     </CardContent>
                 </Card>
 
-                {variant === 'reels' ? (
-                  <div className="grid md:grid-cols-2 gap-6">{descriptionAndAreaCards}</div>
-                ) : (
-                  descriptionAndAreaCards
-                )}
+                <Card className="bg-black/40 border-white/10">
+                    <CardHeader><CardTitle className="text-lg flex items-center gap-2"><AreaChart className="w-6 h-6" strokeWidth={2.5} />Area & Sunlight</CardTitle></CardHeader>
+                    <CardContent className="space-y-4">
+                        <DetailItem label="Super Built-up Area" value={`${property.area.superBuiltUp} sqft`} />
+                        <DetailItem label="Carpet Area" value={`${property.area.carpet} sqft`} />
+                        <DetailItem label="Sunlight Enters" value={property.features.sunlightEntersHome ? 'Yes' : 'No'} icon={Sun} />
+                        <DetailItem label="Sunlight %" value={`${property.amenities.sunlightPercentage}%`} />
+                    </CardContent>
+                </Card>
                 
                 <div className="grid md:grid-cols-2 gap-6">
                     <Card className="bg-black/40 border-white/10">

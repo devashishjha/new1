@@ -23,6 +23,8 @@ import {
     Loader2,
     Trash2,
     Pencil,
+    Volume2,
+    VolumeX,
 } from 'lucide-react';
 import { formatIndianCurrency } from '@/lib/utils';
 import * as React from 'react';
@@ -52,7 +54,8 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isAiMatchDialogOpen, setIsAiMatchDialogOpen] = useState(false);
   const [isShortlisted, setIsShortlisted] = useState(false);
-  const [isUIVisible, setIsUIVisible] = useState(true);
+  const [isMuted, setIsMuted] = useState(true);
+  const [showMuteIndicator, setShowMuteIndicator] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   
@@ -60,6 +63,7 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
   const { navigateToChat, isNavigating: isStartingChat } = useChatNavigation();
   const { user } = useAuth();
   const reelRef = useRef<HTMLElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [isVisible, setIsVisible] = useState(false);
 
   const isLister = user?.uid === property.lister.id;
@@ -110,7 +114,6 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
         Main door facing: ${property.mainDoorDirection}.
         Parking: ${property.parking.has4Wheeler ? 'Car' : 'No Car'}, ${property.parking.has2Wheeler ? 'Bike' : 'No Bike'}.
         Key Amenities: ${amenitiesList || 'None listed'}.
-        Description: ${property.description}
       `;
 
       try {
@@ -197,22 +200,38 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
   const handleChat = () => {
     navigateToChat(property.lister);
   };
+  
+  const handleVideoTap = () => {
+    if (videoRef.current) {
+        const newMutedState = !videoRef.current.muted;
+        videoRef.current.muted = newMutedState;
+        setIsMuted(newMutedState);
+        setShowMuteIndicator(true);
+        setTimeout(() => setShowMuteIndicator(false), 1000);
+    }
+  };
 
   return (
     <section 
       ref={reelRef}
       className="h-full w-full snap-start relative text-white overflow-hidden"
-      onClick={() => setIsUIVisible(!isUIVisible)}
+      onClick={handleVideoTap}
     >
+        <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none transition-opacity duration-300" style={{ opacity: showMuteIndicator ? 1 : 0 }}>
+            <div className="bg-black/50 p-4 rounded-full">
+                {isMuted ? <VolumeX className="h-10 w-10 text-white" /> : <Volume2 className="h-10 w-10 text-white" />}
+            </div>
+      </div>
       {property.video ? (
           <video 
+            ref={videoRef}
             src={property.video} 
             autoPlay 
             muted 
             loop 
             playsInline 
             className="absolute inset-0 w-full h-full object-cover" 
-            style={{ transform: 'rotateX(180deg)' }}
+            style={{ transform: 'none' }}
           />
       ) : (
         property.image && (
@@ -230,8 +249,8 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
       
       <div 
-        className="absolute z-10 w-full transition-opacity duration-300"
-        style={{ bottom: '5rem', opacity: isUIVisible ? 1 : 0 }}
+        className="absolute z-10 w-full"
+        style={{ bottom: '5rem' }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-4">

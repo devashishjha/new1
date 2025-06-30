@@ -90,7 +90,7 @@ const generatePropertyDescriptionFlow = ai.defineFlow(
     
     // If the AI fails for any reason (error, invalid output, safety block, etc.),
     // construct a simple, reliable fallback description.
-    const fallbackDescription = `This is a ${input.configuration || 'property'} ${input.propertyType || ''} in ${input.societyName || 'a prime location'}, available for ${input.priceType || 'rent/sale'}${input.location ? ` in ${input.location}` : ''}. For complete details, please contact the lister.`;
+    const fallbackDescription = `AI generation failed for this property. This is a ${input.configuration || 'property'} ${input.propertyType || ''} in ${input.societyName || 'a prime location'}, available for ${input.priceType || 'rent/sale'}${input.location ? ` in ${input.location}` : ''}. For complete details, please contact the lister.`;
 
     
     // Return the fallback description wrapped in the expected output schema.

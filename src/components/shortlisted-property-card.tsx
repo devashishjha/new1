@@ -1,3 +1,5 @@
+
+'use client';
 import type { Property } from '@/lib/types';
 import { Card, CardFooter, CardHeader } from '@/components/ui/card';
 import Image from 'next/image';
@@ -9,16 +11,30 @@ import { useAuth } from '@/hooks/use-auth';
 import { Button } from './ui/button';
 import Link from 'next/link';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
+import { markPropertyAsOccupiedAction } from '@/app/actions';
 
 export function ShortlistedPropertyCard({ property }: { property: Property }) {
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
     const { user } = useAuth();
+    const { toast } = useToast();
     const isOwner = user?.uid === property.lister.id;
+    const [isOccupied, setIsOccupied] = useState(property.isSoldOrRented);
 
     const priceDisplay = property.price.type === 'rent'
         ? `₹ ${property.price.amount.toLocaleString('en-IN')}/mo`
         : formatIndianCurrency(property.price.amount);
         
+    const handleMarkAsOccupied = async () => {
+        const result = await markPropertyAsOccupiedAction(property.id);
+        if (result.success) {
+            toast({ title: "Property Updated", description: "The property has been marked as occupied." });
+            setIsOccupied(true);
+        } else {
+            toast({ variant: 'destructive', title: "Update Failed", description: result.message });
+        }
+    };
+
     return (
         <>
             <Card className="overflow-hidden flex flex-col bg-card/80 backdrop-blur-sm border-border/20 h-full hover:ring-2 hover:ring-primary transition-all">
@@ -42,7 +58,7 @@ export function ShortlistedPropertyCard({ property }: { property: Property }) {
                             data-ai-hint="apartment exterior"
                         />
                     )}
-                    {property.isSoldOrRented && (
+                    {isOccupied && (
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-bold animate-bounce">
                             {property.price.type === 'rent' ? 'Rented Out' : 'Sold Out'}
                         </div>
@@ -83,8 +99,8 @@ export function ShortlistedPropertyCard({ property }: { property: Property }) {
                                             <Pencil className="mr-2 h-4 w-4" /> Edit Details
                                         </Link>
                                     </DropdownMenuItem>
-                                    {!property.isSoldOrRented && (
-                                        <DropdownMenuItem onClick={() => alert('Marking as sold/rented out (functionality to be implemented)')}>
+                                    {!isOccupied && (
+                                        <DropdownMenuItem onClick={handleMarkAsOccupied}>
                                             <Check className="mr-2 h-4 w-4" /> Mark as {property.price.type === 'rent' ? 'Rented Out' : 'Sold Out'}
                                         </DropdownMenuItem>
                                     )}

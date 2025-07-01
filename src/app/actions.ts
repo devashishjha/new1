@@ -4,7 +4,7 @@
 import { propertyMatchScore, type PropertyMatchScoreInput, type PropertyMatchScoreOutput } from '@/ai/flows/property-match-score';
 import { generatePropertyDescription, type GeneratePropertyDescriptionInput, type GeneratePropertyDescriptionOutput } from '@/ai/flows/generate-property-description';
 import { auth, db, storage } from '@/lib/firebase';
-import { doc, getDoc, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { ref, deleteObject } from 'firebase/storage';
 
 const isAiEnabled = !!process.env.GOOGLE_API_KEY;
@@ -78,5 +78,28 @@ export async function deletePropertyAction(propertyId: string): Promise<{ succes
         return { success: false, message: "You are not authorized to delete this property." };
     }
     return { success: false, message: "An unexpected error occurred while deleting the property." };
+  }
+}
+
+export async function markPropertyAsOccupiedAction(propertyId: string): Promise<{ success: boolean; message: string }> {
+  if (!auth || !db) {
+    return { success: false, message: "Firebase is not configured on the server." };
+  }
+  // Firestore rules should handle authorization.
+  const propertyDocRef = doc(db, 'properties', propertyId);
+  try {
+    // We trust Firestore rules to handle authorization.
+    await updateDoc(propertyDocRef, {
+      isSoldOrRented: true
+    });
+
+    return { success: true, message: "Property status updated successfully." };
+
+  } catch (error: any) {
+    console.error("Error updating property status:", error);
+    if (error.code === 'permission-denied') {
+        return { success: false, message: "You are not authorized to update this property." };
+    }
+    return { success: false, message: "An unexpected error occurred while updating the property status." };
   }
 }

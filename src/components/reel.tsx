@@ -19,7 +19,7 @@ import {
     BedDouble,
     Building,
     AreaChart,
-    CircleDollarSign,
+    IndianRupee,
     Zap,
     Loader2,
     Trash2,
@@ -362,7 +362,7 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
                     <InfoCard icon={UserCircle} label="Posted By" value={property.lister.name} />
                 </Link>
                 <InfoCard 
-                    icon={CircleDollarSign} 
+                    icon={IndianRupee} 
                     label={`For ${property.price.type}`} 
                     value={priceDisplay} 
                 />

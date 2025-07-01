@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -6,7 +7,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetFo
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import {
-  AreaChart, Bath, BedDouble, Building, Car, Check, ChevronRight, CircleDollarSign, Compass,
+  AreaChart, Bath, BedDouble, Building, Car, Check, ChevronRight, IndianRupee, Compass,
   BatteryCharging, Gamepad2, Gift, Home, MessageCircle, Phone, School, ShoppingCart,
   Users, Utensils, Waves, X, Zap, Pill, Sun, Maximize, Wind, CheckCircle2, XCircle, FileText,
   CalendarDays
@@ -115,7 +116,7 @@ export function PropertyDetailsSheet({ open, onOpenChange, property, variant = '
                         </CardContent>
                     </Card>
                     <Card className="bg-black/40 border-white/10">
-                        <CardHeader><CardTitle className="text-lg flex items-center gap-2"><CircleDollarSign className="w-6 h-6" strokeWidth={2.5} />Charges</CardTitle></CardHeader>
+                        <CardHeader><CardTitle className="text-lg flex items-center gap-2"><IndianRupee className="w-6 h-6" strokeWidth={2.5} />Charges</CardTitle></CardHeader>
                         <CardContent className="space-y-4">
                             <DetailItem label="Maintenance" value={`₹ ${property.charges.maintenancePerMonth.toLocaleString('en-IN')}/mo`} />
                             <DetailItem label="Security Deposit" value={`₹ ${property.charges.securityDeposit.toLocaleString('en-IN')}`} />

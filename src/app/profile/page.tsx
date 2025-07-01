@@ -10,7 +10,6 @@ import * as z from 'zod';
 import { Header } from '@/components/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
@@ -252,67 +251,6 @@ export default function ProfilePage() {
         setUserType(updatedProfile.type);
     };
 
-    const handleTypeChange = (newType: UserType) => {
-        if (!userProfile) return;
-
-        // Preserve base properties and try to preserve relevant specific properties
-        const baseProfileData = {
-            id: userProfile.id,
-            name: userProfile.name,
-            email: userProfile.email,
-            phone: userProfile.phone,
-            bio: userProfile.bio,
-            avatar: userProfile.avatar,
-        };
-
-        let newProfile: UserProfile;
-
-        // Create the new profile object based on the selected type,
-        // carrying over existing data if applicable.
-        switch (newType) {
-            case 'seeker':
-                newProfile = {
-                    ...baseProfileData,
-                    type: 'seeker',
-                    searchCriteria: 'searchCriteria' in userProfile ? userProfile.searchCriteria : '',
-                    searchHistory: 'searchHistory' in userProfile ? userProfile.searchHistory : [],
-                };
-                break;
-            case 'owner':
-                newProfile = {
-                    ...baseProfileData,
-                    type: 'owner',
-                };
-                break;
-            case 'dealer':
-                newProfile = {
-                    ...baseProfileData,
-                    type: 'dealer',
-                    companyName: 'companyName' in userProfile ? userProfile.companyName : '',
-                    reraId: ('reraId' in userProfile && userProfile.reraId) ? userProfile.reraId : '',
-                };
-                break;
-            case 'developer':
-                 newProfile = {
-                    ...baseProfileData,
-                    type: 'developer',
-                    companyName: 'companyName' in userProfile ? userProfile.companyName : '',
-                    reraId: ('reraId' in userProfile && userProfile.reraId) ? userProfile.reraId : '',
-                };
-                break;
-            default:
-                // Fallback to a safe default (seeker profile)
-                newProfile = {
-                    ...baseProfileData,
-                    type: 'seeker',
-                    searchCriteria: '',
-                };
-        }
-
-        setUserProfile(newProfile);
-        setUserType(newType);
-    };
-
     const handleLogout = async () => {
         if (!auth) { return; }
         await signOut(auth);
@@ -455,27 +393,11 @@ export default function ProfilePage() {
                                 </CardContent>
                             </Card>
                         )}
-
-                        <Card className="mb-8" id="edit-profile-section">
-                            <CardHeader><CardTitle>Switch Role</CardTitle><CardDescription>Choose the profile that best describes you to update your details.</CardDescription></CardHeader>
-                            <CardContent>
-                                <RadioGroup value={userType} onValueChange={(v) => handleTypeChange(v as UserType)} className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                    {['seeker', 'owner', 'dealer', 'developer'].map(type => (
-                                        <div key={type}>
-                                            <RadioGroupItem value={type} id={type} className="peer sr-only" />
-                                            <Label htmlFor={type} className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground text-popover-foreground capitalize cursor-pointer">
-                                                {type}
-                                            </Label>
-                                        </div>
-                                    ))}
-                                </RadioGroup>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
+                        
+                        <Card id="edit-profile-section" className="mb-8">
                             <CardHeader>
-                                <CardTitle>Edit <span className="capitalize text-primary">{userType}</span> Profile Details</CardTitle>
-                                <CardDescription>Fill in your details below. Saving will set this as your active profile.</CardDescription>
+                                <CardTitle>Edit Profile Details</CardTitle>
+                                <CardDescription>Update your information below.</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <ProfileForm key={userType} userProfile={userProfile} userType={userType} onProfileUpdate={handleProfileUpdate} />

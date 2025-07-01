@@ -1,9 +1,8 @@
 import type { Property } from '@/lib/types';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardFooter, CardHeader } from '@/components/ui/card';
 import Image from 'next/image';
 import { formatIndianCurrency } from '@/lib/utils';
-import { BedDouble, MapPin, Pencil, Video, Eye, Heart, Info, Check } from 'lucide-react';
+import { Pencil, Eye, Heart, Info, Check } from 'lucide-react';
 import { PropertyDetailsSheet } from './property-details-sheet';
 import { useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
@@ -25,16 +24,14 @@ export function ShortlistedPropertyCard({ property }: { property: Property }) {
             <Card className="overflow-hidden flex flex-col bg-card/80 backdrop-blur-sm border-border/20 h-full hover:ring-2 hover:ring-primary transition-all">
                 <CardHeader className="p-0 relative">
                     {property.video ? (
-                        <>
-                            <video
-                                src={`${property.video}#t=0.1`} // Fetch first frame for thumbnail
-                                className="w-full h-48 object-cover bg-black"
-                                style={{ transform: 'none' }}
-                                preload="metadata"
-                                muted
-                                playsInline
-                            />
-                        </>
+                        <video
+                            src={`${property.video}#t=0.1`} // Fetch first frame for thumbnail
+                            className="w-full h-48 object-cover bg-black"
+                            style={{ transform: 'none' }}
+                            preload="metadata"
+                            muted
+                            playsInline
+                        />
                     ) : (
                         <Image
                             src={property.image}
@@ -51,47 +48,37 @@ export function ShortlistedPropertyCard({ property }: { property: Property }) {
                         </div>
                     )}
                 </CardHeader>
-                <CardContent className="p-4 flex-grow">
-                    <CardTitle className="text-lg leading-tight mb-2 text-white">{property.title}</CardTitle>
-                    <div 
-                        className="flex items-center gap-2 text-sm text-muted-foreground mb-2"
-                    >
-                        <MapPin className="w-4 h-4 flex-shrink-0" />
-                        <span className="truncate">{property.location}</span>
-                    </div>
-                    <div className="flex items-center gap-2 mb-4">
-                        <BedDouble className="w-4 h-4 text-primary" />
-                        <span className="text-sm font-medium text-white">{property.configuration.toUpperCase()}</span>
-                    </div>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1.5">
-                            <Eye className="w-4 h-4" />
-                            <span>{property.videoViews?.toLocaleString() || '0'}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                            <Heart className="w-4 h-4" />
-                            <span>{property.shortlistCount?.toLocaleString() || '0'}</span>
+
+                <CardFooter className="p-3 bg-secondary/50 flex justify-between items-center mt-auto flex-wrap gap-2">
+                    <div className='flex flex-col gap-2'>
+                        <span className="text-lg font-bold text-primary">{priceDisplay}</span>
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                                <Eye className="w-4 h-4" />
+                                <span>{property.videoViews?.toLocaleString() || '0'}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <Heart className="w-4 h-4" />
+                                <span>{property.shortlistCount?.toLocaleString() || '0'}</span>
+                            </div>
                         </div>
                     </div>
-                </CardContent>
-                <CardFooter className="p-4 bg-secondary/50 flex justify-between items-center mt-auto">
-                    <span className="text-xl font-bold text-primary">{priceDisplay}</span>
+                    
                     <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="capitalize">{property.propertyType}</Badge>
-                        <Button size="icon" variant="outline" onClick={() => setIsDetailsOpen(true)}>
+                        <Button size="icon" variant="outline" className="w-9 h-9" onClick={() => setIsDetailsOpen(true)}>
                             <Info className="h-4 w-4" />
                             <span className="sr-only">View Details</span>
                         </Button>
                         {isOwner && (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button size="icon" variant="outline">
+                                    <Button size="icon" variant="outline" className="w-9 h-9">
                                         <Pencil className="h-4 w-4" />
                                         <span className="sr-only">Edit Property</span>
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
-                                    <DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
                                         <Link href={`/edit-property/${property.id}`} className="flex items-center w-full">
                                             <Pencil className="mr-2 h-4 w-4" /> Edit Details
                                         </Link>

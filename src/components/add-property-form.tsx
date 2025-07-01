@@ -256,10 +256,10 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
 
                 if (userDoc.exists()) {
                     userProfileData = userDoc.data() as UserProfile;
-                    // If user is a seeker listing for the first time, update their role
-                    if (userProfileData.type === 'seeker' && values.userType) {
+                    // If user selected a role and it's different from their current one, update their profile.
+                    if (values.userType && userProfileData.type !== values.userType) {
                         await updateDoc(userDocRef, { type: values.userType });
-                        userProfileData.type = values.userType;
+                        userProfileData.type = values.userType; // Update local copy for this submission
                     }
                 } else {
                     toast({
@@ -328,8 +328,6 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
     
     const renderCheckboxField = (name: keyof z.infer<typeof propertySchema>, label: string) => (<FormField control={form.control} name={name} render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><FormLabel>{label}</FormLabel><FormControl><Checkbox checked={field.value as boolean} onCheckedChange={field.onChange}/></FormControl></FormItem>)} />);
 
-    const showUserTypeSelection = !userProfile || userProfile.type === 'seeker';
-
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -337,19 +335,19 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
                     <CardHeader><CardTitle>Basic Information</CardTitle></CardHeader>
                     <CardContent className="grid md:grid-cols-2 gap-6">
                         {mode === 'add' && (
-                            isProfileLoading ? <Skeleton className="h-10 w-full md:col-span-2" /> : showUserTypeSelection && (
+                            isProfileLoading ? <Skeleton className="h-10 w-full md:col-span-2" /> : (
                                 <FormField control={form.control} name="userType" render={({ field }) => (
                                     <FormItem className="md:col-span-2">
-                                        <FormLabel>You are a...</FormLabel>
+                                        <FormLabel>You are listing as a...</FormLabel>
                                         <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl><SelectTrigger><SelectValue placeholder="Select your role" /></SelectTrigger></FormControl>
+                                            <FormControl><SelectTrigger><SelectValue placeholder="Select your role for this listing" /></SelectTrigger></FormControl>
                                             <SelectContent>
                                                 <SelectItem value="owner">Property Owner</SelectItem>
                                                 <SelectItem value="dealer">Real Estate Dealer</SelectItem>
                                                 <SelectItem value="developer">Developer</SelectItem>
                                             </SelectContent>
                                         </Select>
-                                        <FormDescription>This will set the profile type on your account.</FormDescription>
+                                        <FormDescription>Selecting a role will update your primary profile type.</FormDescription>
                                         <FormMessage />
                                     </FormItem>
                                 )} />

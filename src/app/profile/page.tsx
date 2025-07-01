@@ -250,12 +250,9 @@ export default function ProfilePage() {
                         {['owner', 'dealer', 'developer'].includes(userProfile.type) && (
                             <Card className="mb-8">
                                 <CardHeader>
-                                    <CardTitle className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <ListVideo className="w-6 h-6 text-primary" />
-                                            <span className="text-lg">My Listings</span>
-                                        </div>
-                                        <Badge variant="outline">{userProperties.length}</Badge>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <ListVideo className="w-6 h-6 text-primary" />
+                                        <span className="text-lg">My Listings ({userProperties.length})</span>
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent>

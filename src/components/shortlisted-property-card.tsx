@@ -4,37 +4,19 @@ import type { Property } from '@/lib/types';
 import { Card, CardFooter, CardHeader } from '@/components/ui/card';
 import Image from 'next/image';
 import { formatIndianCurrency } from '@/lib/utils';
-import { Pencil, Eye, Heart, Info, Check } from 'lucide-react';
+import { Eye, Heart, Info } from 'lucide-react';
 import { PropertyDetailsSheet } from './property-details-sheet';
 import { useState } from 'react';
-import { useAuth } from '@/hooks/use-auth';
 import { Button } from './ui/button';
-import Link from 'next/link';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
-import { useToast } from '@/hooks/use-toast';
-import { markPropertyAsOccupiedAction } from '@/app/actions';
 
 export function ShortlistedPropertyCard({ property }: { property: Property }) {
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-    const { user } = useAuth();
-    const { toast } = useToast();
-    const isOwner = user?.uid === property.lister.id;
-    const [isOccupied, setIsOccupied] = useState(property.isSoldOrRented);
+    const isOccupied = property.isSoldOrRented;
 
     const priceDisplay = property.price.type === 'rent'
         ? `₹ ${property.price.amount.toLocaleString('en-IN')}/mo`
         : formatIndianCurrency(property.price.amount);
         
-    const handleMarkAsOccupied = async () => {
-        const result = await markPropertyAsOccupiedAction(property.id);
-        if (result.success) {
-            toast({ title: "Property Updated", description: "The property has been marked as occupied." });
-            setIsOccupied(true);
-        } else {
-            toast({ variant: 'destructive', title: "Update Failed", description: result.message });
-        }
-    };
-
     return (
         <>
             <Card className="overflow-hidden flex flex-col bg-card/80 backdrop-blur-sm border-border/20 h-full hover:ring-2 hover:ring-primary transition-all">
@@ -65,48 +47,21 @@ export function ShortlistedPropertyCard({ property }: { property: Property }) {
                     )}
                 </CardHeader>
 
-                <CardFooter className="p-3 bg-secondary/50 flex justify-between items-center mt-auto flex-wrap gap-2">
-                    <div className='flex flex-col gap-2'>
-                        <span className="text-lg font-bold text-primary">{priceDisplay}</span>
-                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                                <Eye className="w-4 h-4" />
-                                <span>{property.videoViews?.toLocaleString() || '0'}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <Heart className="w-4 h-4" />
-                                <span>{property.shortlistCount?.toLocaleString() || '0'}</span>
-                            </div>
+                <CardFooter className="p-3 bg-secondary/50 flex justify-between items-center mt-auto">
+                    <span className="text-lg font-bold text-primary">{priceDisplay}</span>
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <Eye className="w-4 h-4" />
+                            <span>{property.videoViews?.toLocaleString() || '0'}</span>
                         </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                        <Button size="icon" variant="outline" className="w-9 h-9" onClick={() => setIsDetailsOpen(true)}>
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <Heart className="w-4 h-4" />
+                            <span>{property.shortlistCount?.toLocaleString() || '0'}</span>
+                        </div>
+                        <Button size="icon" variant="outline" className="w-8 h-8" onClick={() => setIsDetailsOpen(true)}>
                             <Info className="h-4 w-4" />
                             <span className="sr-only">View Details</span>
                         </Button>
-                        {isOwner && (
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button size="icon" variant="outline" className="w-9 h-9">
-                                        <Pencil className="h-4 w-4" />
-                                        <span className="sr-only">Edit Property</span>
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent>
-                                    <DropdownMenuItem asChild>
-                                        <Link href={`/edit-property/${property.id}`} className="flex items-center w-full">
-                                            <Pencil className="mr-2 h-4 w-4" /> Edit Details
-                                        </Link>
-                                    </DropdownMenuItem>
-                                    {!isOccupied && (
-                                        <DropdownMenuItem onClick={handleMarkAsOccupied}>
-                                            <Check className="mr-2 h-4 w-4" /> Mark as {property.price.type === 'rent' ? 'Rented Out' : 'Sold Out'}
-                                        </DropdownMenuItem>
-                                    )}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        )}
                     </div>
                 </CardFooter>
             </Card>

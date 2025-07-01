@@ -34,9 +34,6 @@ export function ShortlistedPropertyCard({ property }: { property: Property }) {
                                 muted
                                 playsInline
                             />
-                            <div className="absolute top-2 right-2 bg-black/50 p-1.5 rounded-full backdrop-blur-sm flex items-center gap-1 text-white text-xs">
-                                <Video className="w-4 h-4" /> {property.videoViews?.toLocaleString() || 'N/A'}
-                            </div>
                         </>
                     ) : (
                         <Image
@@ -66,9 +63,15 @@ export function ShortlistedPropertyCard({ property }: { property: Property }) {
                         <BedDouble className="w-4 h-4 text-primary" />
                         <span className="text-sm font-medium text-white">{property.configuration.toUpperCase()}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Heart className="w-4 h-4" />
-                        <span>{property.shortlistCount?.toLocaleString() || 'N/A'} shortlisted</span>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1.5">
+                            <Eye className="w-4 h-4" />
+                            <span>{property.videoViews?.toLocaleString() || '0'}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            <Heart className="w-4 h-4" />
+                            <span>{property.shortlistCount?.toLocaleString() || '0'}</span>
+                        </div>
                     </div>
                 </CardContent>
                 <CardFooter className="p-4 bg-secondary/50 flex justify-between items-center mt-auto">

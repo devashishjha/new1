@@ -8,7 +8,7 @@ import { Header } from '@/components/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Shield, FileText, LogOut, MessagesSquare, Loader2, Star, Handshake, Sparkles, KeyRound, ShoppingCart, Pencil, User as UserIcon } from 'lucide-react';
+import { Shield, FileText, LogOut, MessagesSquare, Loader2, Star, Handshake, Sparkles, KeyRound, ShoppingCart, Pencil, User as UserIcon, MoreVertical, ListVideo, Phone } from 'lucide-react';
 import { BottomNavBar } from '@/components/bottom-nav-bar';
 import { useToast } from '@/hooks/use-toast';
 import { signOut } from 'firebase/auth';
@@ -22,6 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { ShortlistedPropertyCard } from '@/components/shortlisted-property-card';
 import { dateToJSON } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 
 export default function ProfilePage() {
@@ -161,7 +162,46 @@ export default function ProfilePage() {
             <Header />
             <TooltipProvider>
                 <main className="container mx-auto py-24 px-4 pb-24">
-                    <div className="max-w-2xl mx-auto">
+                    <div className="max-w-2xl mx-auto relative">
+
+                        <div className="absolute top-0 right-0 z-10">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon">
+                                        <MoreVertical className="h-5 w-5" />
+                                        <span className="sr-only">Open menu</span>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem asChild>
+                                        <Link href="/chats" className="flex items-center w-full">
+                                            <MessagesSquare className="mr-2 h-4 w-4" /> My Chats
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <DropdownMenuItem disabled>
+                                                <Shield className="mr-2 h-4 w-4" /> Privacy Policy
+                                            </DropdownMenuItem>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="left"><p>Coming soon!</p></TooltipContent>
+                                    </Tooltip>
+                                     <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <DropdownMenuItem disabled>
+                                                <FileText className="mr-2 h-4 w-4" /> Terms & Conditions
+                                            </DropdownMenuItem>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="left"><p>Coming soon!</p></TooltipContent>
+                                    </Tooltip>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                                        <LogOut className="mr-2 h-4 w-4" /> Log Out
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
                         
                         <div className="flex flex-col items-center text-center mb-12">
                             <div className="relative mb-4">
@@ -180,6 +220,29 @@ export default function ProfilePage() {
                             </div>
                             <h1 className="text-4xl font-bold tracking-tight">{userProfile.name}</h1>
                             <p className="text-muted-foreground mt-2">{userProfile.email}</p>
+
+                             <div className="flex items-center justify-center gap-4 mt-4">
+                                {userProfile.phone ? (
+                                    <a href={`tel:${userProfile.phone}`}>
+                                        <Button variant="outline" size="sm"><Phone className="mr-2 h-4 w-4" /> Call</Button>
+                                    </a>
+                                ) : (
+                                     <Tooltip>
+                                        <TooltipTrigger>
+                                            <div className="inline-block">
+                                                <Button variant="outline" size="sm" disabled><Phone className="mr-2 h-4 w-4" /> Call</Button>
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Add a phone number to enable calls.</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                )}
+                                 <Link href="/chats">
+                                    <Button size="sm"><MessagesSquare className="mr-2 h-4 w-4" /> Chat</Button>
+                                </Link>
+                            </div>
+
                             <Badge variant="secondary" className="capitalize mt-4">{userProfile.type}</Badge>
                         </div>
 
@@ -187,8 +250,13 @@ export default function ProfilePage() {
                         {['owner', 'dealer', 'developer'].includes(userProfile.type) && (
                             <Card className="mb-8">
                                 <CardHeader>
-                                    <CardTitle>Latest Listings ({userProperties.length})</CardTitle>
-                                    <CardDescription>The properties you have listed on LOKALITY.</CardDescription>
+                                    <CardTitle className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <ListVideo className="w-6 h-6 text-primary" />
+                                            <span className="text-lg">My Listings</span>
+                                        </div>
+                                        <Badge variant="outline">{userProperties.length}</Badge>
+                                    </CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     {isPropertiesLoading ? (
@@ -300,36 +368,6 @@ export default function ProfilePage() {
                                 </CardContent>
                             </Card>
                         )}
-
-                        <Card className="mt-8">
-                            <CardContent className="p-4 space-y-2">
-                                 <Link href="/chats"><Button variant="ghost" className="w-full justify-start gap-3"><MessagesSquare className="w-6 h-6" strokeWidth={2.5} /> My Chats</Button></Link>
-                                <Separator />
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <div className='w-full'>
-                                            <Button variant="ghost" className="w-full justify-start gap-3" disabled><Shield className="w-6 h-6" strokeWidth={2.5} /> Privacy Policy</Button>
-                                        </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Coming soon!</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                                <Separator />
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <div className='w-full'>
-                                            <Button variant="ghost" className="w-full justify-start gap-3" disabled><FileText className="w-6 h-6" strokeWidth={2.5}/> Terms & Conditions</Button>
-                                        </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Coming soon!</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                                <Separator />
-                                <Button variant="ghost" className="w-full justify-start text-destructive hover:text-destructive gap-3" onClick={handleLogout}><LogOut className="w-6 h-6" strokeWidth={2.5} /> Log Out</Button>
-                            </CardContent>
-                        </Card>
                     </div>
                 </main>
             </TooltipProvider>

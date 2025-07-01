@@ -164,7 +164,7 @@ export default function ProfilePage() {
                 <main className="container mx-auto py-24 px-4 pb-24">
                     <div className="max-w-2xl mx-auto relative">
 
-                        <div className="absolute top-0 right-0 z-10">
+                        <div className="absolute top-0 right-0 z-50">
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon">
@@ -264,7 +264,7 @@ export default function ProfilePage() {
                                             <Loader2 className="h-8 w-8 animate-spin" />
                                         </div>
                                     ) : userProperties.length > 0 ? (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                             {userProperties.map(property => (
                                                 <ShortlistedPropertyCard key={property.id} property={property} />
                                             ))}

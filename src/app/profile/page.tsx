@@ -8,7 +8,7 @@ import { Header } from '@/components/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Shield, FileText, LogOut, MessagesSquare, Loader2, Star, Handshake, Sparkles, KeyRound, ShoppingCart } from 'lucide-react';
+import { Shield, FileText, LogOut, MessagesSquare, Loader2, Star, Handshake, Sparkles, KeyRound, ShoppingCart, Pencil } from 'lucide-react';
 import { BottomNavBar } from '@/components/bottom-nav-bar';
 import { useToast } from '@/hooks/use-toast';
 import { signOut } from 'firebase/auth';
@@ -53,7 +53,6 @@ export default function ProfilePage() {
                 name: user.displayName || user.email?.split('@')[0] || 'New User',
                 email: user.email!,
                 phone: user.phoneNumber || '',
-                bio: 'Welcome to LOKALITY!',
                 type: 'seeker',
                 searchCriteria: 'I am looking for a new property.',
                 avatar: user.photoURL || `https://placehold.co/100x100.png`
@@ -187,6 +186,12 @@ export default function ProfilePage() {
                                     <CardTitle>Your Active Profile</CardTitle>
                                     <CardDescription>This is your current public profile and information.</CardDescription>
                                 </div>
+                                <Button asChild variant="outline" size="icon">
+                                    <Link href="/profile/edit">
+                                        <Pencil className="h-4 w-4" />
+                                        <span className="sr-only">Edit Profile</span>
+                                    </Link>
+                                </Button>
                             </CardHeader>
                             <CardContent className="space-y-4 pt-0">
                                 <DetailRow label="Name" value={userProfile.name} />
@@ -196,12 +201,7 @@ export default function ProfilePage() {
                                 <DetailRow label="Phone" value={userProfile.phone || 'Not provided'} />
                                 <Separator/>
                                 <DetailRow label="Active Role" value={<Badge variant="default" className="capitalize">{userProfile.type}</Badge>} />
-                                <Separator />
-                                <div className="space-y-1">
-                                    <span className="text-sm text-muted-foreground">Bio</span>
-                                    <p className="font-medium text-white">{userProfile.bio || 'No bio provided.'}</p>
-                                </div>
-
+                                
                                 {userProfile.type === 'seeker' && (userProfile as SeekerProfile).searchCriteria && (
                                     <>
                                         <Separator />

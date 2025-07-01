@@ -76,7 +76,6 @@ type BaseProfile = {
   name: string;
   email: string;
   phone: string;
-  bio: string;
   avatar?: string;
 };
 
@@ -92,14 +91,14 @@ export type OwnerProfile = BaseProfile & {
 
 export type DealerProfile = BaseProfile & {
   type: 'dealer';
-  companyName: string;
+  companyName?: string;
   reraId?: string;
 };
 
 export type DeveloperProfile = BaseProfile & {
   type: 'developer';
-  companyName: string;
-  reraId: string;
+  companyName?: string;
+  reraId?: string;
 };
 
 export type UserProfile = SeekerProfile | OwnerProfile | DealerProfile | DeveloperProfile;

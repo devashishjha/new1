@@ -43,7 +43,6 @@ export function AuthForm() {
                 name: user.displayName || user.email?.split('@')[0] || 'New User',
                 email: user.email!,
                 phone: user.phoneNumber || '',
-                bio: 'Welcome to LOKALITY!',
                 type: 'seeker',
                 searchCriteria: 'I am looking for a new property.',
                 avatar: user.photoURL || `https://placehold.co/100x100.png`
@@ -282,5 +281,3 @@ export function AuthForm() {
         </Card>
     );
 }
-
-    

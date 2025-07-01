@@ -19,8 +19,9 @@ import { db, storage } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { addDoc, collection, doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
-import type { UserProfile, Property } from '@/lib/types';
+import type { UserProfile, Property, OwnerProfile, DealerProfile, DeveloperProfile } from '@/lib/types';
 import { LocationAutocomplete } from './location-autocomplete';
+import { Skeleton } from './ui/skeleton';
 
 
 const propertySchema = z.object({
@@ -30,6 +31,7 @@ const propertySchema = z.object({
     location: z.string().min(3, { message: 'Location must be at least 3 characters.' }),
     societyName: z.string().min(2, { message: 'Please enter a society name.' }),
     video: z.any().optional(),
+    userType: z.enum(['owner', 'dealer', 'developer']).optional(),
 
     // Property Details
     propertyType: z.enum(['apartment', 'villa', 'row house', 'penthouse', 'independent house', 'builder floor']),
@@ -73,6 +75,8 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
     const { user } = useAuth();
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = React.useState(false);
+    const [userProfile, setUserProfile] = React.useState<UserProfile | null>(null);
+    const [isProfileLoading, setIsProfileLoading] = React.useState(true);
 
     const form = useForm<z.infer<typeof propertySchema>>({
         resolver: zodResolver(propertySchema),
@@ -82,6 +86,7 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
             location: '',
             societyName: '',
             video: null,
+            userType: 'owner',
             propertyType: 'apartment',
             configuration: '2bhk',
             floorNo: 0,
@@ -112,6 +117,26 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
             brokerage: 0,
         },
     });
+    
+    React.useEffect(() => {
+        const fetchUserProfile = async () => {
+            if (!user) {
+                setIsProfileLoading(false);
+                return;
+            }
+            if (!db) {
+                setIsProfileLoading(false);
+                return;
+            }
+            const userDocRef = doc(db, 'users', user.uid);
+            const userDocSnap = await getDoc(userDocRef);
+            if (userDocSnap.exists()) {
+                setUserProfile(userDocSnap.data() as UserProfile);
+            }
+            setIsProfileLoading(false);
+        };
+        fetchUserProfile();
+    }, [user]);
 
     React.useEffect(() => {
         if (mode === 'edit' && property) {
@@ -227,36 +252,54 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
             } else {
                 const userDocRef = doc(db, 'users', user.uid);
                 const userDoc = await getDoc(userDocRef);
-                let userProfile: UserProfile;
+                let userProfileData: UserProfile;
 
                 if (userDoc.exists()) {
-                    userProfile = userDoc.data() as UserProfile;
+                    userProfileData = userDoc.data() as UserProfile;
+                    // If user is a seeker listing for the first time, update their role
+                    if (userProfileData.type === 'seeker' && values.userType) {
+                        await updateDoc(userDocRef, { type: values.userType });
+                        userProfileData.type = values.userType;
+                    }
                 } else {
                     toast({
                         title: "Finalizing Account Setup",
-                        description: "We're creating a default profile for you to post this property.",
+                        description: "We're creating a profile for you to post this property.",
                     });
-                    const defaultProfile: UserProfile = {
+                    const newProfileType = values.userType || 'owner';
+                    const baseProfile = {
                         id: user.uid,
                         name: user.displayName || user.email?.split('@')[0] || 'New User',
                         email: user.email!,
                         phone: user.phoneNumber || '',
-                        bio: 'Welcome to LOKALITY!',
-                        type: 'owner',
                         avatar: user.photoURL || `https://placehold.co/100x100.png`
                     };
-                    await setDoc(userDocRef, defaultProfile);
-                    userProfile = defaultProfile;
+                    
+                    switch(newProfileType) {
+                        case 'owner':
+                            userProfileData = { ...baseProfile, type: 'owner' } as OwnerProfile;
+                            break;
+                        case 'dealer':
+                            userProfileData = { ...baseProfile, type: 'dealer' } as DealerProfile;
+                            break;
+                        case 'developer':
+                            userProfileData = { ...baseProfile, type: 'developer' } as DeveloperProfile;
+                            break;
+                        default:
+                            userProfileData = { ...baseProfile, type: 'owner' } as OwnerProfile;
+                    }
+                    
+                    await setDoc(userDocRef, userProfileData);
                 }
 
                 const finalData = {
                     ...propertyDataForFirestore,
                     lister: {
                         id: user.uid,
-                        name: userProfile.name,
-                        type: userProfile.type,
-                        avatar: userProfile.avatar,
-                        phone: userProfile.phone,
+                        name: userProfileData.name,
+                        type: userProfileData.type,
+                        avatar: userProfileData.avatar,
+                        phone: userProfileData.phone,
                     },
                     postedOn: serverTimestamp(),
                     image: 'https://placehold.co/1080x1920.png',
@@ -285,12 +328,33 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
     
     const renderCheckboxField = (name: keyof z.infer<typeof propertySchema>, label: string) => (<FormField control={form.control} name={name} render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><FormLabel>{label}</FormLabel><FormControl><Checkbox checked={field.value as boolean} onCheckedChange={field.onChange}/></FormControl></FormItem>)} />);
 
+    const showUserTypeSelection = !userProfile || userProfile.type === 'seeker';
+
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                  <Card>
                     <CardHeader><CardTitle>Basic Information</CardTitle></CardHeader>
                     <CardContent className="grid md:grid-cols-2 gap-6">
+                        {mode === 'add' && (
+                            isProfileLoading ? <Skeleton className="h-10 w-full md:col-span-2" /> : showUserTypeSelection && (
+                                <FormField control={form.control} name="userType" render={({ field }) => (
+                                    <FormItem className="md:col-span-2">
+                                        <FormLabel>You are a...</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl><SelectTrigger><SelectValue placeholder="Select your role" /></SelectTrigger></FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="owner">Property Owner</SelectItem>
+                                                <SelectItem value="dealer">Real Estate Dealer</SelectItem>
+                                                <SelectItem value="developer">Developer</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormDescription>This will set the profile type on your account.</FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )} />
+                            )
+                        )}
                         <FormField control={form.control} name="priceType" render={({ field }) => ( <FormItem><FormLabel>Listing for</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="rent">Rent</SelectItem><SelectItem value="sale">Sale</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
                         <FormField control={form.control} name="priceAmount" render={({ field }) => ( <FormItem><FormLabel>Price Amount (₹)</FormLabel><FormControl><Input type="number" placeholder="5000000" {...field} /></FormControl><FormMessage /></FormItem> )} />
                         <FormField control={form.control} name="location" render={({ field }) => ( <FormItem className="md:col-span-2"><FormLabel>Location</FormLabel><FormControl><LocationAutocomplete isTextarea placeholder="Full address of the property" value={field.value} onChange={field.onChange} /></FormControl><FormDescription>Start typing and select a location from Google Maps suggestions.</FormDescription><FormMessage /></FormItem> )} />

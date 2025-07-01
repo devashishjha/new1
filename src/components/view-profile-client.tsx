@@ -56,7 +56,6 @@ export function ViewProfileClient() {
             name: dummyLister.name,
             email: `${dummyLister.name.toLowerCase().replace(/\s/g, '.')}@example.com`,
             phone: dummyLister.phone || '',
-            bio: `A passionate ${dummyLister.type} helping people find their dream homes.`,
             avatar: dummyLister.avatar || 'https://placehold.co/100x100.png',
           };
           let fullDummyProfile: UserProfile | null = null;
@@ -184,7 +183,6 @@ export function ViewProfileClient() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                <p className="text-center text-white/70 italic px-4">&quot;{profile.bio}&quot;</p>
                 <div className="space-y-6 pt-4 border-t border-white/10">
                     <DetailItem label="Email" value={profile.email} icon={AtSign} />
                     <DetailItem label="Phone" value={profile.phone || 'Not provided'} icon={Phone} />
@@ -243,5 +241,3 @@ export function ViewProfileClient() {
     </>
   );
 }
-
-    

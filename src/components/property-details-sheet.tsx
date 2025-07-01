@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -9,7 +8,8 @@ import { Button } from './ui/button';
 import {
   AreaChart, Bath, BedDouble, Building, Car, Check, ChevronRight, CircleDollarSign, Compass,
   BatteryCharging, Gamepad2, Gift, Home, MessageCircle, Phone, School, ShoppingCart,
-  Users, Utensils, Waves, X, Zap, Pill, Sun, Maximize, Wind, CheckCircle2, XCircle, FileText
+  Users, Utensils, Waves, X, Zap, Pill, Sun, Maximize, Wind, CheckCircle2, XCircle, FileText,
+  CalendarDays
 } from 'lucide-react';
 import Link from 'next/link';
 import { ScrollArea } from './ui/scroll-area';
@@ -46,6 +46,16 @@ export function PropertyDetailsSheet({ open, onOpenChange, property, variant = '
   const priceDisplay = property.price.type === 'rent'
     ? `₹ ${property.price.amount.toLocaleString('en-IN')}/mo`
     : formatIndianCurrency(property.price.amount);
+
+  const postedDate = property.postedOn instanceof Date
+    ? property.postedOn
+    : typeof property.postedOn === 'string'
+      ? new Date(property.postedOn)
+      : (property.postedOn as any).toDate(); // Assuming Timestamp has toDate method
+
+  const formattedPostedDate = postedDate ? postedDate.toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A';
+  const formattedPostedTime = postedDate ? postedDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '';
+
     
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -62,6 +72,11 @@ export function PropertyDetailsSheet({ open, onOpenChange, property, variant = '
                   <Badge variant="secondary">{priceDisplay}</Badge>
                   <Badge variant="secondary">{property.configuration.toUpperCase()}</Badge>
                   <Badge variant="secondary" className="capitalize">{property.propertyType}</Badge>
+                  {property.isSoldOrRented && (
+                      <Badge variant="destructive">
+                          {property.price.type === 'rent' ? 'Rented Out' : 'Sold Out'}
+                      </Badge>
+                  )}
               </div>
             </SheetHeader>
 
@@ -77,6 +92,7 @@ export function PropertyDetailsSheet({ open, onOpenChange, property, variant = '
                         <DetailItem label="Open Sides" value={property.openSides} icon={Maximize} />
                         <DetailItem label="Kitchen Utility" value={property.kitchenUtility ? 'Yes' : 'No'} icon={Utensils} />
                         <DetailItem label="Balcony" value={property.hasBalcony ? 'Yes' : 'No'} icon={Wind} />
+                        <DetailItem label="Posted On" value={`${formattedPostedDate} ${formattedPostedTime}`} icon={CalendarDays} />
                     </CardContent>
                 </Card>
 

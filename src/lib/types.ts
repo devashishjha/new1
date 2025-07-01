@@ -20,6 +20,9 @@ export type Property = {
   location: string;
   societyName: string;
   postedOn: Timestamp | Date | string;
+  videoViews?: number; // Added field
+  shortlistCount?: number; // Added field
+  isSoldOrRented?: boolean; // Added field
   
   configuration: 'studio' | '1bhk' | '2bhk' | '3bhk' | '4bhk' | '5bhk+';
   floorNo: number;

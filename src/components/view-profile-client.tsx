@@ -7,7 +7,7 @@ import Link from 'next/link';
 import type { UserProfile, Property, SeekerProfile, DeveloperProfile, DealerProfile } from '@/lib/types';
 import { Header } from '@/components/header';
 import { BottomNavBar } from '@/components/bottom-nav-bar';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Building, ChevronsRight, Phone, User, Clock, Loader2, Mail, MessagesSquare } from 'lucide-react';

@@ -1,16 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     experimental: {
-        allowedDevOrigins: ["https://3001-firebase-studio-1750651018378.cluster-73qgvk7hjjadkrjeyexca5ivva.cloudworkstations.dev"]
+        // This is a workaround for a Webpack caching issue that can occur in some dev environments.
+        webpackCache: false,
     },
-    webpack: (config, { dev }) => {
-        if (dev) {
-          // Disabling webpack cache to work around a filesystem issue that can
-          // occur in certain development environments.
-          config.cache = false;
-        }
-        return config;
-    },
+    // This is to allow cross-origin requests from the development environment.
+    allowedDevOrigins: ["https://*.cloudworkstations.dev"],
 };
 
 export default nextConfig;

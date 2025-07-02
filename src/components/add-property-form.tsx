@@ -22,7 +22,10 @@ import { useRouter } from 'next/navigation';
 import type { UserProfile, Property, OwnerProfile, DealerProfile, DeveloperProfile } from '@/lib/types';
 import { MapLocationPicker } from './map-location-picker';
 import { Skeleton } from './ui/skeleton';
+import { FFmpeg } from '@ffmpeg/ffmpeg';
+import { fetchFile } from '@ffmpeg/util';
 
+const ffmpeg = new FFmpeg();
 
 const propertySchema = z.object({
     // Basic Info
@@ -189,9 +192,51 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
 
         try {
             let videoUrl: string | undefined = (mode === 'edit' && property?.video) ? property.video : undefined;
-            const videoFile = values.video?.[0];
+            let videoFile = values.video?.[0];
 
             if (videoFile) {
+                const MAX_SIZE = 20 * 1024 * 1024; // 20MB
+                if (videoFile.size > MAX_SIZE) {
+                    toast({ title: "Compressing Video...", description: "This might take a moment. Please don't close the window.", duration: 120000 });
+                    try {
+                        if (!ffmpeg.loaded) {
+                            await ffmpeg.load();
+                        }
+                        ffmpeg.on('log', ({ message }) => {
+                            console.log(message); // Useful for debugging ffmpeg progress
+                        });
+                        await ffmpeg.writeFile('input_video', await fetchFile(videoFile));
+
+                        // -crf 28 is a good balance for quality and size reduction. Higher is more compression.
+                        await ffmpeg.exec(['-i', 'input_video', '-crf', '28', 'output.mp4']);
+                        
+                        const data = await ffmpeg.readFile('output.mp4');
+
+                        if (data.byteLength > MAX_SIZE) {
+                            toast({
+                                variant: 'destructive',
+                                title: 'Compression Failed',
+                                description: `Video could not be compressed below 20MB. The compressed size is still ${(data.byteLength / (1024*1024)).toFixed(2)}MB. Please try a shorter or different video.`,
+                                duration: 9000,
+                            });
+                            setIsSubmitting(false);
+                            return;
+                        }
+                        videoFile = new File([data], 'compressed_video.mp4', { type: 'video/mp4' });
+                        toast({ title: 'Compression Complete!', description: `New size is ${(videoFile.size / (1024*1024)).toFixed(2)}MB. Now uploading...` });
+                    } catch (compressionError) {
+                        console.error("Video compression failed:", compressionError);
+                        toast({
+                            variant: "destructive",
+                            title: "Compression Error",
+                            description: "There was an error while trying to compress your video. Please try again or use a smaller file.",
+                            duration: 9000
+                        });
+                        setIsSubmitting(false);
+                        return;
+                    }
+                }
+                
                 toast({ title: "Uploading Video...", description: "Please wait while we upload your property video." });
                 const storageRef = ref(storage, `videos/${user.uid}/${Date.now()}_${videoFile.name}`);
                 const uploadResult = await uploadBytes(storageRef, videoFile);

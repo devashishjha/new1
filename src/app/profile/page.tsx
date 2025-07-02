@@ -8,7 +8,7 @@ import { Header } from '@/components/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Shield, FileText, LogOut, MessagesSquare, Loader2, Star, Handshake, Sparkles, KeyRound, ShoppingCart, Pencil, User as UserIcon, MoreVertical, ListVideo, Phone } from 'lucide-react';
+import { Shield, FileText, LogOut, MessagesSquare, Loader2, Star, Handshake, Sparkles, KeyRound, ShoppingCart, Pencil, User as UserIcon, MoreVertical, ListVideo, Phone, Mail } from 'lucide-react';
 import { BottomNavBar } from '@/components/bottom-nav-bar';
 import { useToast } from '@/hooks/use-toast';
 import { signOut } from 'firebase/auth';
@@ -219,31 +219,53 @@ export default function ProfilePage() {
                                 </Button>
                             </div>
                             <h1 className="text-4xl font-bold tracking-tight">{userProfile.name}</h1>
-                            <p className="text-muted-foreground mt-2">{userProfile.email}</p>
-
-                             <div className="flex items-center justify-center gap-4 mt-4">
-                                {userProfile.phone ? (
-                                    <a href={`tel:${userProfile.phone}`}>
-                                        <Button variant="outline" size="sm"><Phone className="mr-2 h-4 w-4" /> Call</Button>
-                                    </a>
-                                ) : (
-                                     <Tooltip>
-                                        <TooltipTrigger>
-                                            <div className="inline-block">
-                                                <Button variant="outline" size="sm" disabled><Phone className="mr-2 h-4 w-4" /> Call</Button>
-                                            </div>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>Add a phone number to enable calls.</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                )}
-                                 <Link href="/chats">
-                                    <Button size="sm"><MessagesSquare className="mr-2 h-4 w-4" /> Chat</Button>
-                                </Link>
+                            
+                            <div className="flex items-center justify-center gap-4 mt-4">
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <a href={`mailto:${userProfile.email}`}>
+                                            <Button variant="outline" size="icon">
+                                                <Mail className="h-5 w-5" />
+                                                <span className="sr-only">Email</span>
+                                            </Button>
+                                        </a>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>{userProfile.email}</p></TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        {userProfile.phone ? (
+                                            <a href={`tel:${userProfile.phone}`}>
+                                                <Button variant="outline" size="icon">
+                                                    <Phone className="h-5 w-5" />
+                                                    <span className="sr-only">Call</span>
+                                                </Button>
+                                            </a>
+                                        ) : (
+                                            <Button variant="outline" size="icon" disabled>
+                                                <Phone className="h-5 w-5" />
+                                                <span className="sr-only">Call</span>
+                                            </Button>
+                                        )}
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        {userProfile.phone ? <p>{userProfile.phone}</p> : <p>No phone number provided.</p>}
+                                    </TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Link href="/chats">
+                                            <Button variant="outline" size="icon">
+                                                <MessagesSquare className="h-5 w-5" />
+                                                <span className="sr-only">Chat</span>
+                                            </Button>
+                                        </Link>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>Start a chat</p></TooltipContent>
+                                </Tooltip>
                             </div>
 
-                            <Badge variant="secondary" className="capitalize mt-4">{userProfile.type}</Badge>
+                            <Badge variant="secondary" className="capitalize mt-6">{userProfile.type}</Badge>
                         </div>
 
 
@@ -261,7 +283,7 @@ export default function ProfilePage() {
                                             <Loader2 className="h-8 w-8 animate-spin" />
                                         </div>
                                     ) : userProperties.length > 0 ? (
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                                             {userProperties.map(property => (
                                                 <ShortlistedPropertyCard key={property.id} property={property} />
                                             ))}

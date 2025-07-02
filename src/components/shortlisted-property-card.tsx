@@ -46,7 +46,7 @@ export function ShortlistedPropertyCard({ property }: { property: Property }) {
                     {property.video ? (
                         <video
                             src={`${property.video}#t=0.1`} // Fetch first frame for thumbnail
-                            className="w-full h-48 object-cover bg-black"
+                            className="w-full h-48 object-cover bg-black transform-gpu"
                             preload="metadata"
                             muted
                             playsInline

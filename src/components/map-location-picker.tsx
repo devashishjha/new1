@@ -35,65 +35,59 @@ export function MapLocationPicker({ value, onChange }: MapLocationPickerProps) {
   const [mapCenter, setMapCenter] = useState(defaultCenter);
   const [isGeocoding, setIsGeocoding] = useState(false);
   
-  const mapRef = useRef<google.maps.Map | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const searchBoxRef = useRef<google.maps.places.SearchBox | null>(null);
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
-  const onMapLoad = useCallback((map: google.maps.Map) => {
-    mapRef.current = map;
+  // Using a ref for the callback is a good practice to avoid re-running the effect
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
 
-    // We only set up the search box once the map has loaded.
-    if (isLoaded && searchInputRef.current) {
-      const searchBox = new window.google.maps.places.SearchBox(searchInputRef.current);
-      searchBoxRef.current = searchBox;
-
-      map.addListener('bounds_changed', () => {
-        searchBox.setBounds(map.getBounds() as google.maps.LatLngBounds);
-      });
-
-      searchBox.addListener('places_changed', () => {
-        const places = searchBox.getPlaces();
-        if (places && places.length > 0 && places[0].geometry) {
-            const location = places[0].geometry.location!;
-            const pos = { lat: location.lat(), lng: location.lng() };
-            setMarkerPosition(pos);
-            setMapCenter(pos);
-            if(places[0].formatted_address) {
-                onChange(places[0].formatted_address);
+  // Effect to set up the Autocomplete once the map is loaded
+  useEffect(() => {
+    if (isLoaded && searchInputRef.current && !autocompleteRef.current) {
+        const autocomplete = new window.google.maps.places.Autocomplete(searchInputRef.current, {
+            componentRestrictions: { country: 'in' },
+            fields: ["formatted_address", "geometry.location"],
+        });
+        autocompleteRef.current = autocomplete;
+        
+        const listener = autocomplete.addListener('place_changed', () => {
+            const place = autocomplete.getPlace();
+            if (place.geometry?.location) {
+                const location = place.geometry.location;
+                const pos = { lat: location.lat(), lng: location.lng() };
+                setMarkerPosition(pos);
+                setMapCenter(pos);
+            }
+             if (place.formatted_address) {
+                onChangeRef.current(place.formatted_address);
+            }
+        });
+        
+        return () => {
+             if (autocompleteRef.current) {
+                window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
             }
         }
-      });
     }
-  }, [isLoaded, onChange]);
+  }, [isLoaded]);
 
-  const onUnmount = useCallback(() => {
-    // Clean up listeners when the component unmounts
-    if (searchBoxRef.current) {
-        window.google.maps.event.clearInstanceListeners(searchBoxRef.current);
-    }
-    if (mapRef.current) {
-        window.google.maps.event.clearInstanceListeners(mapRef.current);
-    }
-    mapRef.current = null;
-  }, []);
-  
-  // Geocode initial address to set marker in edit mode
+  // Effect to geocode initial address to set marker in edit mode
   useEffect(() => {
     if (isLoaded && value && !markerPosition) {
         const geocoder = new window.google.maps.Geocoder();
         setIsGeocoding(true);
         geocoder.geocode({ address: value }, (results, status) => {
+            setIsGeocoding(false);
             if (status === 'OK' && results?.[0]) {
                 const location = results[0].geometry.location;
                 const pos = { lat: location.lat(), lng: location.lng() };
                 setMarkerPosition(pos);
                 setMapCenter(pos);
             }
-            setIsGeocoding(false);
         });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoaded, value]);
+  }, [isLoaded, value, markerPosition]);
 
 
   const handleMarkerDragEnd = (e: google.maps.MapMouseEvent) => {
@@ -104,48 +98,64 @@ export function MapLocationPicker({ value, onChange }: MapLocationPickerProps) {
       const geocoder = new window.google.maps.Geocoder();
       setIsGeocoding(true);
       geocoder.geocode({ location: newPos }, (results, status) => {
+        setIsGeocoding(false);
         if (status === 'OK' && results?.[0]) {
-          onChange(results[0].formatted_address);
+          onChangeRef.current(results[0].formatted_address);
+          if (searchInputRef.current) {
+              searchInputRef.current.value = results[0].formatted_address;
+          }
         } else {
             console.error('Geocoder failed due to: ' + status);
         }
-        setIsGeocoding(false);
       });
     }
   };
 
+  const onMapLoad = useCallback((map: google.maps.Map) => {
+    // Optional: You can do something with the map instance here
+  }, []);
+
   if (loadError) {
     return (
-        <div className="w-full h-[400px] bg-muted/30 rounded-lg flex flex-col items-center justify-center text-center p-4 border border-destructive">
-            <AlertTriangle className="w-12 h-12 text-destructive mb-4" />
-            <h3 className="text-xl font-semibold text-destructive">Oops! Something went wrong.</h3>
-            <p className="text-muted-foreground mt-2">
-                This page didn't load Google Maps correctly.
+        <div className="w-full h-auto bg-muted/30 rounded-lg flex flex-col items-center justify-center text-center p-4 border border-destructive space-y-4">
+            <AlertTriangle className="w-12 h-12 text-destructive" />
+            <h3 className="text-xl font-semibold text-destructive">Map Loading Failed</h3>
+            <p className="text-muted-foreground">
+                There was an issue loading Google Maps. Please ensure the API key is correct and all required APIs are enabled.
             </p>
-            <div className="text-xs text-left bg-destructive/10 p-3 mt-4 rounded-md font-mono text-destructive/80 max-w-full overflow-auto">
-                <p className="font-bold">Troubleshooting for Developers:</p>
-                <ul className="list-disc list-inside mt-1 space-y-1">
-                    <li>Ensure the <code className='font-semibold'>NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code> secret is set correctly.</li>
-                    <li>Verify the "Maps JavaScript API" & "Places API" are enabled in your Google Cloud project.</li>
-                    <li>Check for billing issues or API key restrictions (e.g., HTTP referrers).</li>
-                </ul>
+            {/* Fallback to simple input */}
+             <div className='w-full text-left space-y-2'>
+                <label htmlFor="location-fallback" className="block text-sm font-medium text-foreground">Location (Manual Entry)</label>
+                <Input
+                    id="location-fallback"
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    placeholder="Enter location manually"
+                />
             </div>
         </div>
     );
   }
 
   if (!isLoaded) {
-    return <Skeleton className="w-full h-[400px]" />;
+    return <Skeleton className="w-full h-[460px]" />;
   }
 
   return (
     <div className='space-y-4'>
         <div>
-            <label htmlFor="location-search" className="block text-sm font-medium text-foreground mb-2">Search for a location to place the pin</label>
+            <label htmlFor="location-search" className="block text-sm font-medium text-foreground mb-2">Search for a location</label>
             <Input 
                 id="location-search"
                 ref={searchInputRef} 
                 placeholder="Search for an area, street, or landmark..."
+                // Use defaultValue to prevent React from overwriting Google's manipulations
+                defaultValue={value}
+                onChange={(e) => {
+                  // This allows manual typing to still update the form state,
+                  // even though Autocomplete will take over on selection.
+                  onChange(e.target.value);
+                }}
             />
         </div>
         <div className="relative">
@@ -154,7 +164,6 @@ export function MapLocationPicker({ value, onChange }: MapLocationPickerProps) {
                 center={mapCenter}
                 zoom={markerPosition ? 15 : 10}
                 onLoad={onMapLoad}
-                onUnmount={onUnmount}
                 options={{
                     streetViewControl: false,
                     mapTypeControl: false,
@@ -169,7 +178,7 @@ export function MapLocationPicker({ value, onChange }: MapLocationPickerProps) {
                 )}
             </GoogleMap>
             {isGeocoding && (
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-background/80 backdrop-blur-sm text-foreground text-sm font-medium px-4 py-2 rounded-full flex items-center gap-2">
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-background/80 backdrop-blur-sm text-foreground text-sm font-medium px-4 py-2 rounded-full flex items-center gap-2 z-10">
                     <Loader2 className='w-4 h-4 animate-spin' />
                     Fetching address...
                 </div>
@@ -182,6 +191,7 @@ export function MapLocationPicker({ value, onChange }: MapLocationPickerProps) {
                 readOnly
                 value={value}
                 placeholder="Drag the pin on the map to select a location."
+                className="bg-muted/50 cursor-default"
             />
         </div>
     </div>

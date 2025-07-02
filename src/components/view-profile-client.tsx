@@ -7,19 +7,20 @@ import Link from 'next/link';
 import type { UserProfile, Property, SeekerProfile, DeveloperProfile, DealerProfile } from '@/lib/types';
 import { Header } from '@/components/header';
 import { BottomNavBar } from '@/components/bottom-nav-bar';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, AtSign, Building, ChevronsRight, Phone, User, Clock, Loader2 } from 'lucide-react';
+import { ArrowLeft, Building, ChevronsRight, Phone, User, Clock, Loader2, Mail, MessagesSquare } from 'lucide-react';
 import { ShortlistedPropertyCard } from '@/components/shortlisted-property-card';
 import { db } from '@/lib/firebase';
 import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
 import { dateToJSON } from '@/lib/utils';
-import { ChatButton } from '@/components/chat-button';
 import Image from 'next/image';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/use-auth';
 import { dummyProperties } from '@/lib/dummy-data';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useChatNavigation } from '@/hooks/use-chat-navigation';
 
 const DetailItem = ({ label, value, icon }: { label: string, value: React.ReactNode, icon?: React.ElementType }) => (
   <div className="flex items-start gap-4">
@@ -39,6 +40,7 @@ export function ViewProfileClient() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [userProperties, setUserProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { navigateToChat, isNavigating: isStartingChat } = useChatNavigation();
 
   useEffect(() => {
     if (!userId || authLoading) {
@@ -158,86 +160,127 @@ export function ViewProfileClient() {
 
   return (
     <>
-      <Header />
-      <main className="container mx-auto py-24 px-4 pb-24">
-        <div className="max-w-4xl mx-auto">
-          <Link href={isLoggedInUser ? "/profile" : "/reels"}>
-            <Button variant="ghost" className="mb-4">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to {isLoggedInUser ? "Your Profile" : "Reels"}
-            </Button>
-          </Link>
-          
-          <Card>
-            <CardHeader className="text-center">
-              <div className="w-24 h-24 bg-secondary rounded-full mx-auto flex items-center justify-center mb-4 overflow-hidden border-2 border-primary">
-                  {profile.avatar ? (
-                      <Image src={profile.avatar} alt={profile.name} width={96} height={96} className="object-cover w-full h-full" data-ai-hint="person portrait" />
-                  ) : (
-                      <User className="w-12 h-12 text-primary" />
-                  )}
-              </div>
-              <CardTitle className="text-3xl">{profile.name}</CardTitle>
-              <CardDescription>
-                <Badge variant="default" className="capitalize text-lg py-1 px-3 mt-2">{profile.type}</Badge>
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="space-y-6 pt-4 border-t border-white/10">
-                    <DetailItem label="Email" value={profile.email} icon={AtSign} />
-                    <DetailItem label="Phone" value={profile.phone || 'Not provided'} icon={Phone} />
-                    {(profile.type === 'dealer' || profile.type === 'developer') && (profile as DealerProfile).companyName && <DetailItem label="Company Name" value={(profile as DealerProfile).companyName} icon={Building} />}
-                    {(profile.type === 'dealer' || profile.type === 'developer') && (profile as DeveloperProfile).reraId && <DetailItem label="RERA ID" value={(profile as DeveloperProfile).reraId} icon={ChevronsRight} />}
+      <TooltipProvider>
+        <Header />
+        <main className="container mx-auto py-24 px-4 pb-24">
+          <div className="max-w-4xl mx-auto">
+            <Link href={isLoggedInUser ? "/profile" : "/reels"}>
+              <Button variant="ghost" className="mb-4">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to {isLoggedInUser ? "Your Profile" : "Reels"}
+              </Button>
+            </Link>
+            
+            <Card>
+              <CardHeader className="text-center">
+                <div className="w-24 h-24 bg-secondary rounded-full mx-auto flex items-center justify-center mb-4 overflow-hidden border-2 border-primary">
+                    {profile.avatar ? (
+                        <Image src={profile.avatar} alt={profile.name} width={96} height={96} className="object-cover w-full h-full" data-ai-hint="person portrait" />
+                    ) : (
+                        <User className="w-12 h-12 text-primary" />
+                    )}
                 </div>
-                {profile.type === 'seeker' && (profile as SeekerProfile).searchCriteria && (
-                    <div className="space-y-2 pt-4 border-t border-white/10">
-                        <h3 className="text-sm text-white/70">Search Criteria</h3>
-                        <p className="font-mono text-sm bg-secondary p-4 rounded-md text-secondary-foreground">{(profile as SeekerProfile).searchCriteria}</p>
-                    </div>
+                <CardTitle className="text-3xl">{profile.name}</CardTitle>
+                <CardDescription>
+                  <Badge variant="default" className="capitalize text-lg py-1 px-3 mt-2">{profile.type}</Badge>
+                </CardDescription>
+
+                {!isLoggedInUser && (
+                  <div className="flex items-center justify-center gap-4 pt-4">
+                      <Tooltip>
+                          <TooltipTrigger asChild>
+                              <a href={`mailto:${profile.email}`}>
+                                  <Button variant="outline" size="icon">
+                                      <Mail className="h-5 w-5" />
+                                      <span className="sr-only">Email</span>
+                                  </Button>
+                              </a>
+                          </TooltipTrigger>
+                          <TooltipContent><p>{profile.email}</p></TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                          <TooltipTrigger asChild>
+                              {profile.phone ? (
+                                  <a href={`tel:${profile.phone}`}>
+                                      <Button variant="outline" size="icon">
+                                          <Phone className="h-5 w-5" />
+                                          <span className="sr-only">Call</span>
+                                      </Button>
+                                  </a>
+                              ) : (
+                                  <Button variant="outline" size="icon" disabled>
+                                      <Phone className="h-5 w-5" />
+                                      <span className="sr-only">Call</span>
+                                  </Button>
+                              )}
+                          </TooltipTrigger>
+                          <TooltipContent>
+                              {profile.phone ? <p>{profile.phone}</p> : <p>No phone number provided.</p>}
+                          </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                          <TooltipTrigger asChild>
+                              <Button variant="outline" size="icon" onClick={() => navigateToChat(profile)} disabled={isStartingChat}>
+                                  {isStartingChat ? <Loader2 className="animate-spin" /> : <MessagesSquare className="h-5 w-5" />}
+                                  <span className="sr-only">Chat</span>
+                              </Button>
+                          </TooltipTrigger>
+                          <TooltipContent><p>Start a chat</p></TooltipContent>
+                      </Tooltip>
+                  </div>
                 )}
-            </CardContent>
-            {!isLoggedInUser && (
-                 <CardFooter className="p-4 border-t border-white/10 bg-black/20">
-                    <ChatButton targetUser={profile} />
-                </CardFooter>
+
+              </CardHeader>
+              <CardContent className="space-y-6">
+                  <div className="space-y-6 pt-4 border-t border-white/10">
+                      {(profile.type === 'dealer' || profile.type === 'developer') && (profile as DealerProfile).companyName && <DetailItem label="Company Name" value={(profile as DealerProfile).companyName} icon={Building} />}
+                      {(profile.type === 'dealer' || profile.type === 'developer') && (profile as DeveloperProfile).reraId && <DetailItem label="RERA ID" value={(profile as DeveloperProfile).reraId} icon={ChevronsRight} />}
+                  </div>
+                  {profile.type === 'seeker' && (profile as SeekerProfile).searchCriteria && (
+                      <div className="space-y-2 pt-4 border-t border-white/10">
+                          <h3 className="text-sm text-white/70">Search Criteria</h3>
+                          <p className="font-mono text-sm bg-secondary p-4 rounded-md text-secondary-foreground">{(profile as SeekerProfile).searchCriteria}</p>
+                      </div>
+                  )}
+              </CardContent>
+            </Card>
+
+            {(profile.type === 'owner' || profile.type === 'developer' || profile.type === 'dealer') && (
+                <Card className="mt-8">
+                    <CardHeader><CardTitle>Properties Posted ({userProperties.length})</CardTitle></CardHeader>
+                    <CardContent>
+                        {isLoading ? (
+                            <div className="text-center py-4"><Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" /></div>
+                        ) : userProperties.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {userProperties.map(property => (
+                                    <ShortlistedPropertyCard key={property.id} property={property} />
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-white/70 text-center py-4">This user has not posted any properties yet.</p>
+                        )}
+                    </CardContent>
+                </Card>
             )}
-          </Card>
 
-          {(profile.type === 'owner' || profile.type === 'developer' || profile.type === 'dealer') && (
-              <Card className="mt-8">
-                  <CardHeader><CardTitle>Properties Posted ({userProperties.length})</CardTitle></CardHeader>
-                  <CardContent>
-                      {isLoading ? (
-                          <div className="text-center py-4"><Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" /></div>
-                      ) : userProperties.length > 0 ? (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                              {userProperties.map(property => (
-                                  <ShortlistedPropertyCard key={property.id} property={property} />
-                              ))}
-                          </div>
-                      ) : (
-                          <p className="text-white/70 text-center py-4">This user has not posted any properties yet.</p>
-                      )}
-                  </CardContent>
-              </Card>
-          )}
-
-          {profile.type === 'seeker' && profile.searchHistory && profile.searchHistory.length > 0 && (
-              <Card className="mt-8">
-                  <CardHeader><CardTitle>Recent Searches</CardTitle></CardHeader>
-                  <CardContent className="space-y-3">
-                      {profile.searchHistory.slice(0, 5).map((search, index) => (
-                          <div key={index} className="flex items-center gap-3 text-white/70 p-3 bg-secondary rounded-md">
-                              <Clock className="w-4 h-4 flex-shrink-0" />
-                              <span>{search}</span>
-                          </div>
-                      ))}
-                  </CardContent>
-              </Card>
-          )}
-        </div>
-      </main>
-      <BottomNavBar />
+            {profile.type === 'seeker' && profile.searchHistory && profile.searchHistory.length > 0 && (
+                <Card className="mt-8">
+                    <CardHeader><CardTitle>Recent Searches</CardTitle></CardHeader>
+                    <CardContent className="space-y-3">
+                        {profile.searchHistory.slice(0, 5).map((search, index) => (
+                            <div key={index} className="flex items-center gap-3 text-white/70 p-3 bg-secondary rounded-md">
+                                <Clock className="w-4 h-4 flex-shrink-0" />
+                                <span>{search}</span>
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
+          </div>
+        </main>
+        <BottomNavBar />
+      </TooltipProvider>
     </>
   );
 }

@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Property } from '@/lib/types';
@@ -275,7 +274,6 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
             loop 
             playsInline 
             className="absolute inset-0 w-full h-full object-cover" 
-            style={{ transform: 'none' }} 
           />
       ) : (
         property.image && (

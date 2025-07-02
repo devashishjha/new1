@@ -1,4 +1,3 @@
-
 'use client';
 import type { Property } from '@/lib/types';
 import { Card, CardFooter, CardHeader } from '@/components/ui/card';
@@ -48,7 +47,6 @@ export function ShortlistedPropertyCard({ property }: { property: Property }) {
                         <video
                             src={`${property.video}#t=0.1`} // Fetch first frame for thumbnail
                             className="w-full h-48 object-cover bg-black"
-                            style={{ transform: 'scaleY(-1)' }} // Flipped vertically to correct orientation
                             preload="metadata"
                             muted
                             playsInline

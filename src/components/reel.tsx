@@ -110,7 +110,7 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
       ].filter(Boolean).join(', ');
 
       const propertyDetailsString = `
-        This is a ${property.configuration} ${property.propertyType} for ${property.price.type} at ${property.societyName}, ${property.location}.
+        This is a ${property.configuration} ${property.propertyType} for ${property.price.type} at ${property.societyName ? `${property.societyName}, ` : ''}${property.location}.
         Price: ${priceDisplay}.
         Area: ${property.area.superBuiltUp} sqft.
         Floor: ${property.floorNo} of ${property.totalFloors}.
@@ -274,7 +274,7 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
             muted 
             loop 
             playsInline 
-            className="absolute inset-0 w-full h-full object-cover rotate-180" 
+            className="absolute inset-0 w-full h-full object-cover transform-gpu" 
           />
       ) : (
         property.image && (

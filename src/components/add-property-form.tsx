@@ -20,7 +20,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { addDoc, collection, doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import type { UserProfile, Property, OwnerProfile, DealerProfile, DeveloperProfile } from '@/lib/types';
-import { LocationAutocomplete } from './location-autocomplete';
+import { MapLocationPicker } from './map-location-picker';
 import { Skeleton } from './ui/skeleton';
 
 
@@ -29,7 +29,6 @@ const propertySchema = z.object({
     priceType: z.enum(['rent', 'sale']),
     priceAmount: z.coerce.number().min(1, { message: 'Please enter a valid price.' }),
     location: z.string().min(3, { message: 'Location must be at least 3 characters.' }),
-    societyName: z.string().min(2, { message: 'Please enter a society name.' }),
     video: z.any().optional(),
     userType: z.enum(['owner', 'dealer', 'developer']).optional(),
 
@@ -84,7 +83,6 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
             priceType: 'sale',
             priceAmount: 0,
             location: '',
-            societyName: '',
             video: null,
             userType: 'owner',
             propertyType: 'apartment',
@@ -144,7 +142,6 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
                 priceType: property.price.type,
                 priceAmount: property.price.amount,
                 location: property.location,
-                societyName: property.societyName,
                 propertyType: property.propertyType,
                 configuration: property.configuration,
                 floorNo: property.floorNo,
@@ -201,15 +198,14 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
                 videoUrl = await getDownloadURL(uploadResult.ref);
             }
             
-            const autoDescription = `A ${values.configuration} ${values.propertyType} in ${values.societyName}, available for ${values.priceType}. Located at ${values.location}.`;
+            const autoDescription = `A ${values.configuration} ${values.propertyType}, available for ${values.priceType}. Located at ${values.location}.`;
 
             const propertyDataForFirestore = {
-                title: `${values.configuration.toUpperCase()} in ${values.societyName}`,
+                title: `${values.configuration.toUpperCase()} in ${values.location}`,
                 description: autoDescription,
                 video: videoUrl,
                 price: { type: values.priceType, amount: values.priceAmount },
                 location: values.location,
-                societyName: values.societyName,
                 configuration: values.configuration,
                 propertyType: values.propertyType,
                 floorNo: values.floorNo,
@@ -355,8 +351,7 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
                         )}
                         <FormField control={form.control} name="priceType" render={({ field }) => ( <FormItem><FormLabel>Listing for</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="rent">Rent</SelectItem><SelectItem value="sale">Sale</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
                         <FormField control={form.control} name="priceAmount" render={({ field }) => ( <FormItem><FormLabel>Price Amount (₹)</FormLabel><FormControl><Input type="number" placeholder="5000000" {...field} /></FormControl><FormMessage /></FormItem> )} />
-                        <FormField control={form.control} name="location" render={({ field }) => ( <FormItem className="md:col-span-2"><FormLabel>Location</FormLabel><FormControl><LocationAutocomplete placeholder="Full address of the property" value={field.value} onChange={field.onChange} /></FormControl><FormDescription>Start typing and select a location from Google Maps suggestions.</FormDescription><FormMessage /></FormItem> )} />
-                        <FormField control={form.control} name="societyName" render={({ field }) => ( <FormItem className="md:col-span-2"><FormLabel>Society Name</FormLabel><FormControl><Input placeholder="Sunshine Apartments" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                        <FormField control={form.control} name="location" render={({ field }) => ( <FormItem className="md:col-span-2"><FormLabel>Pinpoint Location on Map</FormLabel><FormControl><MapLocationPicker value={field.value} onChange={field.onChange} /></FormControl><FormDescription>Search for a location and then drag the pin to the exact property spot.</FormDescription><FormMessage /></FormItem> )} />
                     </CardContent>
                 </Card>
 

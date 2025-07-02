@@ -18,7 +18,7 @@ export type Property = {
     amount: number;
   };
   location: string;
-  societyName: string;
+  societyName?: string;
   postedOn: Timestamp | Date | string;
   videoViews?: number; // Added field
   shortlistCount?: number; // Added field

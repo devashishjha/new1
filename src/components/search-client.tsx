@@ -33,7 +33,6 @@ const searchSchema = z.object({
     lookingTo: z.enum(['rent', 'sale']).default('sale'),
     priceRange: z.array(z.number()).default([0, 50000000]),
     location: z.string().optional(),
-    societyName: z.string().optional(),
     propertyType: z.array(z.string()).default([]),
     configuration: z.array(z.string()).default([]),
     floorRange: z.array(z.number()).default([0, 50]),
@@ -121,7 +120,6 @@ export function SearchClient() {
                 const priceTypeMatch = filters.lookingTo === 'rent' ? p.price.type === 'rent' : p.price.type === 'sale';
                 const priceRangeMatch = p.price.amount >= filters.priceRange[0] && p.price.amount <= filters.priceRange[1];
                 const locationMatch = !filters.location || p.location.toLowerCase().includes(filters.location.toLowerCase());
-                const societyMatch = !filters.societyName || p.societyName.toLowerCase().includes(filters.societyName.toLowerCase());
                 const propertyTypeMatch = filters.propertyType.length === 0 || filters.propertyType.includes(p.propertyType);
                 const configMatch = filters.configuration.length === 0 || filters.configuration.includes(p.configuration);
                 const floorMatch = p.floorNo >= filters.floorRange[0] && p.floorNo <= filters.floorRange[1];
@@ -145,7 +143,7 @@ export function SearchClient() {
                 const waterMeterMatch = filters.hasWaterMeter === undefined || filters.hasWaterMeter === null || p.amenities.hasWaterMeter === filters.hasWaterMeter;
                 const gasMatch = filters.hasGasPipeline === undefined || filters.hasGasPipeline === null || p.amenities.hasGasPipeline === filters.hasGasPipeline;
 
-                return priceTypeMatch && priceRangeMatch && locationMatch && societyMatch && propertyTypeMatch && configMatch && floorMatch && totalFloorMatch && housesOnFloorMatch && directionMatch && openSidesMatch && kitchenMatch && balconyMatch && sunlightMatch && parking2WMatch && parking4WMatch && liftMatch && playAreaMatch && clinicMatch && playSchoolMatch && marketMatch && pharmacyMatch && clubhouseMatch && waterMeterMatch && gasMatch;
+                return priceTypeMatch && priceRangeMatch && locationMatch && propertyTypeMatch && configMatch && floorMatch && totalFloorMatch && housesOnFloorMatch && directionMatch && openSidesMatch && kitchenMatch && balconyMatch && sunlightMatch && parking2WMatch && parking4WMatch && liftMatch && playAreaMatch && clinicMatch && playSchoolMatch && marketMatch && pharmacyMatch && clubhouseMatch && waterMeterMatch && gasMatch;
             });
 
         const getDate = (p: Property) => p.postedOn instanceof Date ? p.postedOn.getTime() : new Date(p.postedOn as string).getTime();
@@ -272,7 +270,6 @@ export function SearchClient() {
                                         <div className="grid md:grid-cols-2 gap-6">
                                             <FormField control={form.control} name="lookingTo" render={({ field }) => ( <FormItem><FormLabel>Looking to</FormLabel><Select onValueChange={(value) => { field.onChange(value); form.setValue('priceRange', [0, value === 'rent' ? MAX_PRICE_RENT : MAX_PRICE_BUY]); }} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="rent">Rent</SelectItem><SelectItem value="sale">Sale</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
                                             <FormField control={form.control} name="location" render={({ field }) => ( <FormItem><FormLabel>Location</FormLabel><FormControl><LocationAutocomplete placeholder="e.g. Koramangala" value={field.value || ''} onChange={field.onChange} /></FormControl><FormMessage /></FormItem> )}/>
-                                            <FormField control={form.control} name="societyName" render={({ field }) => ( <FormItem><FormLabel>Society Name</FormLabel><FormControl><Input placeholder="e.g. Prestige Acropolis" {...field} /></FormControl><FormMessage /></FormItem> )}/>
                                         </div>
 
                                         <FormField control={form.control} name="priceRange" render={({ field }) => (

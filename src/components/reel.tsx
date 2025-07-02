@@ -300,22 +300,22 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
         <div className="p-4">
              {/* Action Bar */}
             <div className="flex justify-around items-center rounded-full bg-black/30 p-1.5 backdrop-blur-sm border border-white/20 mb-4 max-w-sm mx-auto">
-                <button onClick={(e) => handleInteraction(e, handleCall)} className="flex-1 flex flex-col items-center gap-1 p-1 rounded-full hover:bg-white/10 transition-colors">
+                <button onClick={(e) => handleInteraction(e, handleCall)} onMouseUp={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()} className="flex-1 flex flex-col items-center gap-1 p-1 rounded-full hover:bg-white/10 transition-colors">
                     <PhoneCall strokeWidth={2.5} className="h-6 w-6"/>
                 </button>
-                <button onClick={(e) => handleInteraction(e, toggleShortlist)} className={`flex-1 flex flex-col items-center gap-1 p-1 rounded-full hover:bg-white/10 transition-colors ${isShortlisted ? 'text-primary' : ''}`}>
+                <button onClick={(e) => handleInteraction(e, toggleShortlist)} onMouseUp={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()} className={`flex-1 flex flex-col items-center gap-1 p-1 rounded-full hover:bg-white/10 transition-colors ${isShortlisted ? 'text-primary' : ''}`}>
                     <Bookmark strokeWidth={2.5} className="h-6 w-6" fill={isShortlisted ? 'currentColor' : 'none'}/>
                 </button>
-                <button onClick={(e) => handleInteraction(e, handleChat)} className="flex-1 flex flex-col items-center gap-1 p-1 rounded-full hover:bg-white/10 transition-colors" disabled={isStartingChat}>
+                <button onClick={(e) => handleInteraction(e, handleChat)} onMouseUp={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()} className="flex-1 flex flex-col items-center gap-1 p-1 rounded-full hover:bg-white/10 transition-colors" disabled={isStartingChat}>
                     {isStartingChat ? <Loader2 className="h-6 w-6 animate-spin"/> : <MessageCircle strokeWidth={2.5} className="h-6 w-6"/>}
                 </button>
-                <button onClick={(e) => handleInteraction(e, openDetailsSheet)} className="flex-1 flex flex-col items-center gap-1 p-1 rounded-full hover:bg-white/10 transition-colors">
+                <button onClick={(e) => handleInteraction(e, openDetailsSheet)} onMouseUp={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()} className="flex-1 flex flex-col items-center gap-1 p-1 rounded-full hover:bg-white/10 transition-colors">
                     <Info strokeWidth={2.5} className="h-6 w-6"/>
                 </button>
                 {isLister && onDelete && (
                   <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                       <AlertDialogTrigger asChild>
-                           <button onClick={(e) => e.stopPropagation()} className="flex-1 flex flex-col items-center gap-1 p-1 rounded-full hover:bg-destructive/80 transition-colors text-destructive">
+                           <button onClick={(e) => e.stopPropagation()} onMouseUp={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()} className="flex-1 flex flex-col items-center gap-1 p-1 rounded-full hover:bg-destructive/80 transition-colors text-destructive">
                               <Trash2 strokeWidth={2.5} className="h-6 w-6"/>
                           </button>
                       </AlertDialogTrigger>
@@ -338,7 +338,7 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
                 )}
                  {isLister && (
                     <Button asChild size="icon" variant="ghost" className="flex-1 h-auto p-1 rounded-full hover:bg-white/10 text-white">
-                        <Link href={`/edit-property/${property.id}`} onClick={(e) => e.stopPropagation()}>
+                        <Link href={`/edit-property/${property.id}`} onClick={(e) => e.stopPropagation()} onMouseUp={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()}>
                             <Pencil strokeWidth={2.5} className="h-6 w-6"/>
                         </Link>
                     </Button>
@@ -347,7 +347,7 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
 
             {/* Horizontally Scrolling Info Cards */}
             <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                <button onClick={(e) => handleInteraction(e, openAiMatchDialog)} className="text-left">
+                <button onClick={(e) => handleInteraction(e, openAiMatchDialog)} onMouseUp={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()} className="text-left">
                     <InfoCard icon={Zap} label="AI Match">
                     {matchInfo === undefined ? (
                         <Skeleton className="h-7 w-12 mt-1 bg-white/20" />
@@ -358,7 +358,7 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
                     )}
                     </InfoCard>
                 </button>
-                <Link href={`/view-profile/${property.lister.id}`} onClick={(e) => e.stopPropagation()}>
+                <Link href={`/view-profile/${property.lister.id}`} onClick={(e) => e.stopPropagation()} onMouseUp={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()}>
                     <InfoCard icon={UserCircle} label="Posted By" value={property.lister.name} />
                 </Link>
                 <InfoCard 
@@ -366,7 +366,7 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
                     label={`For ${property.price.type}`} 
                     value={priceDisplay} 
                 />
-                <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(property.location)}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+                <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(property.location)}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} onMouseUp={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()}>
                     <InfoCard icon={MapPin} label="Location" value={property.location} />
                 </a>
                 <InfoCard icon={BedDouble} label="Config" value={property.configuration.toUpperCase()} />

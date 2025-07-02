@@ -1,11 +1,10 @@
-
 'use client';
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { GoogleMap, useJsApiLoader, MarkerF } from '@react-google-maps/api';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from './ui/skeleton';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertTriangle } from 'lucide-react';
 
 const containerStyle = {
   width: '100%',
@@ -38,12 +37,43 @@ export function MapLocationPicker({ value, onChange }: MapLocationPickerProps) {
   
   const mapRef = useRef<google.maps.Map | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchBoxRef = useRef<google.maps.places.SearchBox | null>(null);
 
   const onMapLoad = useCallback((map: google.maps.Map) => {
     mapRef.current = map;
-  }, []);
+
+    // We only set up the search box once the map has loaded.
+    if (isLoaded && searchInputRef.current) {
+      const searchBox = new window.google.maps.places.SearchBox(searchInputRef.current);
+      searchBoxRef.current = searchBox;
+
+      map.addListener('bounds_changed', () => {
+        searchBox.setBounds(map.getBounds() as google.maps.LatLngBounds);
+      });
+
+      searchBox.addListener('places_changed', () => {
+        const places = searchBox.getPlaces();
+        if (places && places.length > 0 && places[0].geometry) {
+            const location = places[0].geometry.location!;
+            const pos = { lat: location.lat(), lng: location.lng() };
+            setMarkerPosition(pos);
+            setMapCenter(pos);
+            if(places[0].formatted_address) {
+                onChange(places[0].formatted_address);
+            }
+        }
+      });
+    }
+  }, [isLoaded, onChange]);
 
   const onUnmount = useCallback(() => {
+    // Clean up listeners when the component unmounts
+    if (searchBoxRef.current) {
+        window.google.maps.event.clearInstanceListeners(searchBoxRef.current);
+    }
+    if (mapRef.current) {
+        window.google.maps.event.clearInstanceListeners(mapRef.current);
+    }
     mapRef.current = null;
   }, []);
   
@@ -65,30 +95,6 @@ export function MapLocationPicker({ value, onChange }: MapLocationPickerProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded, value]);
 
-  // Setup search box
-  useEffect(() => {
-    if (isLoaded && mapRef.current && searchInputRef.current) {
-        const searchBox = new window.google.maps.places.SearchBox(searchInputRef.current);
-        
-        const listener = searchBox.addListener('places_changed', () => {
-            const places = searchBox.getPlaces();
-            if (places && places.length > 0 && places[0].geometry) {
-                const location = places[0].geometry.location!;
-                const pos = { lat: location.lat(), lng: location.lng() };
-                setMarkerPosition(pos);
-                setMapCenter(pos);
-                if(places[0].formatted_address) {
-                    onChange(places[0].formatted_address);
-                }
-            }
-        });
-        
-        return () => {
-            window.google.maps.event.removeListener(listener);
-        }
-    }
-  }, [isLoaded, onChange]);
-
 
   const handleMarkerDragEnd = (e: google.maps.MapMouseEvent) => {
     if (e.latLng) {
@@ -109,7 +115,23 @@ export function MapLocationPicker({ value, onChange }: MapLocationPickerProps) {
   };
 
   if (loadError) {
-    return <div>Error loading maps. Please check the API key and configuration.</div>;
+    return (
+        <div className="w-full h-[400px] bg-muted/30 rounded-lg flex flex-col items-center justify-center text-center p-4 border border-destructive">
+            <AlertTriangle className="w-12 h-12 text-destructive mb-4" />
+            <h3 className="text-xl font-semibold text-destructive">Oops! Something went wrong.</h3>
+            <p className="text-muted-foreground mt-2">
+                This page didn't load Google Maps correctly.
+            </p>
+            <div className="text-xs text-left bg-destructive/10 p-3 mt-4 rounded-md font-mono text-destructive/80 max-w-full overflow-auto">
+                <p className="font-bold">Troubleshooting for Developers:</p>
+                <ul className="list-disc list-inside mt-1 space-y-1">
+                    <li>Ensure the <code className='font-semibold'>NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code> secret is set correctly.</li>
+                    <li>Verify the "Maps JavaScript API" & "Places API" are enabled in your Google Cloud project.</li>
+                    <li>Check for billing issues or API key restrictions (e.g., HTTP referrers).</li>
+                </ul>
+            </div>
+        </div>
+    );
   }
 
   if (!isLoaded) {

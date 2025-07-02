@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Property } from '@/lib/types';
@@ -148,7 +149,7 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
     }
   }, [property.id]);
   
-  const handleInteraction = (e: React.MouseEvent, action: () => void) => {
+  const handleInteraction = (e: React.MouseEvent | React.TouchEvent, action: () => void) => {
     e.stopPropagation();
     action();
   };
@@ -273,7 +274,7 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
             muted 
             loop 
             playsInline 
-            className="absolute inset-0 w-full h-full object-cover transform-gpu" 
+            className="absolute inset-0 w-full h-full object-cover rotate-180" 
           />
       ) : (
         property.image && (
@@ -382,3 +383,5 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
 }
 
 export const Reel = ReelComponent;
+
+    

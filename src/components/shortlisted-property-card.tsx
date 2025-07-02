@@ -1,3 +1,4 @@
+
 'use client';
 import type { Property } from '@/lib/types';
 import { Card, CardFooter, CardHeader } from '@/components/ui/card';
@@ -46,7 +47,7 @@ export function ShortlistedPropertyCard({ property }: { property: Property }) {
                     {property.video ? (
                         <video
                             src={`${property.video}#t=0.1`} // Fetch first frame for thumbnail
-                            className="w-full h-48 object-cover bg-black transform-gpu"
+                            className="w-full h-48 object-cover bg-black rotate-180"
                             preload="metadata"
                             muted
                             playsInline
@@ -129,3 +130,5 @@ export function ShortlistedPropertyCard({ property }: { property: Property }) {
         </>
     );
 }
+
+    

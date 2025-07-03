@@ -173,12 +173,6 @@ export default function ProfilePage() {
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                    <DropdownMenuItem asChild>
-                                        <Link href="/chats" className="flex items-center w-full">
-                                            <MessagesSquare className="mr-2 h-4 w-4" /> My Chats
-                                        </Link>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                             <DropdownMenuItem disabled>

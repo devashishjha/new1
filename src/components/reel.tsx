@@ -274,7 +274,7 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
             muted 
             loop 
             playsInline 
-            className="absolute inset-0 w-full h-full object-cover transform-gpu rotate-180" 
+            className="absolute inset-0 w-full h-full object-cover" 
           />
       ) : (
         property.image && (

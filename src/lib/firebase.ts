@@ -2,6 +2,7 @@ import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
 import { getStorage, type FirebaseStorage } from "firebase/storage";
+import { getDatabase, type Database } from "firebase/database";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -10,12 +11,14 @@ const firebaseConfig = {
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  databaseURL: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ? `https://${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}-default-rtdb.firebaseio.com` : undefined,
 };
 
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
 let storage: FirebaseStorage | null = null;
+let rtdb: Database | null = null;
 
 // This flag checks if all the public Firebase keys are present.
 // It's used to determine if the app should run in "offline mode".
@@ -33,6 +36,7 @@ if (isFirebaseEnabled) {
   auth = getAuth(app);
   db = getFirestore(app);
   storage = getStorage(app);
+  rtdb = firebaseConfig.databaseURL ? getDatabase(app) : null;
 } else {
   // Log a warning in the server console if Firebase is not configured.
   // This is helpful for debugging deployment issues.
@@ -41,4 +45,4 @@ if (isFirebaseEnabled) {
   }
 }
 
-export { app, auth, db, storage };
+export { app, auth, db, storage, rtdb };

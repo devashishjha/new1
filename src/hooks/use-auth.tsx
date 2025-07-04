@@ -4,8 +4,9 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import type { User } from 'firebase/auth';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth, isFirebaseEnabled } from '@/lib/firebase';
+import { auth, isFirebaseEnabled, rtdb } from '@/lib/firebase';
 import { useRouter, usePathname } from 'next/navigation';
+import { ref, onValue, set, onDisconnect, serverTimestamp } from 'firebase/database';
 
 type AuthContextType = {
   user: User | null;
@@ -41,6 +42,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+      
+      if (currentUser && rtdb) {
+        const uid = currentUser.uid;
+        const userStatusDatabaseRef = ref(rtdb, '/status/' + uid);
+        const connectedRef = ref(rtdb, '.info/connected');
+
+        onValue(connectedRef, (snap) => {
+            if (snap.val() === true) {
+                const conStatus = { state: 'online', last_changed: serverTimestamp() };
+                set(userStatusDatabaseRef, conStatus);
+
+                onDisconnect(userStatusDatabaseRef).set({ state: 'offline', last_changed: serverTimestamp() });
+            }
+        });
+      }
+
       setLoading(false);
     });
 

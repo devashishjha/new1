@@ -23,6 +23,7 @@ import { ShortlistedPropertyCard } from '@/components/shortlisted-property-card'
 import { dateToJSON } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { PresenceDot } from '@/components/presence-dot';
 
 
 export default function ProfilePage() {
@@ -205,6 +206,9 @@ export default function ProfilePage() {
                                         {userProfile.avatar ? userProfile.name.charAt(0) : <UserIcon className="w-16 h-16 text-muted-foreground" />}
                                     </AvatarFallback>
                                 </Avatar>
+                                <div className="absolute bottom-2 right-8">
+                                    <PresenceDot userId={userProfile.id} />
+                                </div>
                                 <Button asChild variant="outline" size="icon" className="absolute bottom-0 right-0 rounded-full bg-background">
                                     <Link href="/profile/edit">
                                         <Pencil className="h-4 w-4" />

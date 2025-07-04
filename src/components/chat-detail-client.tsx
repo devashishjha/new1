@@ -14,6 +14,7 @@ import type { ChatConversation, UserProfile } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { doc, onSnapshot, updateDoc, arrayUnion, serverTimestamp, getDoc, Timestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { PresenceDot } from './presence-dot';
 
 export function ChatDetailClient() {
   const { user } = useAuth();
@@ -150,10 +151,15 @@ export function ChatDetailClient() {
             <Link href="/chats">
               <Button variant="ghost" size="icon"><ArrowLeft /></Button>
             </Link>
-            <Avatar className="h-10 w-10 border">
-              <AvatarImage src={conversation.participants[otherUser.id]?.avatar} alt={otherUser.name} data-ai-hint="person portrait" />
-              <AvatarFallback>{otherUser.name.charAt(0)}</AvatarFallback>
-            </Avatar>
+            <div className="relative">
+              <Avatar className="h-10 w-10 border">
+                <AvatarImage src={conversation.participants[otherUser.id]?.avatar} alt={otherUser.name} data-ai-hint="person portrait" />
+                <AvatarFallback>{otherUser.name.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <div className="absolute bottom-0 right-0">
+                <PresenceDot userId={otherUser.id} />
+              </div>
+            </div>
             <Link href={`/view-profile/${otherUser.id}`} className="hover:underline">
               <h2 className="text-lg font-semibold">{otherUser.name}</h2>
             </Link>

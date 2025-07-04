@@ -7,6 +7,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/use-auth';
 import type { Timestamp } from 'firebase/firestore';
+import { PresenceDot } from './presence-dot';
 
 export function ChatListItem({ conversation, isLast }: { conversation: ChatConversation, isLast: boolean }) {
   const { user } = useAuth();
@@ -27,10 +28,15 @@ export function ChatListItem({ conversation, isLast }: { conversation: ChatConve
   return (
     <div className="block hover:bg-secondary/50 transition-colors">
         <div className="flex items-center gap-4 p-4">
-            <Avatar className="h-12 w-12 border">
-                <AvatarImage src={otherUser.avatar} alt={otherUser.name} data-ai-hint="person portrait" />
-                <AvatarFallback>{otherUser.name.charAt(0)}</AvatarFallback>
-            </Avatar>
+            <div className="relative">
+              <Avatar className="h-12 w-12 border">
+                  <AvatarImage src={otherUser.avatar} alt={otherUser.name} data-ai-hint="person portrait" />
+                  <AvatarFallback>{otherUser.name.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <div className="absolute bottom-0 right-0">
+                <PresenceDot userId={otherUserId} />
+              </div>
+            </div>
             <div className="flex-grow overflow-hidden">
                 <div className="flex justify-between items-center">
                     <h3 className="font-semibold truncate">{otherUser.name}</h3>

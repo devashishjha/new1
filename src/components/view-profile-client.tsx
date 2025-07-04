@@ -21,6 +21,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { dummyProperties } from '@/lib/dummy-data';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useChatNavigation } from '@/hooks/use-chat-navigation';
+import { PresenceDot } from './presence-dot';
 
 const DetailItem = ({ label, value, icon }: { label: string, value: React.ReactNode, icon?: React.ElementType }) => (
   <div className="flex items-start gap-4">
@@ -173,13 +174,19 @@ export function ViewProfileClient() {
             
             <Card>
               <CardHeader className="text-center">
-                <div className="w-24 h-24 bg-secondary rounded-full mx-auto flex items-center justify-center mb-4 overflow-hidden border-2 border-primary">
-                    {profile.avatar ? (
-                        <Image src={profile.avatar} alt={profile.name} width={96} height={96} className="object-cover w-full h-full" data-ai-hint="person portrait" />
-                    ) : (
-                        <User className="w-12 h-12 text-primary" />
-                    )}
+                <div className="relative w-24 h-24 mx-auto mb-4">
+                    <div className="w-24 h-24 bg-secondary rounded-full flex items-center justify-center overflow-hidden border-2 border-primary">
+                        {profile.avatar ? (
+                            <Image src={profile.avatar} alt={profile.name} width={96} height={96} className="object-cover w-full h-full" data-ai-hint="person portrait" />
+                        ) : (
+                            <User className="w-12 h-12 text-primary" />
+                        )}
+                    </div>
+                    <div className="absolute bottom-0 right-0">
+                        <PresenceDot userId={profile.id} />
+                    </div>
                 </div>
+
                 <CardTitle className="text-3xl">{profile.name}</CardTitle>
                 <CardDescription>
                   <Badge variant="default" className="capitalize text-lg py-1 px-3 mt-2">{profile.type}</Badge>

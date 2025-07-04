@@ -208,7 +208,7 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
                         await ffmpeg.writeFile('input_video', await fetchFile(videoFile));
 
                         // This command respects original rotation metadata and resets it so the video plays correctly.
-                        await ffmpeg.exec(['-i', 'input_video', '-crf', '28', '-c:a', 'copy', '-metadata:s:v:0', 'rotate=0', 'output.mp4']);
+                        await ffmpeg.exec(['-i', 'input_video', '-map_metadata', '0', '-crf', '28', '-c:a', 'copy', 'output.mp4']);
                         
                         const data = await ffmpeg.readFile('output.mp4');
 

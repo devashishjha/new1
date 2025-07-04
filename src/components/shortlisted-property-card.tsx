@@ -43,15 +43,17 @@ export function ShortlistedPropertyCard({ property }: { property: Property }) {
     return (
         <>
             <Card className="overflow-hidden flex flex-col bg-card/80 backdrop-blur-sm border-border/20 h-full hover:ring-2 hover:ring-primary transition-all">
-                <CardHeader className="p-0 relative">
+                <CardHeader className="p-0 relative overflow-hidden">
                     {property.video ? (
-                        <video
-                            src={`${property.video}#t=0.1`} // Fetch first frame for thumbnail
-                            className="w-full h-48 object-cover bg-black rotate-180"
-                            preload="metadata"
-                            muted
-                            playsInline
-                        />
+                        <div className="w-full h-48 rotate-180">
+                            <video
+                                src={`${property.video}#t=0.1`} // Fetch first frame for thumbnail
+                                className="w-full h-full object-cover bg-black"
+                                preload="metadata"
+                                muted
+                                playsInline
+                            />
+                        </div>
                     ) : (
                         <Image
                             src={property.image}
@@ -63,7 +65,7 @@ export function ShortlistedPropertyCard({ property }: { property: Property }) {
                         />
                     )}
                     {isOccupied && (
-                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
                             <div className="bg-destructive text-destructive-foreground px-3 py-1 rounded-md text-sm font-bold">
                                 {property.price.type === 'rent' ? 'Rented Out' : 'Sold Out'}
                             </div>

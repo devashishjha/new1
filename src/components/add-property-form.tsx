@@ -207,8 +207,8 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
                         });
                         await ffmpeg.writeFile('input_video', await fetchFile(videoFile));
 
-                        // -crf 28 is a good balance for quality and size reduction. Higher is more compression.
-                        await ffmpeg.exec(['-i', 'input_video', '-crf', '28', 'output.mp4']);
+                        // This command respects original rotation metadata and resets it so the video plays correctly.
+                        await ffmpeg.exec(['-i', 'input_video', '-crf', '28', '-c:a', 'copy', '-metadata:s:v:0', 'rotate=0', 'output.mp4']);
                         
                         const data = await ffmpeg.readFile('output.mp4');
 

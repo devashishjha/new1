@@ -8,7 +8,7 @@ import { Header } from '@/components/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Shield, FileText, LogOut, MessagesSquare, Loader2, Star, Handshake, Sparkles, KeyRound, ShoppingCart, Pencil, User as UserIcon, MoreVertical, ListVideo, Phone, Mail } from 'lucide-react';
+import { Shield, FileText, LogOut, MessagesSquare, Loader2, Star, Handshake, Sparkles, KeyRound, ShoppingCart, Pencil, User as UserIcon, MoreVertical, ListVideo, Phone, Mail, Building2, CheckCircle2 } from 'lucide-react';
 import { BottomNavBar } from '@/components/bottom-nav-bar';
 import { useToast } from '@/hooks/use-toast';
 import { signOut } from 'firebase/auth';
@@ -158,6 +158,8 @@ export default function ProfilePage() {
         )
     }
 
+    const occupiedCount = userProperties.filter(p => p.isSoldOrRented).length;
+
     return (
         <>
             <Header />
@@ -266,6 +268,34 @@ export default function ProfilePage() {
                             <Badge variant="secondary" className="capitalize mt-6">{userProfile.type}</Badge>
                         </div>
 
+                        {['owner', 'dealer', 'developer'].includes(userProfile.type) && (
+                            <div className="mb-8 grid grid-cols-3 gap-4">
+                                <Card className="p-4 text-center flex flex-col items-center justify-center">
+                                    <Building2 className="w-8 h-8 text-primary mb-2" />
+                                    <p className="text-2xl font-bold">{userProperties.length}</p>
+                                    <p className="text-sm text-muted-foreground">Listings</p>
+                                </Card>
+                                <Card className="p-4 text-center flex flex-col items-center justify-center">
+                                    <CheckCircle2 className="w-8 h-8 text-primary mb-2" />
+                                    <p className="text-2xl font-bold">{occupiedCount}</p>
+                                    <p className="text-sm text-muted-foreground">Occupied</p>
+                                </Card>
+                                <Card className="p-4 text-center flex flex-col items-center justify-center">
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div className="cursor-pointer">
+                                                <Star className="w-8 h-8 text-accent mb-2 mx-auto" />
+                                                <p className="text-2xl font-bold">4.5</p>
+                                                <p className="text-sm text-muted-foreground">Rating</p>
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Rating feature coming soon!</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </Card>
+                            </div>
+                        )}
 
                         {['owner', 'dealer', 'developer'].includes(userProfile.type) && (
                             <Card className="mb-8">

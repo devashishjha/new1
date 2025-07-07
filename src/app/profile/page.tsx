@@ -117,6 +117,10 @@ export default function ProfilePage() {
         toast({ title: "Logged Out", description: "You have been successfully logged out." });
     };
 
+    const handleDeleteProperty = (propertyId: string) => {
+        setUserProperties(prevProperties => prevProperties.filter(p => p.id !== propertyId));
+    };
+
     if (isLoading) {
         return (
              <>
@@ -313,7 +317,7 @@ export default function ProfilePage() {
                                     ) : userProperties.length > 0 ? (
                                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                                             {userProperties.map(property => (
-                                                <ShortlistedPropertyCard key={property.id} property={property} />
+                                                <ShortlistedPropertyCard key={property.id} property={property} onDelete={handleDeleteProperty} />
                                             ))}
                                         </div>
                                     ) : (

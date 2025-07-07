@@ -19,9 +19,9 @@ export const dummyProperties: Property[] = [
         location: 'HSR Layout, Bengaluru',
         societyName: 'Prestige Ferns Residency',
         postedOn: new Date().toISOString(),
-        videoViews: 1250, // Added
-        shortlistCount: 85, // Added
-        isSoldOrRented: false, // Added
+        videoViews: 1250,
+        shortlistCount: 85,
+        isSoldOrRented: false,
         configuration: '3bhk',
         propertyType: 'apartment',
         floorNo: 12,
@@ -65,9 +65,9 @@ export const dummyProperties: Property[] = [
         location: 'Whitefield, Bengaluru',
         societyName: 'Palm Meadows',
         postedOn: new Date(Date.now() - 86400000).toISOString(), // Yesterday
-        videoViews: 5600, // Added
-        shortlistCount: 210, // Added
-        isSoldOrRented: false, // Added
+        videoViews: 5600,
+        shortlistCount: 210,
+        isSoldOrRented: false,
         configuration: '4bhk',
         propertyType: 'villa',
         floorNo: 0,
@@ -111,9 +111,9 @@ export const dummyProperties: Property[] = [
         location: 'Koramangala, Bengaluru',
         societyName: 'Raheja Residency',
         postedOn: new Date(Date.now() - 2 * 86400000).toISOString(), // 2 days ago
-        videoViews: 890, // Added
-        shortlistCount: 45, // Added
-        isSoldOrRented: false, // Added
+        videoViews: 890,
+        shortlistCount: 45,
+        isSoldOrRented: false,
         configuration: '2bhk',
         propertyType: 'apartment',
         floorNo: 5,
@@ -157,9 +157,9 @@ export const dummyProperties: Property[] = [
         location: 'Indiranagar, Bengaluru',
         societyName: 'Indiranagar Homes',
         postedOn: new Date(Date.now() - 3 * 86400000).toISOString(), // 3 days ago
-        videoViews: 3200, // Added
-        shortlistCount: 150, // Added
-        isSoldOrRented: false, // Added
+        videoViews: 3200,
+        shortlistCount: 150,
+        isSoldOrRented: false,
         configuration: 'studio',
         propertyType: 'builder floor',
         floorNo: 3,
@@ -203,9 +203,9 @@ export const dummyProperties: Property[] = [
         location: 'Koramangala, Bengaluru',
         societyName: 'Prestige Pinnacle',
         postedOn: new Date(Date.now() - 4 * 86400000).toISOString(), // 4 days ago
-        videoViews: 7800, // Added
-        shortlistCount: 300, // Added
-        isSoldOrRented: true, // Added
+        videoViews: 7800,
+        shortlistCount: 300,
+        isSoldOrRented: true,
         configuration: '5bhk+',
         propertyType: 'penthouse',
         floorNo: 25,

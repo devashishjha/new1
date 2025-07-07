@@ -44,26 +44,28 @@ export function ShortlistedPropertyCard({ property }: { property: Property }) {
         <>
             <Card className="overflow-hidden flex flex-col bg-card/80 backdrop-blur-sm border-border/20 h-full hover:ring-2 hover:ring-primary transition-all">
                 <CardHeader className="p-0 relative overflow-hidden">
-                    {property.video ? (
-                        <div className="w-full h-48">
-                            <video
-                                src={`${property.video}#t=0.1`} // Fetch first frame for thumbnail
-                                className="w-full h-full object-cover bg-black"
-                                preload="metadata"
-                                muted
-                                playsInline
+                    <div className='aspect-w-16 aspect-h-9'>
+                        {property.video ? (
+                            <div className="w-full h-48">
+                                <video
+                                    src={`${property.video}#t=0.1`} // Fetch first frame for thumbnail
+                                    className="w-full h-full object-cover bg-black"
+                                    preload="metadata"
+                                    muted
+                                    playsInline
+                                />
+                            </div>
+                        ) : (
+                            <Image
+                                src={property.image}
+                                alt={property.title}
+                                width={400}
+                                height={300}
+                                className="w-full h-48 object-cover"
+                                data-ai-hint="apartment exterior"
                             />
-                        </div>
-                    ) : (
-                        <Image
-                            src={property.image}
-                            alt={property.title}
-                            width={400}
-                            height={300}
-                            className="w-full h-48 object-cover"
-                            data-ai-hint="apartment exterior"
-                        />
-                    )}
+                        )}
+                    </div>
                     {isOccupied && (
                         <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
                             <div className="bg-destructive text-destructive-foreground px-3 py-1 rounded-md text-sm font-bold">

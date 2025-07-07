@@ -45,7 +45,7 @@ export function ShortlistedPropertyCard({ property }: { property: Property }) {
             <Card className="overflow-hidden flex flex-col bg-card/80 backdrop-blur-sm border-border/20 h-full hover:ring-2 hover:ring-primary transition-all">
                 <CardHeader className="p-0 relative overflow-hidden">
                     {property.video ? (
-                        <div className="w-full h-48 rotate-180">
+                        <div className="w-full h-48">
                             <video
                                 src={`${property.video}#t=0.1`} // Fetch first frame for thumbnail
                                 className="w-full h-full object-cover bg-black"
@@ -132,5 +132,7 @@ export function ShortlistedPropertyCard({ property }: { property: Property }) {
         </>
     );
 }
+
+    
 
     

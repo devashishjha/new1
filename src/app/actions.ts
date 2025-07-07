@@ -85,10 +85,18 @@ export async function markPropertyAsOccupiedAction(propertyId: string): Promise<
   if (!auth || !db) {
     return { success: false, message: "Firebase is not configured on the server." };
   }
-  // Firestore rules should handle authorization.
+  
   const propertyDocRef = doc(db, 'properties', propertyId);
+  
   try {
-    // We trust Firestore rules to handle authorization.
+    const propertyDoc = await getDoc(propertyDocRef);
+
+    if (!propertyDoc.exists()) {
+      return { success: false, message: "Property not found." };
+    }
+    
+    // Now that we know the doc exists, we can update it.
+    // We still rely on Firestore rules to check for ownership.
     await updateDoc(propertyDocRef, {
       isSoldOrRented: true
     });
@@ -97,9 +105,11 @@ export async function markPropertyAsOccupiedAction(propertyId: string): Promise<
 
   } catch (error: any) {
     console.error("Error updating property status:", error);
+    
     if (error.code === 'permission-denied') {
         return { success: false, message: "You are not authorized to update this property." };
     }
-    return { success: false, message: "An unexpected error occurred while updating the property status." };
+    
+    return { success: false, message: "An unexpected error occurred while updating the property." };
   }
 }

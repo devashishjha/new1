@@ -95,7 +95,10 @@ export async function markPropertyAsOccupiedAction(propertyId: string): Promise<
       return { success: false, message: "Property not found." };
     }
     
-    // Now that we know the doc exists, we can update it.
+    // Explicitly read the data to ensure consistency with other actions.
+    const propertyData = propertyDoc.data();
+    
+    // Now that we know the doc exists and have its data, we can update it.
     // We still rely on Firestore rules to check for ownership.
     await updateDoc(propertyDocRef, {
       isSoldOrRented: true
@@ -107,7 +110,7 @@ export async function markPropertyAsOccupiedAction(propertyId: string): Promise<
     console.error("Error updating property status:", error);
     
     if (error.code === 'permission-denied') {
-        return { success: false, message: "You are not authorized to update this property." };
+        return { success: false, message: "Authorization failed. Please ensure you are logged in as the property owner and try again." };
     }
     
     return { success: false, message: "An unexpected error occurred while updating the property." };

@@ -1,7 +1,7 @@
 
 'use client';
 import type { Property } from '@/lib/types';
-import { Card, CardFooter, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import Image from 'next/image';
 import { formatIndianCurrency } from '@/lib/utils';
 import { Eye, Heart, Info, Pencil, CheckCircle2 } from 'lucide-react';
@@ -44,12 +44,12 @@ export function ShortlistedPropertyCard({ property }: { property: Property }) {
         <>
             <Card className="overflow-hidden flex flex-col bg-card/80 backdrop-blur-sm border-border/20 h-full hover:ring-2 hover:ring-primary transition-all">
                 <CardHeader className="p-0 relative overflow-hidden">
-                    <div className='aspect-w-16 aspect-h-9'>
+                    <div className='aspect-video w-full'>
                         {property.video ? (
-                            <div className="w-full h-48">
+                             <div className="w-full h-full bg-black">
                                 <video
                                     src={`${property.video}#t=0.1`} // Fetch first frame for thumbnail
-                                    className="w-full h-full object-cover bg-black"
+                                    className="w-full h-full object-cover"
                                     preload="metadata"
                                     muted
                                     playsInline
@@ -60,8 +60,8 @@ export function ShortlistedPropertyCard({ property }: { property: Property }) {
                                 src={property.image}
                                 alt={property.title}
                                 width={400}
-                                height={300}
-                                className="w-full h-48 object-cover"
+                                height={225}
+                                className="w-full h-full object-cover"
                                 data-ai-hint="apartment exterior"
                             />
                         )}
@@ -74,6 +74,11 @@ export function ShortlistedPropertyCard({ property }: { property: Property }) {
                         </div>
                     )}
                 </CardHeader>
+                
+                <CardContent className="p-4 flex-grow">
+                    <h3 className="font-bold text-lg leading-tight truncate" title={property.title}>{property.title}</h3>
+                    <p className="text-sm text-muted-foreground truncate" title={property.location}>{property.location}</p>
+                </CardContent>
 
                 <CardFooter className="p-3 bg-secondary/50 flex justify-between items-center mt-auto">
                     <div>
@@ -134,7 +139,3 @@ export function ShortlistedPropertyCard({ property }: { property: Property }) {
         </>
     );
 }
-
-    
-
-    

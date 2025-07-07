@@ -298,6 +298,7 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
                     },
                     postedOn: serverTimestamp(),
                     image: 'https://placehold.co/1080x1920.png',
+                    isSoldOrRented: false,
                 };
     
                 await addDoc(collection(db, "properties"), finalData);

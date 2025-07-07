@@ -12,9 +12,11 @@ import { useAuth } from '@/hooks/use-auth';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { deletePropertyAction, markPropertyAsOccupiedAction } from '@/app/actions';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from './ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { db, storage } from '@/lib/firebase';
+import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { ref, deleteObject } from 'firebase/storage';
 
 
 export function ShortlistedPropertyCard({ property, onDelete }: { property: Property, onDelete?: (propertyId: string) => void }) {
@@ -24,6 +26,7 @@ export function ShortlistedPropertyCard({ property, onDelete }: { property: Prop
 
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [isUpdating, setIsUpdating] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     
     const isLister = user?.uid === property.lister.id;
@@ -34,36 +37,79 @@ export function ShortlistedPropertyCard({ property, onDelete }: { property: Prop
         : formatIndianCurrency(property.price.amount);
         
     const handleMarkAsOccupied = async (e: React.MouseEvent) => {
-        e.stopPropagation(); // Prevent dropdown from closing immediately
-        const result = await markPropertyAsOccupiedAction(property.id);
-        if (result.success) {
-            toast({ title: "Property Status Updated", description: result.message });
+        e.stopPropagation();
+        if (!user || !db) return;
+        
+        setIsUpdating(true);
+        const propertyDocRef = doc(db, 'properties', property.id);
+        
+        try {
+            const propertyDoc = await getDoc(propertyDocRef);
+            if (!propertyDoc.exists() || propertyDoc.data().lister.id !== user.uid) {
+                toast({ variant: 'destructive', title: "Authorization Failed", description: "You do not have permission to modify this property." });
+                setIsUpdating(false);
+                return;
+            }
+            
+            await updateDoc(propertyDocRef, { isSoldOrRented: true });
+            toast({ title: "Property Status Updated", description: "The property has been marked as occupied." });
             router.refresh();
-        } else {
-            toast({ variant: 'destructive', title: "Update Failed", description: result.message });
+        } catch (error) {
+            console.error("Error updating property status:", error);
+            toast({ variant: 'destructive', title: "Update Failed", description: "An unexpected error occurred." });
+        } finally {
+            setIsUpdating(false);
         }
     };
         
     const handleDeleteConfirm = async () => {
+        if (!user || !db || !storage) return;
+
         setIsDeleting(true);
-        const result = await deletePropertyAction(property.id);
-        if (result.success) {
-            toast({ title: "Property Deleted", description: result.message });
+        const propertyDocRef = doc(db, 'properties', property.id);
+        
+        try {
+            const propertyDoc = await getDoc(propertyDocRef);
+            if (!propertyDoc.exists() || propertyDoc.data().lister.id !== user.uid) {
+                toast({ variant: 'destructive', title: "Authorization Failed", description: "You do not have permission to delete this property." });
+                setIsDeleting(false);
+                return;
+            }
+
+            const propertyData = propertyDoc.data();
+            
+            // Delete video from storage if it exists
+            if (propertyData.video) {
+                try {
+                    const videoRef = ref(storage, propertyData.video);
+                    await deleteObject(videoRef);
+                } catch (storageError: any) {
+                    if (storageError.code !== 'storage/object-not-found') {
+                        console.warn(`Could not delete video from storage: ${storageError.code}`);
+                    }
+                }
+            }
+    
+            await deleteDoc(propertyDocRef);
+            toast({ title: "Property Deleted", description: "The property has been successfully deleted." });
             if (onDelete) {
                 onDelete(property.id);
             }
             setIsDeleteDialogOpen(false);
-        } else {
-            toast({ variant: 'destructive', title: "Deletion Failed", description: result.message });
+
+        } catch (error) {
+            console.error("Error deleting property:", error);
+            toast({ variant: 'destructive', title: "Deletion Failed", description: "An unexpected error occurred." });
+        } finally {
+            setIsDeleting(false);
         }
-        setIsDeleting(false);
     };
 
     return (
         <>
             <Card className="overflow-hidden flex flex-col bg-card/80 backdrop-blur-sm border-border/20 h-full hover:ring-2 hover:ring-primary transition-all">
                 <CardHeader className="p-0 relative group overflow-hidden">
-                    <div className='aspect-video w-full'>
+                    <div className='aspect-[4/5] w-full'>
                         {property.video ? (
                              <div className="w-full h-full bg-black">
                                 <video
@@ -79,7 +125,7 @@ export function ShortlistedPropertyCard({ property, onDelete }: { property: Prop
                                 src={property.image}
                                 alt={property.title}
                                 width={400}
-                                height={225}
+                                height={500}
                                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                 data-ai-hint="apartment exterior"
                             />
@@ -121,7 +167,8 @@ export function ShortlistedPropertyCard({ property, onDelete }: { property: Prop
                         {isLister ? (
                              <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="w-full">
+                                    <Button variant="outline" className="w-full" disabled={isUpdating}>
+                                        {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                         <Pencil className="mr-2 h-4 w-4" />
                                         Manage Listing
                                     </Button>
@@ -138,8 +185,8 @@ export function ShortlistedPropertyCard({ property, onDelete }: { property: Prop
                                         </Link>
                                     </DropdownMenuItem>
                                     {!isOccupied && (
-                                        <DropdownMenuItem onClick={handleMarkAsOccupied}>
-                                            <CheckCircle2 className="mr-2 h-4 w-4" />
+                                        <DropdownMenuItem onClick={handleMarkAsOccupied} disabled={isUpdating}>
+                                            {isUpdating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
                                             Mark as Occupied
                                         </DropdownMenuItem>
                                     )}

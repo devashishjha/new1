@@ -43,7 +43,13 @@ export async function deletePropertyAction(propertyId: string): Promise<{ succes
   if (!auth || !db || !storage) {
     return { success: false, message: "Firebase is not configured on the server." };
   }
-  // Firestore rules should handle authorization. This action confirms deletion from DB and storage.
+
+  // Server-side authentication check
+  if (!auth.currentUser) {
+    return { success: false, message: "Authentication error. Please sign in again to manage your properties." };
+  }
+  const currentUserId = auth.currentUser.uid;
+
   const propertyDocRef = doc(db, 'properties', propertyId);
   try {
     const propertyDoc = await getDoc(propertyDocRef);
@@ -51,6 +57,11 @@ export async function deletePropertyAction(propertyId: string): Promise<{ succes
       return { success: false, message: "Property not found." };
     }
     const propertyData = propertyDoc.data();
+
+    // Server-side ownership verification
+    if (propertyData.lister.id !== currentUserId) {
+        return { success: false, message: "Authorization failed. You are not the owner of this property." };
+    }
 
     // Attempt to delete video from storage if it exists
     if (propertyData.video) {
@@ -67,7 +78,6 @@ export async function deletePropertyAction(propertyId: string): Promise<{ succes
     }
 
     // Delete property from firestore
-    // This will fail if firestore rules are not met (i.e., user is not owner)
     await deleteDoc(propertyDocRef);
 
     return { success: true, message: "Property deleted successfully." };
@@ -75,7 +85,8 @@ export async function deletePropertyAction(propertyId: string): Promise<{ succes
   } catch (error: any) {
     console.error("Error deleting property:", error);
     if (error.code === 'permission-denied') {
-        return { success: false, message: "You are not authorized to delete this property." };
+        // This is a fallback in case the explicit check fails for some reason
+        return { success: false, message: "You do not have permission to delete this property." };
     }
     return { success: false, message: "An unexpected error occurred while deleting the property." };
   }
@@ -86,6 +97,12 @@ export async function markPropertyAsOccupiedAction(propertyId: string): Promise<
     return { success: false, message: "Firebase is not configured on the server." };
   }
   
+  // Server-side authentication check
+  if (!auth.currentUser) {
+    return { success: false, message: "Authentication error. Please sign in again to manage your properties." };
+  }
+  const currentUserId = auth.currentUser.uid;
+  
   const propertyDocRef = doc(db, 'properties', propertyId);
   
   try {
@@ -95,11 +112,13 @@ export async function markPropertyAsOccupiedAction(propertyId: string): Promise<
       return { success: false, message: "Property not found." };
     }
     
-    // Explicitly read the data to ensure consistency with other actions.
     const propertyData = propertyDoc.data();
     
-    // Now that we know the doc exists and have its data, we can update it.
-    // We still rely on Firestore rules to check for ownership.
+    // Server-side ownership verification
+    if (propertyData.lister.id !== currentUserId) {
+        return { success: false, message: "Authorization failed. You are not the owner of this property." };
+    }
+    
     await updateDoc(propertyDocRef, {
       isSoldOrRented: true
     });
@@ -110,7 +129,8 @@ export async function markPropertyAsOccupiedAction(propertyId: string): Promise<
     console.error("Error updating property status:", error);
     
     if (error.code === 'permission-denied') {
-        return { success: false, message: "Authorization failed. Please ensure you are logged in as the property owner and try again." };
+        // This is a fallback in case the explicit check fails for some reason
+        return { success: false, message: "You do not have permission to update this property." };
     }
     
     return { success: false, message: "An unexpected error occurred while updating the property." };

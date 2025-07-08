@@ -128,6 +128,9 @@ export function ShortlistedPropertyCard({ property, onDelete, onUpdate }: {
     };
 
     const StatusBadge = () => {
+        if (property.status === 'available') {
+            return <Badge variant="default" className="absolute top-2 left-2 z-20 bg-green-600 text-white"><PlayCircle className="w-4 h-4 mr-1" />Live</Badge>;
+        }
         if (property.status === 'pending-review') {
              return <Badge variant="default" className="absolute top-2 left-2 z-20 bg-yellow-500 text-black"><AlertCircle className="w-4 h-4 mr-1" />Pending Review</Badge>;
         }

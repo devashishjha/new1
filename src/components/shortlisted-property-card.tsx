@@ -156,9 +156,9 @@ export function ShortlistedPropertyCard({ property, onDelete, onUpdate }: {
 
     return (
         <>
-            <Card className="overflow-hidden flex flex-col group relative">
+            <Card className="overflow-hidden group relative">
                 <div 
-                    className="aspect-[4/5] w-full relative overflow-hidden bg-black rounded-lg"
+                    className="aspect-square w-full relative overflow-hidden rounded-lg"
                     onMouseEnter={handleMouseEnter}
                     onMouseLeave={handleMouseLeave}
                 >
@@ -185,24 +185,24 @@ export function ShortlistedPropertyCard({ property, onDelete, onUpdate }: {
                     )}
                 </div>
                 
-                <div className="absolute bottom-0 left-0 right-0 h-2/5 bg-gradient-to-t from-black/80 via-black/50 to-transparent pointer-events-none" />
+                <div className="absolute bottom-0 left-0 right-0 h-3/5 bg-gradient-to-t from-black/90 via-black/60 to-transparent pointer-events-none" />
 
-                <CardContent className="absolute bottom-0 left-0 right-0 p-4 !pt-0 flex flex-col justify-end text-white">
-                    <div className="space-y-1">
+                <CardContent className="absolute bottom-0 left-0 right-0 p-4 flex flex-col justify-end text-white">
+                    <div className="space-y-1.5">
                         <div>
-                            <p className="text-xs capitalize">For {property.price.type}</p>
-                            <p className="text-xl font-bold text-primary -mt-1">{priceDisplay}</p>
+                            <p className="text-sm capitalize text-white/70">For {property.price.type}</p>
+                            <p className="text-lg font-bold text-primary -mt-0.5">{priceDisplay}</p>
                         </div>
                         <div>
-                            <p className="font-semibold leading-tight truncate" title={property.title}>{property.title}</p>
-                            <p className="text-xs text-white/80 truncate flex items-center gap-1.5" title={property.location}>
-                                <MapPin className='w-3 h-3' /> 
+                            <p className="text-base font-semibold leading-tight truncate" title={property.title}>{property.title}</p>
+                            <p className="text-sm text-white/80 truncate flex items-center gap-1.5" title={property.location}>
+                                <MapPin className='w-4 h-4' /> 
                                 {property.location}
                             </p>
                         </div>
                     </div>
 
-                     <div className="w-full flex justify-between items-center pt-3">
+                     <div className="w-full flex justify-between items-center pt-4">
                         <Button variant="outline" size="sm" onClick={() => setIsDetailsOpen(true)} className="bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm">
                             <Info className="mr-2 h-4 w-4" />
                             Details
@@ -210,10 +210,9 @@ export function ShortlistedPropertyCard({ property, onDelete, onUpdate }: {
                         {isLister && (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" size="sm" disabled={isUpdating} className="bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm">
-                                        {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                        <MoreVertical className="mr-2 h-4 w-4" />
-                                        Manage
+                                    <Button variant="outline" size="icon" disabled={isUpdating} className="h-8 w-8 bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm">
+                                        {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreVertical className="h-4 w-4" />}
+                                        <span className="sr-only">Manage Property</span>
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-56">

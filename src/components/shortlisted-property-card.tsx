@@ -1,9 +1,10 @@
+
 'use client';
 import type { Property } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import Image from 'next/image';
 import { formatIndianCurrency } from '@/lib/utils';
-import { Info, Pencil, CheckCircle2, Trash2, Loader2, PlayCircle, PauseCircle, MoreVertical, MapPin } from 'lucide-react';
+import { Info, Pencil, CheckCircle2, Trash2, Loader2, PlayCircle, PauseCircle, MoreVertical, MapPin, AlertCircle } from 'lucide-react';
 import { PropertyDetailsSheet } from './property-details-sheet';
 import { useState, useRef } from 'react';
 import { Button } from './ui/button';
@@ -127,6 +128,9 @@ export function ShortlistedPropertyCard({ property, onDelete, onUpdate }: {
     };
 
     const StatusBadge = () => {
+        if (property.status === 'pending-review') {
+             return <Badge variant="default" className="absolute top-2 left-2 z-20 bg-yellow-500 text-black"><AlertCircle className="w-4 h-4 mr-1" />Pending Review</Badge>;
+        }
         if (property.status === 'occupied') {
              return <Badge variant="destructive" className="absolute top-2 left-2 z-20">{property.price.type === 'rent' ? 'Rented Out' : 'Sold Out'}</Badge>;
         }
@@ -163,7 +167,7 @@ export function ShortlistedPropertyCard({ property, onDelete, onUpdate }: {
                          <video
                             ref={videoRef}
                             src={`${property.video}#t=0.1`}
-                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110 rotate-180"
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                             preload="metadata"
                             muted
                             loop
@@ -213,7 +217,7 @@ export function ShortlistedPropertyCard({ property, onDelete, onUpdate }: {
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-56">
-                                    <DropdownMenuItem onClick={() => handleStatusChange('available')} disabled={isUpdating || property.status === 'available'}>
+                                    <DropdownMenuItem onClick={() => handleStatusChange('available')} disabled={isUpdating || property.status === 'available' || property.status === 'pending-review'}>
                                         <PlayCircle className="mr-2 h-4 w-4" /> Make Live
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => handleStatusChange('occupied')} disabled={isUpdating || property.status === 'occupied'}>

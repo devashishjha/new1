@@ -23,7 +23,7 @@ export type Property = {
   postedOn: Timestamp | Date | string;
   videoViews?: number;
   shortlistCount?: number;
-  status: 'available' | 'occupied' | 'on-hold';
+  status: 'available' | 'occupied' | 'on-hold' | 'pending-review';
   
   configuration: 'studio' | '1bhk' | '2bhk' | '3bhk' | '4bhk' | '5bhk+';
   floorNo: number;
@@ -78,6 +78,7 @@ type BaseProfile = {
   email: string;
   phone: string;
   avatar?: string;
+  role?: 'admin';
 };
 
 export type SeekerProfile = BaseProfile & {

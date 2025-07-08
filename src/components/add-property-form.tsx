@@ -238,10 +238,14 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
 
             if (mode === 'edit' && property) {
                 const propertyDocRef = doc(db, 'properties', property.id);
-                await updateDoc(propertyDocRef, propertyDataForFirestore);
+                await updateDoc(propertyDocRef, {
+                    ...propertyDataForFirestore,
+                    // If video is updated, set status to pending review
+                    ...(videoUrl && videoUrl !== property.video && { status: 'pending-review' })
+                });
                 toast({
                     title: "Property Updated!",
-                    description: "Your property has been successfully updated.",
+                    description: videoUrl && videoUrl !== property.video ? "Your property video will be reviewed." : "Your property has been successfully updated.",
                 });
                 router.push('/profile');
             } else {
@@ -298,14 +302,14 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
                     },
                     postedOn: serverTimestamp(),
                     image: 'https://placehold.co/1080x1920.png',
-                    status: 'available' as const,
+                    status: videoUrl ? 'pending-review' : 'available' as const,
                 };
     
                 await addDoc(collection(db, "properties"), finalData);
                 
                 toast({
-                    title: "Property Submitted!",
-                    description: "Your property has been successfully listed.",
+                    title: videoUrl ? "Property Submitted for Review!" : "Property Listed!",
+                    description: videoUrl ? "Your property will be reviewed and published shortly." : "Your property has been successfully listed.",
                 });
                 form.reset();
                 router.push('/reels');
@@ -411,7 +415,7 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
                                         />
                                     </FormControl>
                                     <FormDescription>
-                                        {mode === 'edit' && property?.video ? 'A video is already uploaded. Upload a new one to replace it.' : 'Upload a short video of your property for the reel.'}
+                                        {mode === 'edit' && property?.video ? 'A video is already uploaded. Uploading a new one will replace it and send it for review.' : 'Upload a short video of your property for the reel. Videos are reviewed before publishing.'}
                                     </FormDescription>
                                     <FormMessage />
                                 </FormItem>

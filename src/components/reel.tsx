@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Property } from '@/lib/types';
@@ -316,7 +315,7 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
             muted 
             loop 
             playsInline 
-            className="absolute inset-0 w-full h-full object-cover rotate-180" 
+            className="absolute inset-0 w-full h-full object-cover" 
           />
       ) : (
         property.image && (
@@ -425,8 +424,3 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
 }
 
 export const Reel = ReelComponent;
-
-    
-
-    
-

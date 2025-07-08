@@ -284,7 +284,7 @@ export default function ProfilePage() {
                                 </Tooltip>
                             </div>
 
-                            <Badge variant="secondary" className="capitalize mt-6">{userProfile.type}</Badge>
+                            <Badge variant="secondary" className="capitalize mt-6">{userProfile.role === 'admin' ? 'Admin' : userProfile.type}</Badge>
                         </div>
 
                         {['owner', 'dealer', 'developer'].includes(userProfile.type) && (

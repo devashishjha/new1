@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         // Admin Role Assignment Logic
         // This check runs on login to automatically grant admin rights to the specified user.
-        const ADMIN_EMAIL = "admin@lokality.com"; 
+        const ADMIN_EMAIL = "jha.devashish@gmail.com"; 
         
         if (db && currentUser.email === ADMIN_EMAIL) {
             const userDocRef = doc(db, 'users', currentUser.uid);

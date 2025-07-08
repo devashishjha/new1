@@ -7,7 +7,7 @@ import * as React from 'react';
 import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import { PropertyDetailsSheet } from '@/components/property-details-sheet';
-import { getPropertyMatchScore, deletePropertyAction } from '@/app/actions';
+import { getPropertyMatchScore } from '@/app/actions';
 import Link from 'next/link';
 import { 
     Bookmark, 
@@ -35,6 +35,9 @@ import { AiMatchDialog } from './ai-match-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Button } from './ui/button';
+import { db, storage } from '@/lib/firebase';
+import { doc, getDoc, deleteDoc } from 'firebase/firestore';
+import { ref, deleteObject } from 'firebase/storage';
 
 
 const InfoCard = ({ icon, label, value, children }: { icon: React.ElementType, label: string, value?: string | React.ReactNode, children?: React.ReactNode }) => (
@@ -175,17 +178,56 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
   };
   
   const handleDeleteConfirm = async () => {
-    if (!onDelete) return;
+    if (!onDelete || !user) {
+        toast({ variant: 'destructive', title: "Deletion Failed", description: "You must be logged in to perform this action." });
+        return;
+    };
     setIsDeleting(true);
-    const result = await deletePropertyAction(property.id);
-    if (result.success) {
-        toast({ title: "Property Deleted", description: result.message });
+
+    if (!db || !storage) {
+        toast({ variant: 'destructive', title: "Deletion Failed", description: 'Database/Storage service not available.' });
+        setIsDeleting(false);
+        return;
+    }
+
+    const propertyDocRef = doc(db, 'properties', property.id);
+
+    try {
+        const propertyDoc = await getDoc(propertyDocRef);
+        if (!propertyDoc.exists()) {
+             toast({ variant: 'destructive', title: "Deletion Failed", description: 'Property not found.' });
+             setIsDeleting(false);
+             return;
+        }
+
+        const propertyData = propertyDoc.data();
+        if (propertyData.lister.id !== user.uid) {
+            toast({ variant: 'destructive', title: "Deletion Failed", description: 'You are not authorized to delete this property.' });
+            setIsDeleting(false);
+            return;
+        }
+        
+        if (propertyData.video) {
+            try {
+                const videoFileRef = ref(storage, propertyData.video);
+                await deleteObject(videoFileRef);
+            } catch (storageError: any) {
+                if (storageError.code !== 'storage/object-not-found') {
+                    console.warn(`Could not delete video from storage: ${storageError.code}`);
+                }
+            }
+        }
+
+        await deleteDoc(propertyDocRef);
+        toast({ title: "Property Deleted", description: 'Property successfully deleted.' });
         onDelete(property.id);
         setIsDeleteDialogOpen(false);
-    } else {
-        toast({ variant: 'destructive', title: "Deletion Failed", description: result.message });
+    } catch (error) {
+        console.error("Error deleting property:", error);
+        toast({ variant: 'destructive', title: "Deletion Failed", description: 'An unexpected error occurred while deleting the property.' });
+    } finally {
+        setIsDeleting(false);
     }
-    setIsDeleting(false);
   };
 
   const openDetailsSheet = () => setIsDetailsOpen(true);

@@ -14,8 +14,10 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from './ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { updatePropertyStatusAction, deletePropertyAction } from '@/app/actions';
 import { Badge } from './ui/badge';
+import { db, storage } from '@/lib/firebase';
+import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { ref, deleteObject } from 'firebase/storage';
 
 
 export function ShortlistedPropertyCard({ property, onDelete }: { property: Property, onDelete?: (propertyId: string) => void }) {
@@ -37,30 +39,94 @@ export function ShortlistedPropertyCard({ property, onDelete }: { property: Prop
         : formatIndianCurrency(property.price.amount);
         
     const handleStatusChange = async (newStatus: 'available' | 'occupied' | 'on-hold') => {
-        setIsUpdating(true);
-        const result = await updatePropertyStatusAction(property.id, newStatus);
-        if (result.success) {
-            toast({ title: "Status Updated", description: result.message });
-            router.refresh();
-        } else {
-            toast({ variant: 'destructive', title: "Update Failed", description: result.message });
+        if (!user) {
+            toast({ variant: 'destructive', title: "Update Failed", description: "You must be logged in to perform this action." });
+            return;
         }
-        setIsUpdating(false);
+        if (!db) {
+            toast({ variant: 'destructive', title: "Update Failed", description: "Database service not available." });
+            return;
+        }
+
+        setIsUpdating(true);
+        const propertyDocRef = doc(db, 'properties', property.id);
+
+        try {
+            const propertyDoc = await getDoc(propertyDocRef);
+            if (!propertyDoc.exists()) {
+                toast({ variant: 'destructive', title: "Update Failed", description: "Property not found." });
+                setIsUpdating(false);
+                return;
+            }
+
+            if (propertyDoc.data().lister.id !== user.uid) {
+                toast({ variant: 'destructive', title: "Update Failed", description: "You are not authorized to update this property." });
+                setIsUpdating(false);
+                return;
+            }
+
+            await updateDoc(propertyDocRef, { status: newStatus });
+            toast({ title: "Status Updated", description: `Property status updated to ${newStatus}.` });
+            router.refresh(); // This will re-fetch server components and show updated status
+        } catch (error) {
+            console.error("Error updating property status:", error);
+            toast({ variant: 'destructive', title: "Update Failed", description: 'An unexpected error occurred while updating the property status.' });
+        } finally {
+            setIsUpdating(false);
+        }
     };
         
     const handleDeleteConfirm = async () => {
+        if (!user) {
+            toast({ variant: 'destructive', title: "Deletion Failed", description: "You must be logged in to perform this action." });
+            return;
+        }
+        if (!db || !storage) {
+            toast({ variant: 'destructive', title: "Deletion Failed", description: 'Database/Storage service not available.' });
+            return;
+        }
+
         setIsDeleting(true);
-        const result = await deletePropertyAction(property.id);
-        if (result.success) {
-            toast({ title: "Property Deleted", description: result.message });
+        const propertyDocRef = doc(db, 'properties', property.id);
+
+        try {
+            const propertyDoc = await getDoc(propertyDocRef);
+            if (!propertyDoc.exists()) {
+                 toast({ variant: 'destructive', title: "Deletion Failed", description: 'Property not found.' });
+                 setIsDeleting(false);
+                 return;
+            }
+
+            const propertyData = propertyDoc.data();
+            if (propertyData.lister.id !== user.uid) {
+                toast({ variant: 'destructive', title: "Deletion Failed", description: 'You are not authorized to delete this property.' });
+                setIsDeleting(false);
+                return;
+            }
+            
+            if (propertyData.video) {
+                try {
+                    const videoFileRef = ref(storage, propertyData.video);
+                    await deleteObject(videoFileRef);
+                } catch (storageError: any) {
+                    if (storageError.code !== 'storage/object-not-found') {
+                        console.warn(`Could not delete video from storage: ${storageError.code}`);
+                    }
+                }
+            }
+
+            await deleteDoc(propertyDocRef);
+            toast({ title: "Property Deleted", description: 'Property successfully deleted.' });
             if (onDelete) {
                 onDelete(property.id);
             }
-        } else {
-            toast({ variant: 'destructive', title: "Deletion Failed", description: result.message });
+        } catch (error) {
+            console.error("Error deleting property:", error);
+            toast({ variant: 'destructive', title: "Deletion Failed", description: 'An unexpected error occurred while deleting the property.' });
+        } finally {
+            setIsDeleting(false);
+            setIsDeleteDialogOpen(false);
         }
-        setIsDeleting(false);
-        setIsDeleteDialogOpen(false);
     };
 
     const StatusBadge = () => {

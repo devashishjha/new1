@@ -1,10 +1,11 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import type { Property, UserProfile, SeekerProfile } from '@/lib/types';
 import { Reel } from '@/components/reel';
 import { useAuth } from '@/hooks/use-auth';
-import { doc, getDoc, collection, onSnapshot, query, orderBy, where } from 'firebase/firestore';
+import { doc, getDoc, collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from './ui/skeleton';
 import { dateToJSON } from '@/lib/utils';
@@ -38,26 +39,24 @@ export function ReelsClient() {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        if (authLoading) return; // Wait for authentication to resolve
+        if (authLoading) return;
 
         let unsubscribe = () => {};
 
         const setupListeners = async () => {
             setIsLoading(true);
 
-            // If Firebase is not configured, fall back to dummy data immediately.
+            const defaultSearchCriteria = "A great property with good amenities in a nice neighborhood.";
+
             if (!db) {
                 console.warn("Firebase is not configured. Falling back to dummy data.");
-                setProperties(dummyProperties.map(p => dateToJSON(p)).filter(p => p.status === 'available') as Property[]);
-                setUserSearchCriteria("A great property with good amenities in a nice neighborhood.");
+                setProperties(dummyProperties.filter(p => p.status === 'available').map(p => dateToJSON(p)) as Property[]);
+                setUserSearchCriteria(defaultSearchCriteria);
                 setIsLoading(false);
                 return;
             }
             
             try {
-                // The default criteria for non-seekers or logged-out users.
-                const defaultSearchCriteria = "A great property with good amenities in a nice neighborhood.";
-
                 if (user) {
                     const userDocRef = doc(db, 'users', user.uid);
                     const userDocSnap = await getDoc(userDocRef);
@@ -75,19 +74,21 @@ export function ReelsClient() {
                     setUserSearchCriteria(defaultSearchCriteria);
                 }
 
-                // Set up real-time listener for available properties
                 const propertiesCol = collection(db, 'properties');
-                const q = query(propertiesCol, where("status", "==", "available"), orderBy('postedOn', 'desc'));
+                // Querying without the 'where' clause to avoid needing a composite index.
+                // Filtering will happen on the client.
+                const q = query(propertiesCol, orderBy('postedOn', 'desc'));
                 
                 unsubscribe = onSnapshot(q, (snapshot) => {
-                    let fetchedProperties = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Property));
+                    const allProperties = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Property));
+                    let availableProperties = allProperties.filter(p => p.status === 'available');
 
-                    // If Firestore returns no properties, use dummy data as a fallback.
-                    if (fetchedProperties.length === 0) {
-                        fetchedProperties = dummyProperties.filter(p => p.status === 'available');
+                    // If Firestore returns no available properties, use dummy data as a fallback.
+                    if (availableProperties.length === 0) {
+                        availableProperties = dummyProperties.filter(p => p.status === 'available');
                     }
                     
-                    setProperties(fetchedProperties.map(p => dateToJSON(p)) as Property[]);
+                    setProperties(availableProperties.map(p => dateToJSON(p)) as Property[]);
                     setIsLoading(false);
                 }, (error) => {
                     console.error("Error fetching real-time properties:", error);
@@ -108,6 +109,7 @@ export function ReelsClient() {
         // Cleanup subscription on component unmount
         return () => unsubscribe();
     }, [user, authLoading]);
+
 
     const handleDeleteProperty = (propertyId: string) => {
         setProperties(prev => prev.filter(p => p.id !== propertyId));

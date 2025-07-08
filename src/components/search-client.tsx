@@ -17,7 +17,7 @@ import { Slider } from '@/components/ui/slider';
 import { cn, formatIndianCurrency, dateToJSON } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, orderBy, query, where } from 'firebase/firestore';
+import { collection, onSnapshot, query } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/use-auth';
 import { LocationAutocomplete } from './location-autocomplete';
@@ -82,27 +82,29 @@ export function SearchClient() {
     useEffect(() => {
         if (authLoading) return; // Wait for auth to resolve
         
-        const fetchProperties = async () => {
-            setIsLoading(true);
-            try {
-                if (!db) {
-                    setProperties([]);
-                    return;
-                }
-                const propertiesCol = collection(db, 'properties');
-                const q = query(propertiesCol, where("status", "==", "available"), orderBy('postedOn', 'desc'));
-                const snapshot = await getDocs(q);
-                const fetchedProperties = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Property));
-                setProperties(fetchedProperties.map(p => dateToJSON(p)) as Property[]);
-            } catch (error) {
-                console.error("Error fetching properties:", error);
-                setProperties([]);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchProperties();
+        setIsLoading(true);
+        if (!db) {
+            setProperties([]);
+            setIsLoading(false);
+            return;
+        }
+
+        const propertiesCol = collection(db, 'properties');
+        const q = query(propertiesCol);
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const fetchedProperties = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Property));
+            setProperties(fetchedProperties.map(p => dateToJSON(p)) as Property[]);
+            setIsLoading(false);
+        }, (error) => {
+            console.error("Error fetching properties:", error);
+            setProperties([]);
+            setIsLoading(false);
+        });
+
+        return () => unsubscribe();
     }, [authLoading]);
+
 
     const lookingTo = form.watch('lookingTo');
     const priceRange = form.watch('priceRange');
@@ -117,6 +119,8 @@ export function SearchClient() {
     const filteredAndSortedProperties = useMemo(() => {
         let filtered = [...properties]
             .filter(p => {
+                if (p.status !== 'available') return false;
+
                 const priceTypeMatch = filters.lookingTo === 'rent' ? p.price.type === 'rent' : p.price.type === 'sale';
                 const priceRangeMatch = p.price.amount >= filters.priceRange[0] && p.price.amount <= filters.priceRange[1];
                 const locationMatch = !filters.location || p.location.toLowerCase().includes(filters.location.toLowerCase());

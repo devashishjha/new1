@@ -52,14 +52,7 @@ export function ShortlistedPropertyCard({ property, onDelete }: { property: Prop
         const propertyDocRef = doc(db, 'properties', property.id);
 
         try {
-            const propertyDoc = await getDoc(propertyDocRef);
-            if (!propertyDoc.exists()) {
-                toast({ variant: 'destructive', title: "Update Failed", description: "Property not found." });
-                setIsUpdating(false);
-                return;
-            }
-
-            if (propertyDoc.data().lister.id !== user.uid) {
+            if (user.uid !== property.lister.id) {
                 toast({ variant: 'destructive', title: "Update Failed", description: "You are not authorized to update this property." });
                 setIsUpdating(false);
                 return;
@@ -67,7 +60,7 @@ export function ShortlistedPropertyCard({ property, onDelete }: { property: Prop
 
             await updateDoc(propertyDocRef, { status: newStatus });
             toast({ title: "Status Updated", description: `Property status updated to ${newStatus}.` });
-            router.refresh(); // This will re-fetch server components and show updated status
+            router.refresh();
         } catch (error) {
             console.error("Error updating property status:", error);
             toast({ variant: 'destructive', title: "Update Failed", description: 'An unexpected error occurred while updating the property status.' });
@@ -90,31 +83,31 @@ export function ShortlistedPropertyCard({ property, onDelete }: { property: Prop
         const propertyDocRef = doc(db, 'properties', property.id);
 
         try {
-            const propertyDoc = await getDoc(propertyDocRef);
-            if (!propertyDoc.exists()) {
-                 toast({ variant: 'destructive', title: "Deletion Failed", description: 'Property not found.' });
+            if (user.uid !== property.lister.id) {
+                 toast({ variant: 'destructive', title: "Deletion Failed", description: 'You are not authorized to delete this property.' });
                  setIsDeleting(false);
                  return;
             }
 
-            const propertyData = propertyDoc.data();
-            if (propertyData.lister.id !== user.uid) {
-                toast({ variant: 'destructive', title: "Deletion Failed", description: 'You are not authorized to delete this property.' });
+            const propertyDoc = await getDoc(propertyDocRef);
+            if (propertyDoc.exists()) {
+                const propertyData = propertyDoc.data();
+                if (propertyData.video) {
+                    try {
+                        const videoFileRef = ref(storage, propertyData.video);
+                        await deleteObject(videoFileRef);
+                    } catch (storageError: any) {
+                        if (storageError.code !== 'storage/object-not-found') {
+                            console.warn(`Could not delete video from storage: ${storageError.code}`);
+                        }
+                    }
+                }
+            } else {
+                toast({ variant: 'destructive', title: "Deletion Failed", description: 'Property not found.' });
                 setIsDeleting(false);
                 return;
             }
             
-            if (propertyData.video) {
-                try {
-                    const videoFileRef = ref(storage, propertyData.video);
-                    await deleteObject(videoFileRef);
-                } catch (storageError: any) {
-                    if (storageError.code !== 'storage/object-not-found') {
-                        console.warn(`Could not delete video from storage: ${storageError.code}`);
-                    }
-                }
-            }
-
             await deleteDoc(propertyDocRef);
             toast({ title: "Property Deleted", description: 'Property successfully deleted.' });
             if (onDelete) {

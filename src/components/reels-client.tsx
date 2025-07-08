@@ -1,11 +1,10 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import type { Property, UserProfile, SeekerProfile } from '@/lib/types';
 import { Reel } from '@/components/reel';
 import { useAuth } from '@/hooks/use-auth';
-import { doc, getDoc, collection, getDocs, query, orderBy, where } from 'firebase/firestore';
+import { doc, getDoc, collection, onSnapshot, query, orderBy, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from './ui/skeleton';
 import { dateToJSON } from '@/lib/utils';
@@ -40,8 +39,10 @@ export function ReelsClient() {
 
     useEffect(() => {
         if (authLoading) return; // Wait for authentication to resolve
-        
-        const fetchData = async () => {
+
+        let unsubscribe = () => {};
+
+        const setupListeners = async () => {
             setIsLoading(true);
 
             // If Firebase is not configured, fall back to dummy data immediately.
@@ -62,43 +63,50 @@ export function ReelsClient() {
                     const userDocSnap = await getDoc(userDocRef);
                     if (userDocSnap.exists()) {
                         const userData = userDocSnap.data() as UserProfile;
-                        // Use seeker's criteria if they are a seeker and have defined it, otherwise use default
                         if (userData.type === 'seeker' && (userData as SeekerProfile).searchCriteria) {
                             setUserSearchCriteria((userData as SeekerProfile).searchCriteria);
                         } else {
                             setUserSearchCriteria(defaultSearchCriteria);
                         }
                     } else {
-                         // User profile doesn't exist, but they are logged in. Use default.
                         setUserSearchCriteria(defaultSearchCriteria);
                     }
                 } else {
-                    // User is not logged in, use default
                     setUserSearchCriteria(defaultSearchCriteria);
                 }
 
-                // Fetch properties that are available
+                // Set up real-time listener for available properties
                 const propertiesCol = collection(db, 'properties');
                 const q = query(propertiesCol, where("status", "==", "available"), orderBy('postedOn', 'desc'));
-                const snapshot = await getDocs(q);
-                let fetchedProperties = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Property));
-
-                // If no properties from Firestore, use dummy data
-                if (fetchedProperties.length === 0) {
-                    fetchedProperties = dummyProperties.filter(p => p.status === 'available');
-                }
                 
-                setProperties(fetchedProperties.map(p => dateToJSON(p)) as Property[]);
+                unsubscribe = onSnapshot(q, (snapshot) => {
+                    let fetchedProperties = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Property));
+
+                    // If Firestore returns no properties, use dummy data as a fallback.
+                    if (fetchedProperties.length === 0) {
+                        fetchedProperties = dummyProperties.filter(p => p.status === 'available');
+                    }
+                    
+                    setProperties(fetchedProperties.map(p => dateToJSON(p)) as Property[]);
+                    setIsLoading(false);
+                }, (error) => {
+                    console.error("Error fetching real-time properties:", error);
+                    // Fallback to dummy data on error as well
+                    setProperties(dummyProperties.filter(p => p.status === 'available').map(p => dateToJSON(p)) as Property[]);
+                    setIsLoading(false);
+                });
+
             } catch (error) {
-                console.error("Error fetching data:", error);
-                // Fallback to dummy data on error as well
+                console.error("Error setting up data listeners:", error);
                 setProperties(dummyProperties.filter(p => p.status === 'available').map(p => dateToJSON(p)) as Property[]);
-            } finally {
                 setIsLoading(false);
             }
         };
         
-        fetchData();
+        setupListeners();
+        
+        // Cleanup subscription on component unmount
+        return () => unsubscribe();
     }, [user, authLoading]);
 
     const handleDeleteProperty = (propertyId: string) => {

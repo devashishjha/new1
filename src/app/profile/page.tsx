@@ -315,7 +315,7 @@ export default function ProfilePage() {
                                             <Loader2 className="h-8 w-8 animate-spin" />
                                         </div>
                                     ) : userProperties.length > 0 ? (
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                                        <div className="grid grid-cols-1 gap-6">
                                             {userProperties.map(property => (
                                                 <ShortlistedPropertyCard key={property.id} property={property} onDelete={handleDeleteProperty} />
                                             ))}

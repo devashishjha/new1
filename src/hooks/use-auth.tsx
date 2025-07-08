@@ -4,9 +4,12 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import type { User } from 'firebase/auth';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth, isFirebaseEnabled, rtdb } from '@/lib/firebase';
+import { auth, isFirebaseEnabled, rtdb, db } from '@/lib/firebase';
 import { useRouter, usePathname } from 'next/navigation';
 import { ref, onValue, set, onDisconnect, serverTimestamp } from 'firebase/database';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import type { UserProfile } from '@/lib/types';
+
 
 type AuthContextType = {
   user: User | null;
@@ -40,22 +43,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
       return;
     }
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       
-      if (currentUser && rtdb) {
-        const uid = currentUser.uid;
-        const userStatusDatabaseRef = ref(rtdb, '/status/' + uid);
-        const connectedRef = ref(rtdb, '.info/connected');
+      if (currentUser) {
+        // Presence Logic
+        if (rtdb) {
+            const uid = currentUser.uid;
+            const userStatusDatabaseRef = ref(rtdb, '/status/' + uid);
+            const connectedRef = ref(rtdb, '.info/connected');
 
-        onValue(connectedRef, (snap) => {
-            if (snap.val() === true) {
-                const conStatus = { state: 'online', last_changed: serverTimestamp() };
-                set(userStatusDatabaseRef, conStatus);
+            onValue(connectedRef, (snap) => {
+                if (snap.val() === true) {
+                    const conStatus = { state: 'online', last_changed: serverTimestamp() };
+                    set(userStatusDatabaseRef, conStatus);
 
-                onDisconnect(userStatusDatabaseRef).set({ state: 'offline', last_changed: serverTimestamp() });
+                    onDisconnect(userStatusDatabaseRef).set({ state: 'offline', last_changed: serverTimestamp() });
+                }
+            });
+        }
+        
+        // Admin Role Assignment Logic
+        // This check runs on login to automatically grant admin rights to the specified user.
+        const ADMIN_EMAIL = "admin@lokality.com"; 
+        
+        if (db && currentUser.email === ADMIN_EMAIL) {
+            const userDocRef = doc(db, 'users', currentUser.uid);
+            try {
+                const docSnap = await getDoc(userDocRef);
+                if (docSnap.exists()) {
+                    const profile = docSnap.data() as UserProfile;
+                    if (profile.role !== 'admin') {
+                        await updateDoc(userDocRef, { role: 'admin' });
+                        console.log(`Admin role successfully granted to ${currentUser.email}.`);
+                    }
+                }
+            } catch (error) {
+                console.error("Error granting admin role:", error);
             }
-        });
+        }
       }
 
       setLoading(false);

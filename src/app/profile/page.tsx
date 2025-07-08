@@ -2,13 +2,13 @@
 'use client';
 
 import * as React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { Header } from '@/components/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Shield, FileText, LogOut, MessagesSquare, Loader2, Star, Handshake, Sparkles, KeyRound, ShoppingCart, Pencil, User as UserIcon, MoreVertical, ListVideo, Phone, Mail, Building2, CheckCircle2, LayoutDashboard } from 'lucide-react';
+import { Shield, FileText, LogOut, MessagesSquare, Loader2, Star, Handshake, Sparkles, KeyRound, ShoppingCart, Pencil, User as UserIcon, MoreVertical, ListVideo, Phone, Mail, Building2, CheckCircle2, LayoutDashboard, PlayCircle, PauseCircle } from 'lucide-react';
 import { BottomNavBar } from '@/components/bottom-nav-bar';
 import { useToast } from '@/hooks/use-toast';
 import { signOut } from 'firebase/auth';
@@ -20,7 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import { ShortlistedPropertyCard } from '@/components/shortlisted-property-card';
-import { dateToJSON } from '@/lib/utils';
+import { dateToJSON, cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { PresenceDot } from '@/components/presence-dot';
@@ -33,6 +33,7 @@ export default function ProfilePage() {
     const [isLoading, setIsLoading] = useState(true);
     const [userProperties, setUserProperties] = useState<Property[]>([]);
     const [isPropertiesLoading, setIsPropertiesLoading] = useState(true);
+    const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'occupied' | 'on-hold'>('all');
 
     useEffect(() => {
         if (!user) {
@@ -129,6 +130,24 @@ export default function ProfilePage() {
         );
     };
 
+    const liveCount = userProperties.filter(p => p.status === 'available').length;
+    const occupiedCount = userProperties.filter(p => p.status === 'occupied').length;
+    const onHoldCount = userProperties.filter(p => p.status === 'on-hold').length;
+
+    const filteredProperties = useMemo(() => {
+        if (statusFilter === 'all') {
+            return userProperties;
+        }
+        return userProperties.filter(property => property.status === statusFilter);
+    }, [userProperties, statusFilter]);
+
+    const filterTitles = {
+        all: 'All Listings',
+        available: 'Live Listings',
+        occupied: 'Occupied Listings',
+        'on-hold': 'On Hold Listings',
+    };
+
     if (isLoading) {
         return (
              <>
@@ -169,8 +188,6 @@ export default function ProfilePage() {
             </>
         )
     }
-
-    const occupiedCount = userProperties.filter(p => p.status === 'occupied').length;
 
     return (
         <>
@@ -289,29 +306,38 @@ export default function ProfilePage() {
 
                         {['owner', 'dealer', 'developer'].includes(userProfile.type) && (
                             <div className="mb-8 grid grid-cols-3 gap-4">
-                                <Card className="p-4 text-center flex flex-col items-center justify-center">
-                                    <Building2 className="w-8 h-8 text-primary mb-2" />
-                                    <p className="text-2xl font-bold">{userProperties.length}</p>
-                                    <p className="text-sm text-muted-foreground">Listings</p>
+                                <Card
+                                    onClick={() => setStatusFilter(statusFilter === 'available' ? 'all' : 'available')}
+                                    className={cn(
+                                        "p-4 text-center flex flex-col items-center justify-center cursor-pointer transition-all",
+                                        statusFilter === 'available' && 'ring-2 ring-primary bg-primary/10'
+                                    )}
+                                >
+                                    <PlayCircle className="w-8 h-8 text-primary mb-2" />
+                                    <p className="text-2xl font-bold">{liveCount}</p>
+                                    <p className="text-sm text-muted-foreground">Live</p>
                                 </Card>
-                                <Card className="p-4 text-center flex flex-col items-center justify-center">
+                                <Card
+                                    onClick={() => setStatusFilter(statusFilter === 'occupied' ? 'all' : 'occupied')}
+                                    className={cn(
+                                        "p-4 text-center flex flex-col items-center justify-center cursor-pointer transition-all",
+                                        statusFilter === 'occupied' && 'ring-2 ring-primary bg-primary/10'
+                                    )}
+                                >
                                     <CheckCircle2 className="w-8 h-8 text-primary mb-2" />
                                     <p className="text-2xl font-bold">{occupiedCount}</p>
                                     <p className="text-sm text-muted-foreground">Occupied</p>
                                 </Card>
-                                <Card className="p-4 text-center flex flex-col items-center justify-center">
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <div className="cursor-pointer">
-                                                <Star className="w-8 h-8 text-accent mb-2 mx-auto" />
-                                                <p className="text-2xl font-bold">4.5</p>
-                                                <p className="text-sm text-muted-foreground">Rating</p>
-                                            </div>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>Rating feature coming soon!</p>
-                                        </TooltipContent>
-                                    </Tooltip>
+                                <Card
+                                    onClick={() => setStatusFilter(statusFilter === 'on-hold' ? 'all' : 'on-hold')}
+                                    className={cn(
+                                        "p-4 text-center flex flex-col items-center justify-center cursor-pointer transition-all",
+                                        statusFilter === 'on-hold' && 'ring-2 ring-primary bg-primary/10'
+                                    )}
+                                >
+                                    <PauseCircle className="w-8 h-8 text-primary mb-2" />
+                                    <p className="text-2xl font-bold">{onHoldCount}</p>
+                                    <p className="text-sm text-muted-foreground">On Hold</p>
                                 </Card>
                             </div>
                         )}
@@ -321,7 +347,7 @@ export default function ProfilePage() {
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2">
                                         <ListVideo className="w-6 h-6 text-primary" />
-                                        <span className="text-lg">My Listings ({userProperties.length})</span>
+                                        <span className="text-lg">{filterTitles[statusFilter]} ({filteredProperties.length})</span>
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent>
@@ -330,16 +356,23 @@ export default function ProfilePage() {
                                             <Loader2 className="h-8 w-8 animate-spin" />
                                         </div>
                                     ) : userProperties.length > 0 ? (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            {userProperties.map(property => (
-                                                <ShortlistedPropertyCard
-                                                    key={property.id}
-                                                    property={property}
-                                                    onDelete={handleDeleteProperty}
-                                                    onUpdate={handleUpdateProperty}
-                                                />
-                                            ))}
-                                        </div>
+                                        filteredProperties.length > 0 ? (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                {filteredProperties.map(property => (
+                                                    <ShortlistedPropertyCard
+                                                        key={property.id}
+                                                        property={property}
+                                                        onDelete={handleDeleteProperty}
+                                                        onUpdate={handleUpdateProperty}
+                                                    />
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="text-center py-10 border border-dashed rounded-lg">
+                                                <h3 className="text-lg font-semibold">No properties with status "{statusFilter}".</h3>
+                                                <p className="text-muted-foreground mt-2">Click the status card again to clear the filter.</p>
+                                            </div>
+                                        )
                                     ) : (
                                         <div className="text-center py-10 border border-dashed rounded-lg">
                                             <h3 className="text-lg font-semibold">You haven't listed any properties yet.</h3>

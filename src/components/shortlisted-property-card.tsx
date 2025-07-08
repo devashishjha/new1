@@ -11,7 +11,6 @@ import { Button } from './ui/button';
 import { useAuth } from '@/hooks/use-auth';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from './ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Badge } from './ui/badge';
@@ -20,10 +19,13 @@ import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { ref, deleteObject } from 'firebase/storage';
 
 
-export function ShortlistedPropertyCard({ property, onDelete }: { property: Property, onDelete?: (propertyId: string) => void }) {
+export function ShortlistedPropertyCard({ property, onDelete, onUpdate }: { 
+    property: Property, 
+    onDelete?: (propertyId: string) => void,
+    onUpdate?: (property: Property) => void 
+}) {
     const { user } = useAuth();
     const { toast } = useToast();
-    const router = useRouter();
 
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -61,7 +63,11 @@ export function ShortlistedPropertyCard({ property, onDelete }: { property: Prop
 
             await updateDoc(propertyDocRef, { status: newStatus });
             toast({ title: "Status Updated", description: `Property status updated to ${newStatus}.` });
-            router.refresh();
+            
+            if (onUpdate) {
+                onUpdate({ ...property, status: newStatus });
+            }
+
         } catch (error) {
             console.error("Error updating property status:", error);
             toast({ variant: 'destructive', title: "Update Failed", description: 'An unexpected error occurred while updating the property status.' });

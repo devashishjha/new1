@@ -109,6 +109,14 @@ export function ViewProfileClient() {
     });
   }, [userId, authLoading]);
 
+  const handleUpdateProperty = (updatedProperty: Property) => {
+    setUserProperties(prev => prev.map(p => p.id === updatedProperty.id ? updatedProperty : p));
+  };
+
+  const handleDeleteProperty = (propertyId: string) => {
+      setUserProperties(prev => prev.filter(p => p.id !== propertyId));
+  };
+
   // This check runs after loading is complete
   if (!isLoading && !profile) {
     notFound();
@@ -261,7 +269,12 @@ export function ViewProfileClient() {
                         ) : userProperties.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {userProperties.map(property => (
-                                    <ShortlistedPropertyCard key={property.id} property={property} />
+                                    <ShortlistedPropertyCard 
+                                        key={property.id} 
+                                        property={property}
+                                        onUpdate={handleUpdateProperty}
+                                        onDelete={handleDeleteProperty}
+                                    />
                                 ))}
                             </div>
                         ) : (

@@ -121,6 +121,14 @@ export default function ProfilePage() {
         setUserProperties(prevProperties => prevProperties.filter(p => p.id !== propertyId));
     };
 
+    const handleUpdateProperty = (updatedProperty: Property) => {
+        setUserProperties(prevProperties => 
+            prevProperties.map(p => 
+                p.id === updatedProperty.id ? updatedProperty : p
+            )
+        );
+    };
+
     if (isLoading) {
         return (
              <>
@@ -317,7 +325,12 @@ export default function ProfilePage() {
                                     ) : userProperties.length > 0 ? (
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             {userProperties.map(property => (
-                                                <ShortlistedPropertyCard key={property.id} property={property} onDelete={handleDeleteProperty} />
+                                                <ShortlistedPropertyCard
+                                                    key={property.id}
+                                                    property={property}
+                                                    onDelete={handleDeleteProperty}
+                                                    onUpdate={handleUpdateProperty}
+                                                />
                                             ))}
                                         </div>
                                     ) : (

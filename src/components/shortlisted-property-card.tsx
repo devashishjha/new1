@@ -90,45 +90,47 @@ export function ShortlistedPropertyCard({ property, onDelete }: { property: Prop
     return (
         <>
             <Card 
-                className="overflow-hidden flex flex-col md:flex-row bg-card/80 backdrop-blur-sm border-border/20 hover:ring-2 hover:ring-primary transition-all duration-300"
+                className="overflow-hidden flex flex-col bg-card/80 backdrop-blur-sm border-border/20 hover:ring-2 hover:ring-primary transition-all duration-300 group"
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
             >
-                <div className="md:w-1/3 p-0 relative group overflow-hidden">
+                <div className="aspect-video w-full relative overflow-hidden bg-black">
                     <StatusBadge />
-                    <div className='aspect-video md:aspect-auto w-full md:h-full bg-black'>
-                        {property.video ? (
-                             <video
-                                ref={videoRef}
-                                src={`${property.video}#t=0.1`}
-                                className="w-full h-full object-cover"
-                                preload="metadata"
-                                muted
-                                loop
-                                playsInline
-                            />
-                        ) : (
-                            <Image
-                                src={property.image}
-                                alt={property.title}
-                                fill
-                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 25vw"
-                                className="w-full h-full object-cover"
-                                data-ai-hint="apartment exterior"
-                            />
-                        )}
-                    </div>
+                    {property.video ? (
+                         <video
+                            ref={videoRef}
+                            src={`${property.video}#t=0.1`}
+                            className="w-full h-full object-cover"
+                            preload="metadata"
+                            muted
+                            loop
+                            playsInline
+                        />
+                    ) : (
+                        <Image
+                            src={property.image}
+                            alt={property.title}
+                            fill
+                            sizes="(max-width: 768px) 100vw, 50vw"
+                            className="w-full h-full object-cover"
+                            data-ai-hint="apartment exterior"
+                        />
+                    )}
                 </div>
                 
                 <div className="flex flex-col flex-grow">
-                    <CardContent className="p-4 flex-grow flex flex-col gap-1">
-                        <p className="text-xs text-muted-foreground capitalize">For {property.price.type}</p>
-                        <p className="text-xl font-bold text-primary -mt-1">{priceDisplay}</p>
-                        <p className="text-sm font-semibold text-white leading-tight truncate" title={property.title}>{property.title}</p>
-                        <p className="text-xs text-muted-foreground truncate flex items-center gap-1.5" title={property.location}>
-                            <MapPin className='w-3 h-3' /> 
-                            {property.location}
-                        </p>
+                    <CardContent className="p-4 flex-grow space-y-2">
+                        <div>
+                            <p className="text-xs text-muted-foreground capitalize">For {property.price.type}</p>
+                            <p className="text-xl font-bold text-primary -mt-1">{priceDisplay}</p>
+                        </div>
+                        <div>
+                            <p className="font-semibold text-white leading-tight truncate" title={property.title}>{property.title}</p>
+                            <p className="text-xs text-muted-foreground truncate flex items-center gap-1.5" title={property.location}>
+                                <MapPin className='w-3 h-3' /> 
+                                {property.location}
+                            </p>
+                        </div>
                     </CardContent>
 
                     <CardFooter className="p-3 bg-secondary/20 mt-auto">

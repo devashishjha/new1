@@ -17,7 +17,7 @@ import { Slider } from '@/components/ui/slider';
 import { cn, formatIndianCurrency, dateToJSON } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, orderBy, query } from 'firebase/firestore';
+import { collection, getDocs, orderBy, query, where } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/use-auth';
 import { LocationAutocomplete } from './location-autocomplete';
@@ -90,7 +90,7 @@ export function SearchClient() {
                     return;
                 }
                 const propertiesCol = collection(db, 'properties');
-                const q = query(propertiesCol, orderBy('postedOn', 'desc'));
+                const q = query(propertiesCol, where("status", "==", "available"), orderBy('postedOn', 'desc'));
                 const snapshot = await getDocs(q);
                 const fetchedProperties = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Property));
                 setProperties(fetchedProperties.map(p => dateToJSON(p)) as Property[]);

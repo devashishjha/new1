@@ -52,7 +52,8 @@ export function ShortlistedPropertyCard({ property, onDelete }: { property: Prop
         const propertyDocRef = doc(db, 'properties', property.id);
 
         try {
-            if (user.uid !== property.lister.id) {
+            const docSnap = await getDoc(propertyDocRef);
+            if (!docSnap.exists() || docSnap.data().lister.id !== user.uid) {
                 toast({ variant: 'destructive', title: "Update Failed", description: "You are not authorized to update this property." });
                 setIsUpdating(false);
                 return;
@@ -83,14 +84,13 @@ export function ShortlistedPropertyCard({ property, onDelete }: { property: Prop
         const propertyDocRef = doc(db, 'properties', property.id);
 
         try {
-            if (user.uid !== property.lister.id) {
-                 toast({ variant: 'destructive', title: "Deletion Failed", description: 'You are not authorized to delete this property.' });
-                 setIsDeleting(false);
-                 return;
-            }
-
             const propertyDoc = await getDoc(propertyDocRef);
             if (propertyDoc.exists()) {
+                if (user.uid !== propertyDoc.data().lister.id) {
+                    toast({ variant: 'destructive', title: "Deletion Failed", description: 'You are not authorized to delete this property.' });
+                    setIsDeleting(false);
+                    return;
+                }
                 const propertyData = propertyDoc.data();
                 if (propertyData.video) {
                     try {

@@ -77,7 +77,7 @@ export function ReelsClient() {
                     setUserSearchCriteria(defaultSearchCriteria);
                 }
 
-                // Fetch properties
+                // Fetch properties that are available
                 const propertiesCol = collection(db, 'properties');
                 const q = query(propertiesCol, where("status", "==", "available"), orderBy('postedOn', 'desc'));
                 const snapshot = await getDocs(q);

@@ -158,7 +158,7 @@ export function ShortlistedPropertyCard({ property, onDelete, onUpdate }: {
         <>
             <Card className="overflow-hidden group relative">
                 <div 
-                    className="aspect-square w-full relative overflow-hidden rounded-lg"
+                    className="aspect-square w-full relative overflow-hidden rounded-t-lg"
                     onMouseEnter={handleMouseEnter}
                     onMouseLeave={handleMouseLeave}
                 >
@@ -167,7 +167,7 @@ export function ShortlistedPropertyCard({ property, onDelete, onUpdate }: {
                          <video
                             ref={videoRef}
                             src={`${property.video}#t=0.1`}
-                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110 rotate-180"
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                             preload="metadata"
                             muted
                             loop
@@ -183,18 +183,19 @@ export function ShortlistedPropertyCard({ property, onDelete, onUpdate }: {
                             data-ai-hint="apartment exterior"
                         />
                     )}
+                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none" />
                 </div>
                 
-                <div className="absolute bottom-0 left-0 right-0 h-3/5 bg-gradient-to-t from-black/90 via-black/60 to-transparent pointer-events-none" />
-
-                <CardContent className="absolute bottom-0 left-0 right-0 p-4 flex flex-col justify-end text-white">
-                    <div className="space-y-1.5">
-                        <div>
+                <CardContent className="p-4 bg-black/30">
+                    <div className="space-y-2">
+                         <div>
                             <p className="text-sm capitalize text-white/70">For {property.price.type}</p>
-                            <p className="text-lg font-bold text-primary -mt-0.5">{priceDisplay}</p>
+                            <p className="text-xl font-bold text-primary -mt-0.5">{priceDisplay}</p>
                         </div>
                         <div>
-                            <p className="text-base font-semibold leading-tight truncate" title={property.title}>{property.title}</p>
+                            <h3 className="font-semibold leading-tight truncate text-white" title={property.title}>
+                                {property.title}
+                            </h3>
                             <p className="text-sm text-white/80 truncate flex items-center gap-1.5" title={property.location}>
                                 <MapPin className='w-4 h-4' /> 
                                 {property.location}
@@ -202,13 +203,13 @@ export function ShortlistedPropertyCard({ property, onDelete, onUpdate }: {
                         </div>
                     </div>
 
-                     <div className="w-full flex justify-between items-center pt-4">
+                     <div className="w-full flex justify-between items-center pt-4 mt-4 border-t border-white/20">
                         <Button variant="outline" size="sm" onClick={() => setIsDetailsOpen(true)} className="bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm">
                             <Info className="mr-2 h-4 w-4" />
                             Details
                         </Button>
                         {isLister && (
-                            <DropdownMenu>
+                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="outline" size="icon" disabled={isUpdating} className="h-8 w-8 bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm">
                                         {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreVertical className="h-4 w-4" />}
@@ -222,7 +223,7 @@ export function ShortlistedPropertyCard({ property, onDelete, onUpdate }: {
                                     <DropdownMenuItem onClick={() => handleStatusChange('occupied')} disabled={isUpdating || property.status === 'occupied'}>
                                         <CheckCircle2 className="mr-2 h-4 w-4" /> Mark as Occupied
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleStatusChange('on-hold')} disabled={isUpdating || property.status === 'on-hold'}>
+                                     <DropdownMenuItem onClick={() => handleStatusChange('on-hold')} disabled={isUpdating || property.status === 'on-hold'}>
                                         <PauseCircle className="mr-2 h-4 w-4" /> Put on Hold
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />

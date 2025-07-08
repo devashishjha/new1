@@ -162,7 +162,7 @@ export default function ProfilePage() {
         )
     }
 
-    const occupiedCount = userProperties.filter(p => p.isSoldOrRented).length;
+    const occupiedCount = userProperties.filter(p => p.status === 'occupied').length;
 
     return (
         <>

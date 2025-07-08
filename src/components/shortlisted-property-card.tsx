@@ -4,7 +4,7 @@ import type { Property } from '@/lib/types';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import Image from 'next/image';
 import { formatIndianCurrency } from '@/lib/utils';
-import { Eye, Heart, Info, Pencil, CheckCircle2, Trash2, Loader2 } from 'lucide-react';
+import { Eye, Heart, Info, Pencil, CheckCircle2, Trash2, Loader2, PlayCircle, PauseCircle, Check, MoreVertical, MapPin, Building, Home } from 'lucide-react';
 import { PropertyDetailsSheet } from './property-details-sheet';
 import { useState } from 'react';
 import { Button } from './ui/button';
@@ -14,9 +14,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from './ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { db, storage } from '@/lib/firebase';
-import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { ref, deleteObject } from 'firebase/storage';
+import { updatePropertyStatusAction, deletePropertyAction } from '@/app/actions';
+import { Badge } from './ui/badge';
 
 
 export function ShortlistedPropertyCard({ property, onDelete }: { property: Property, onDelete?: (propertyId: string) => void }) {
@@ -30,96 +29,63 @@ export function ShortlistedPropertyCard({ property, onDelete }: { property: Prop
     const [isDeleting, setIsDeleting] = useState(false);
     
     const isLister = user?.uid === property.lister.id;
-    const isOccupied = property.isSoldOrRented;
+    const currentStatus = property.status;
 
     const priceDisplay = property.price.type === 'rent'
         ? `₹ ${property.price.amount.toLocaleString('en-IN')}/mo`
         : formatIndianCurrency(property.price.amount);
         
-    const handleMarkAsOccupied = async (e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (!user || !db) return;
-        
+    const handleStatusChange = async (newStatus: 'available' | 'occupied' | 'on-hold') => {
         setIsUpdating(true);
-        const propertyDocRef = doc(db, 'properties', property.id);
-        
-        try {
-            const propertyDoc = await getDoc(propertyDocRef);
-            if (!propertyDoc.exists() || propertyDoc.data().lister.id !== user.uid) {
-                toast({ variant: 'destructive', title: "Authorization Failed", description: "You do not have permission to modify this property." });
-                setIsUpdating(false);
-                return;
-            }
-            
-            await updateDoc(propertyDocRef, { isSoldOrRented: true });
-            toast({ title: "Property Status Updated", description: "The property has been marked as occupied." });
+        const result = await updatePropertyStatusAction(property.id, newStatus);
+        if (result.success) {
+            toast({ title: "Status Updated", description: result.message });
             router.refresh();
-        } catch (error) {
-            console.error("Error updating property status:", error);
-            toast({ variant: 'destructive', title: "Update Failed", description: "An unexpected error occurred." });
-        } finally {
-            setIsUpdating(false);
+        } else {
+            toast({ variant: 'destructive', title: "Update Failed", description: result.message });
         }
+        setIsUpdating(false);
     };
         
     const handleDeleteConfirm = async () => {
-        if (!user || !db || !storage) return;
-
         setIsDeleting(true);
-        const propertyDocRef = doc(db, 'properties', property.id);
-        
-        try {
-            const propertyDoc = await getDoc(propertyDocRef);
-            if (!propertyDoc.exists() || propertyDoc.data().lister.id !== user.uid) {
-                toast({ variant: 'destructive', title: "Authorization Failed", description: "You do not have permission to delete this property." });
-                setIsDeleting(false);
-                return;
-            }
-
-            const propertyData = propertyDoc.data();
-            
-            // Delete video from storage if it exists
-            if (propertyData.video) {
-                try {
-                    const videoRef = ref(storage, propertyData.video);
-                    await deleteObject(videoRef);
-                } catch (storageError: any) {
-                    if (storageError.code !== 'storage/object-not-found') {
-                        console.warn(`Could not delete video from storage: ${storageError.code}`);
-                    }
-                }
-            }
-    
-            await deleteDoc(propertyDocRef);
-            toast({ title: "Property Deleted", description: "The property has been successfully deleted." });
+        const result = await deletePropertyAction(property.id);
+        if (result.success) {
+            toast({ title: "Property Deleted", description: result.message });
             if (onDelete) {
                 onDelete(property.id);
             }
-            setIsDeleteDialogOpen(false);
-
-        } catch (error) {
-            console.error("Error deleting property:", error);
-            toast({ variant: 'destructive', title: "Deletion Failed", description: "An unexpected error occurred." });
-        } finally {
-            setIsDeleting(false);
+        } else {
+            toast({ variant: 'destructive', title: "Deletion Failed", description: result.message });
         }
+        setIsDeleting(false);
+        setIsDeleteDialogOpen(false);
     };
+
+    const StatusBadge = () => {
+        if (currentStatus === 'occupied') {
+             return <Badge variant="destructive" className="absolute top-2 left-2 z-10">{property.price.type === 'rent' ? 'Rented Out' : 'Sold Out'}</Badge>;
+        }
+        if (currentStatus === 'on-hold') {
+            return <Badge variant="secondary" className="absolute top-2 left-2 z-10 bg-accent text-accent-foreground">On Hold</Badge>;
+        }
+        return null;
+    }
 
     return (
         <>
             <Card className="overflow-hidden flex flex-col bg-card/80 backdrop-blur-sm border-border/20 h-full hover:ring-2 hover:ring-primary transition-all">
                 <CardHeader className="p-0 relative group overflow-hidden">
-                    <div className='aspect-[4/5] w-full'>
+                    <StatusBadge />
+                    <div className='aspect-[4/5] w-full bg-black'>
                         {property.video ? (
-                             <div className="w-full h-full bg-black">
-                                <video
-                                    src={`${property.video}#t=0.1`} // Fetch first frame for thumbnail
-                                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                    preload="metadata"
-                                    muted
-                                    playsInline
-                                />
-                            </div>
+                             <video
+                                src={`${property.video}#t=0.1`}
+                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                preload="metadata"
+                                muted
+                                playsInline
+                            />
                         ) : (
                             <Image
                                 src={property.image}
@@ -131,45 +97,26 @@ export function ShortlistedPropertyCard({ property, onDelete }: { property: Prop
                             />
                         )}
                     </div>
-                    {isOccupied && (
-                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
-                            <div className="bg-destructive text-destructive-foreground px-3 py-1 rounded-md text-sm font-bold">
-                                {property.price.type === 'rent' ? 'Rented Out' : 'Sold Out'}
-                            </div>
-                        </div>
-                    )}
                 </CardHeader>
                 
-                 <CardContent className="p-4 flex-grow flex flex-col">
-                    <h3 className="font-bold text-lg leading-tight truncate" title={property.title}>{property.title}</h3>
-                    <p className="text-sm text-muted-foreground truncate" title={property.location}>{property.location}</p>
+                <CardContent className="p-4 flex-grow flex flex-col gap-1">
+                    <p className="text-xs text-muted-foreground capitalize">For {property.price.type}</p>
+                    <p className="text-xl font-bold text-primary -mt-1">{priceDisplay}</p>
+                    <p className="text-sm font-semibold text-white leading-tight truncate" title={property.title}>{property.title}</p>
+                    <p className="text-xs text-muted-foreground truncate flex items-center gap-1.5" title={property.location}>
+                        <MapPin className='w-3 h-3' /> 
+                        {property.location}
+                    </p>
                 </CardContent>
 
-                <CardFooter className="p-3 bg-secondary/20 flex flex-col items-start gap-3 mt-auto">
-                   <div className="w-full flex justify-between items-center">
-                        <div>
-                            <p className="text-xs text-muted-foreground capitalize">For {property.price.type}</p>
-                            <p className="text-lg font-bold text-primary -mt-1">{priceDisplay}</p>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                <Eye className="w-4 h-4" />
-                                <span className="text-xs">{property.videoViews?.toLocaleString() || '0'}</span>
-                            </div>
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                <Heart className="w-4 h-4" />
-                                <span className="text-xs">{property.shortlistCount?.toLocaleString() || '0'}</span>
-                            </div>
-                        </div>
-                   </div>
-
+                <CardFooter className="p-3 bg-secondary/20 mt-auto">
                     <div className="w-full">
                         {isLister ? (
                              <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="outline" className="w-full" disabled={isUpdating}>
                                         {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                        <Pencil className="mr-2 h-4 w-4" />
+                                        <MoreVertical className="mr-2 h-4 w-4" />
                                         Manage Listing
                                     </Button>
                                 </DropdownMenuTrigger>
@@ -184,12 +131,16 @@ export function ShortlistedPropertyCard({ property, onDelete }: { property: Prop
                                             Edit Property
                                         </Link>
                                     </DropdownMenuItem>
-                                    {!isOccupied && (
-                                        <DropdownMenuItem onClick={handleMarkAsOccupied} disabled={isUpdating}>
-                                            {isUpdating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
-                                            Mark as Occupied
-                                        </DropdownMenuItem>
-                                    )}
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={() => handleStatusChange('available')} disabled={isUpdating || currentStatus === 'available'}>
+                                        <PlayCircle className="mr-2 h-4 w-4" /> Make Live
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleStatusChange('occupied')} disabled={isUpdating || currentStatus === 'occupied'}>
+                                        <CheckCircle2 className="mr-2 h-4 w-4" /> Mark as Occupied
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleStatusChange('on-hold')} disabled={isUpdating || currentStatus === 'on-hold'}>
+                                        <PauseCircle className="mr-2 h-4 w-4" /> Put on Hold
+                                    </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                                         <AlertDialogTrigger asChild>

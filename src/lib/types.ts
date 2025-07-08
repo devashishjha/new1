@@ -1,3 +1,4 @@
+
 import type { Timestamp } from "firebase/firestore";
 
 export type Property = {
@@ -20,9 +21,9 @@ export type Property = {
   location: string;
   societyName?: string;
   postedOn: Timestamp | Date | string;
-  videoViews?: number; // Added field
-  shortlistCount?: number; // Added field
-  isSoldOrRented?: boolean; // Added field
+  videoViews?: number;
+  shortlistCount?: number;
+  status: 'available' | 'occupied' | 'on-hold';
   
   configuration: 'studio' | '1bhk' | '2bhk' | '3bhk' | '4bhk' | '5bhk+';
   floorNo: number;

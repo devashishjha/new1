@@ -73,9 +73,14 @@ export function PropertyDetailsSheet({ open, onOpenChange, property, variant = '
                   <Badge variant="secondary">{priceDisplay}</Badge>
                   <Badge variant="secondary">{property.configuration.toUpperCase()}</Badge>
                   <Badge variant="secondary" className="capitalize">{property.propertyType}</Badge>
-                  {property.isSoldOrRented && (
+                  {property.status === 'occupied' && (
                       <Badge variant="destructive">
                           {property.price.type === 'rent' ? 'Rented Out' : 'Sold Out'}
+                      </Badge>
+                  )}
+                   {property.status === 'on-hold' && (
+                      <Badge variant="secondary" className='bg-accent text-accent-foreground'>
+                          On Hold
                       </Badge>
                   )}
               </div>

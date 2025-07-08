@@ -1,3 +1,4 @@
+
 import type { Property } from './types';
 
 export const dummyProperties: Property[] = [
@@ -21,7 +22,7 @@ export const dummyProperties: Property[] = [
         postedOn: new Date().toISOString(),
         videoViews: 1250,
         shortlistCount: 85,
-        isSoldOrRented: false,
+        status: 'available',
         configuration: '3bhk',
         propertyType: 'apartment',
         floorNo: 12,
@@ -67,7 +68,7 @@ export const dummyProperties: Property[] = [
         postedOn: new Date(Date.now() - 86400000).toISOString(), // Yesterday
         videoViews: 5600,
         shortlistCount: 210,
-        isSoldOrRented: false,
+        status: 'available',
         configuration: '4bhk',
         propertyType: 'villa',
         floorNo: 0,
@@ -113,7 +114,7 @@ export const dummyProperties: Property[] = [
         postedOn: new Date(Date.now() - 2 * 86400000).toISOString(), // 2 days ago
         videoViews: 890,
         shortlistCount: 45,
-        isSoldOrRented: false,
+        status: 'available',
         configuration: '2bhk',
         propertyType: 'apartment',
         floorNo: 5,
@@ -159,7 +160,7 @@ export const dummyProperties: Property[] = [
         postedOn: new Date(Date.now() - 3 * 86400000).toISOString(), // 3 days ago
         videoViews: 3200,
         shortlistCount: 150,
-        isSoldOrRented: false,
+        status: 'available',
         configuration: 'studio',
         propertyType: 'builder floor',
         floorNo: 3,
@@ -205,7 +206,7 @@ export const dummyProperties: Property[] = [
         postedOn: new Date(Date.now() - 4 * 86400000).toISOString(), // 4 days ago
         videoViews: 7800,
         shortlistCount: 300,
-        isSoldOrRented: true,
+        status: 'occupied',
         configuration: '5bhk+',
         propertyType: 'penthouse',
         floorNo: 25,

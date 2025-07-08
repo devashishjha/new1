@@ -47,7 +47,7 @@ export function ReelsClient() {
             // If Firebase is not configured, fall back to dummy data immediately.
             if (!db) {
                 console.warn("Firebase is not configured. Falling back to dummy data.");
-                setProperties(dummyProperties.map(p => dateToJSON(p)) as Property[]);
+                setProperties(dummyProperties.map(p => dateToJSON(p)).filter(p => p.status === 'available') as Property[]);
                 setUserSearchCriteria("A great property with good amenities in a nice neighborhood.");
                 setIsLoading(false);
                 return;
@@ -79,20 +79,20 @@ export function ReelsClient() {
 
                 // Fetch properties
                 const propertiesCol = collection(db, 'properties');
-                const q = query(propertiesCol, where("isSoldOrRented", "==", false), orderBy('postedOn', 'desc'));
+                const q = query(propertiesCol, where("status", "==", "available"), orderBy('postedOn', 'desc'));
                 const snapshot = await getDocs(q);
                 let fetchedProperties = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Property));
 
                 // If no properties from Firestore, use dummy data
                 if (fetchedProperties.length === 0) {
-                    fetchedProperties = dummyProperties.filter(p => !p.isSoldOrRented);
+                    fetchedProperties = dummyProperties.filter(p => p.status === 'available');
                 }
                 
                 setProperties(fetchedProperties.map(p => dateToJSON(p)) as Property[]);
             } catch (error) {
                 console.error("Error fetching data:", error);
                 // Fallback to dummy data on error as well
-                setProperties(dummyProperties.filter(p => !p.isSoldOrRented).map(p => dateToJSON(p)) as Property[]);
+                setProperties(dummyProperties.filter(p => p.status === 'available').map(p => dateToJSON(p)) as Property[]);
             } finally {
                 setIsLoading(false);
             }

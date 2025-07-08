@@ -155,11 +155,11 @@ export function ShortlistedPropertyCard({ property, onDelete, onUpdate }: {
     return (
         <>
             <Card 
-                className="overflow-hidden flex flex-col bg-transparent border-border/20 hover:ring-2 hover:ring-primary transition-all duration-300 group"
+                className="overflow-hidden flex flex-col bg-transparent border-none shadow-none hover:ring-2 hover:ring-primary transition-all duration-300 group"
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
             >
-                <div className="aspect-square w-full relative overflow-hidden bg-black">
+                <div className="aspect-square w-full relative overflow-hidden bg-black rounded-lg">
                     <StatusBadge />
                     {property.video ? (
                          <video
@@ -183,8 +183,8 @@ export function ShortlistedPropertyCard({ property, onDelete, onUpdate }: {
                     )}
                 </div>
                 
-                <div className="flex flex-col flex-grow text-white">
-                    <CardContent className="p-4 flex-grow space-y-2">
+                <div className="flex flex-col flex-grow text-white pt-3">
+                    <CardContent className="p-0 flex-grow space-y-2">
                         <div>
                             <p className="text-xs text-white/70 capitalize">For {property.price.type}</p>
                             <p className="text-xl font-bold text-primary -mt-1">{priceDisplay}</p>
@@ -198,7 +198,7 @@ export function ShortlistedPropertyCard({ property, onDelete, onUpdate }: {
                         </div>
                     </CardContent>
 
-                    <CardFooter className="p-3 bg-transparent border-t border-white/20">
+                    <CardFooter className="p-0 pt-3">
                          <div className="w-full flex justify-between items-center">
                             <Button variant="outline" size="sm" onClick={() => setIsDetailsOpen(true)} className="bg-white/10 border-white/20 text-white hover:bg-white/20">
                                 <Info className="mr-2 h-4 w-4" />

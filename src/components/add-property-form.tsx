@@ -16,12 +16,14 @@ import { useToast } from '@/hooks/use-toast';
 import { Slider } from './ui/slider';
 import { useAuth } from '@/hooks/use-auth';
 import { db, storage } from '@/lib/firebase';
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { addDoc, collection, doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import type { UserProfile, Property, OwnerProfile, DealerProfile, DeveloperProfile } from '@/lib/types';
 import { MapLocationPicker } from './map-location-picker';
 import { Skeleton } from './ui/skeleton';
+import { Progress } from './ui/progress';
+import { Loader2 } from 'lucide-react';
 
 const propertySchema = z.object({
     // Basic Info
@@ -73,6 +75,7 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
     const { user } = useAuth();
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = React.useState(false);
+    const [uploadProgress, setUploadProgress] = React.useState<number | null>(null);
     const [userProfile, setUserProfile] = React.useState<UserProfile | null>(null);
     const [isProfileLoading, setIsProfileLoading] = React.useState(true);
 
@@ -128,12 +131,14 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
             const userDocRef = doc(db, 'users', user.uid);
             const userDocSnap = await getDoc(userDocRef);
             if (userDocSnap.exists()) {
-                setUserProfile(userDocSnap.data() as UserProfile);
+                const profileData = userDocSnap.data() as UserProfile;
+                setUserProfile(profileData);
+                form.setValue('userType', profileData.type);
             }
             setIsProfileLoading(false);
         };
         fetchUserProfile();
-    }, [user]);
+    }, [user, form]);
 
     React.useEffect(() => {
         if (mode === 'edit' && property) {
@@ -185,147 +190,140 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
         }
 
         setIsSubmitting(true);
+        const videoFile = values.video?.[0];
 
-        try {
-            let videoUrl: string | undefined = (mode === 'edit' && property?.video) ? property.video : undefined;
-            const videoFile = values.video?.[0];
+        const finalizeSubmission = async (videoUrl?: string) => {
+            try {
+                const autoDescription = `A ${values.configuration} ${values.propertyType}, available for ${values.priceType}. Located at ${values.location}.`;
 
-            if (videoFile) {
-                toast({ title: "Uploading Video...", description: "Please wait while we upload your property video." });
-                const storageRef = ref(storage, `videos/${user.uid}/${Date.now()}_${videoFile.name}`);
-                const uploadResult = await uploadBytes(storageRef, videoFile);
-                videoUrl = await getDownloadURL(uploadResult.ref);
-            }
-            
-            const autoDescription = `A ${values.configuration} ${values.propertyType}, available for ${values.priceType}. Located at ${values.location}.`;
-
-            const propertyDataForFirestore = {
-                title: `${values.configuration.toUpperCase()} in ${values.location}`,
-                description: autoDescription,
-                video: videoUrl,
-                price: { type: values.priceType, amount: values.priceAmount },
-                location: values.location,
-                configuration: values.configuration,
-                propertyType: values.propertyType,
-                floorNo: values.floorNo,
-                totalFloors: values.totalFloors,
-                kitchenUtility: values.kitchenUtility,
-                mainDoorDirection: values.mainDoorDirection,
-                openSides: values.openSides,
-                hasBalcony: values.hasBalcony,
-                parking: { has2Wheeler: values.has2WheelerParking, has4Wheeler: values.has4WheelerParking },
-                features: { sunlightEntersHome: values.sunlightEntersHome, housesOnSameFloor: values.housesOnSameFloor },
-                amenities: {
-                    hasLift: values.hasLift,
-                    hasChildrenPlayArea: values.hasChildrenPlayArea,
-                    hasDoctorClinic: values.hasDoctorClinic,
-                    hasPlaySchool: values.hasPlaySchool,
-                    hasSuperMarket: values.hasSuperMarket,
-                    hasPharmacy: values.hasPharmacy,
-                    hasClubhouse: values.hasClubhouse,
-                    sunlightPercentage: values.sunlightPercentage,
-                    hasWaterMeter: values.hasWaterMeter,
-                    hasGasPipeline: values.hasGasPipeline,
-                },
-                area: { superBuiltUp: values.superBuiltUpArea, carpet: values.carpetArea },
-                charges: {
-                    maintenancePerMonth: values.maintenancePerMonth,
-                    securityDeposit: values.securityDeposit,
-                    brokerage: values.brokerage || 0,
-                    moveInCharges: values.moveInCharges,
-                },
-            };
-
-            if (mode === 'edit' && property) {
-                const propertyDocRef = doc(db, 'properties', property.id);
-                await updateDoc(propertyDocRef, {
-                    ...propertyDataForFirestore,
-                    // If video is updated, set status to pending review
-                    ...(videoUrl && videoUrl !== property.video && { status: 'pending-review' })
-                });
-                toast({
-                    title: "Property Updated!",
-                    description: videoUrl && videoUrl !== property.video ? "Your property video will be reviewed." : "Your property has been successfully updated.",
-                });
-                router.push('/profile');
-            } else {
-                const userDocRef = doc(db, 'users', user.uid);
-                const userDoc = await getDoc(userDocRef);
-                let userProfileData: UserProfile;
-
-                if (userDoc.exists()) {
-                    userProfileData = userDoc.data() as UserProfile;
-                    // If user selected a role and it's different from their current one, update their profile.
-                    if (values.userType && userProfileData.type !== values.userType) {
-                        await updateDoc(userDocRef, { type: values.userType });
-                        userProfileData.type = values.userType; // Update local copy for this submission
-                    }
-                } else {
-                    toast({
-                        title: "Finalizing Account Setup",
-                        description: "We're creating a profile for you to post this property.",
-                    });
-                    const newProfileType = values.userType || 'owner';
-                    const baseProfile = {
-                        id: user.uid,
-                        name: user.displayName || user.email?.split('@')[0] || 'New User',
-                        email: user.email!,
-                        phone: user.phoneNumber || '',
-                        avatar: user.photoURL || `https://placehold.co/100x100.png`
-                    };
-                    
-                    switch(newProfileType) {
-                        case 'owner':
-                            userProfileData = { ...baseProfile, type: 'owner' } as OwnerProfile;
-                            break;
-                        case 'dealer':
-                            userProfileData = { ...baseProfile, type: 'dealer' } as DealerProfile;
-                            break;
-                        case 'developer':
-                            userProfileData = { ...baseProfile, type: 'developer' } as DeveloperProfile;
-                            break;
-                        default:
-                            userProfileData = { ...baseProfile, type: 'owner' } as OwnerProfile;
-                    }
-                    
-                    await setDoc(userDocRef, userProfileData);
-                }
-
-                const finalData = {
-                    ...propertyDataForFirestore,
-                    lister: {
-                        id: user.uid,
-                        name: userProfileData.name,
-                        type: userProfileData.type,
-                        avatar: userProfileData.avatar,
-                        phone: userProfileData.phone,
+                const propertyDataForFirestore = {
+                    title: `${values.configuration.toUpperCase()} in ${values.location}`,
+                    description: autoDescription,
+                    video: videoUrl,
+                    price: { type: values.priceType, amount: values.priceAmount },
+                    location: values.location,
+                    configuration: values.configuration,
+                    propertyType: values.propertyType,
+                    floorNo: values.floorNo,
+                    totalFloors: values.totalFloors,
+                    kitchenUtility: values.kitchenUtility,
+                    mainDoorDirection: values.mainDoorDirection,
+                    openSides: values.openSides,
+                    hasBalcony: values.hasBalcony,
+                    parking: { has2Wheeler: values.has2WheelerParking, has4Wheeler: values.has4WheelerParking },
+                    features: { sunlightEntersHome: values.sunlightEntersHome, housesOnSameFloor: values.housesOnSameFloor },
+                    amenities: {
+                        hasLift: values.hasLift,
+                        hasChildrenPlayArea: values.hasChildrenPlayArea,
+                        hasDoctorClinic: values.hasDoctorClinic,
+                        hasPlaySchool: values.hasPlaySchool,
+                        hasSuperMarket: values.hasSuperMarket,
+                        hasPharmacy: values.hasPharmacy,
+                        hasClubhouse: values.hasClubhouse,
+                        sunlightPercentage: values.sunlightPercentage,
+                        hasWaterMeter: values.hasWaterMeter,
+                        hasGasPipeline: values.hasGasPipeline,
                     },
-                    postedOn: serverTimestamp(),
-                    image: 'https://placehold.co/1080x1920.png',
-                    status: videoUrl ? 'pending-review' : 'available' as const,
+                    area: { superBuiltUp: values.superBuiltUpArea, carpet: values.carpetArea },
+                    charges: {
+                        maintenancePerMonth: values.maintenancePerMonth,
+                        securityDeposit: values.securityDeposit,
+                        brokerage: values.brokerage || 0,
+                        moveInCharges: values.moveInCharges,
+                    },
                 };
-    
-                await addDoc(collection(db, "properties"), finalData);
-                
-                toast({
-                    title: videoUrl ? "Property Submitted for Review!" : "Property Listed!",
-                    description: videoUrl ? "Your property will be reviewed and published shortly." : "Your property has been successfully listed.",
-                });
-                form.reset();
-                router.push('/reels');
+
+                if (mode === 'edit' && property) {
+                    const propertyDocRef = doc(db, 'properties', property.id);
+                    await updateDoc(propertyDocRef, {
+                        ...propertyDataForFirestore,
+                        ...(videoUrl && videoUrl !== property.video && { status: 'pending-review' })
+                    });
+                    toast({
+                        title: "Property Updated!",
+                        description: videoUrl && videoUrl !== property.video ? "Your property video will be reviewed." : "Your property has been successfully updated.",
+                    });
+                    router.push('/profile');
+                } else {
+                    const userDocRef = doc(db, 'users', user.uid);
+                    const userDoc = await getDoc(userDocRef);
+                    let userProfileData: UserProfile;
+
+                    if (userDoc.exists()) {
+                        userProfileData = userDoc.data() as UserProfile;
+                        if (values.userType && userProfileData.type !== values.userType) {
+                            await updateDoc(userDocRef, { type: values.userType });
+                            userProfileData.type = values.userType;
+                        }
+                    } else {
+                        toast({ title: "Finalizing Account Setup", description: "We're creating your profile now." });
+                        const newProfileType = values.userType || 'owner';
+                        const baseProfile = { id: user.uid, name: user.displayName || user.email?.split('@')[0] || 'New User', email: user.email!, phone: user.phoneNumber || '', avatar: user.photoURL || `https://placehold.co/100x100.png` };
+                        userProfileData = { ...baseProfile, type: newProfileType } as OwnerProfile | DealerProfile | DeveloperProfile;
+                        await setDoc(userDocRef, userProfileData);
+                    }
+
+                    const finalData = {
+                        ...propertyDataForFirestore,
+                        lister: { id: user.uid, name: userProfileData.name, type: userProfileData.type, avatar: userProfileData.avatar, phone: userProfileData.phone },
+                        postedOn: serverTimestamp(),
+                        image: 'https://placehold.co/1080x1920.png',
+                        status: videoUrl ? 'pending-review' : 'available' as const,
+                    };
+                    await addDoc(collection(db, "properties"), finalData);
+                    toast({
+                        title: videoUrl ? "Property Submitted for Review!" : "Property Listed!",
+                        description: videoUrl ? "Your property will be reviewed and published shortly." : "Your property has been successfully listed.",
+                    });
+                    form.reset();
+                    router.push('/reels');
+                }
+            } catch (error) {
+                console.error("Error finalizing submission:", error);
+                toast({ variant: "destructive", title: "Submission Failed", description: "There was an error saving your property data." });
+            } finally {
+                setIsSubmitting(false);
+                setUploadProgress(null);
             }
-        } catch (error) {
-            console.error("Error submitting property:", error);
-            toast({
-                variant: "destructive",
-                title: "Submission Failed",
-                description: "There was an error submitting your property. Please try again.",
-            });
-        } finally {
-            setIsSubmitting(false);
+        };
+
+        if (videoFile) {
+            setUploadProgress(0);
+            const storageRef = ref(storage, `videos/${user.uid}/${Date.now()}_${videoFile.name}`);
+            const uploadTask = uploadBytesResumable(storageRef, videoFile);
+
+            uploadTask.on('state_changed',
+                (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    setUploadProgress(progress);
+                },
+                (error) => {
+                    console.error("Upload error:", error);
+                    toast({ variant: "destructive", title: "Upload Failed", description: "Could not upload your video. Please try again." });
+                    setIsSubmitting(false);
+                    setUploadProgress(null);
+                },
+                async () => {
+                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                    await finalizeSubmission(downloadURL);
+                }
+            );
+        } else {
+            const existingVideoUrl = (mode === 'edit' && property?.video) ? property.video : undefined;
+            await finalizeSubmission(existingVideoUrl);
         }
     }
     
+    if (isSubmitting) {
+        return (
+            <Card className="text-center p-8">
+                <CardHeader>
+                    <CardTitle className="text-2xl">{uploadProgress !== null ? 'Uploading Video...' : 'Finalizing Submission...'}</CardTitle>
+                </CardContent>
+            </Card>
+        );
+    }
+
     const renderCheckboxField = (name: keyof z.infer<typeof propertySchema>, label: string) => (<FormField control={form.control} name={name} render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><FormLabel>{label}</FormLabel><FormControl><Checkbox checked={field.value as boolean} onCheckedChange={field.onChange}/></FormControl></FormItem>)} />);
 
     return (
@@ -339,7 +337,7 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
                                 <FormField control={form.control} name="userType" render={({ field }) => (
                                     <FormItem className="md:col-span-2">
                                         <FormLabel>You are listing as a...</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <Select onValueChange={field.onChange} value={field.value}>
                                             <FormControl><SelectTrigger><SelectValue placeholder="Select your role for this listing" /></SelectTrigger></FormControl>
                                             <SelectContent>
                                                 <SelectItem value="owner">Property Owner</SelectItem>
@@ -347,7 +345,7 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
                                                 <SelectItem value="developer">Developer</SelectItem>
                                             </SelectContent>
                                         </Select>
-                                        <FormDescription>Selecting a role will update your primary profile type.</FormDescription>
+                                        <FormDescription>Selecting a role will update your primary profile type if it's different.</FormDescription>
                                         <FormMessage />
                                     </FormItem>
                                 )} />
@@ -430,3 +428,5 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
         </Form>
     );
 }
+
+    

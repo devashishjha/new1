@@ -168,3 +168,5 @@ export function PropertyDetailsSheet({ open, onOpenChange, property, variant = '
     </Sheet>
   );
 }
+
+    

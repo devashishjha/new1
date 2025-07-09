@@ -170,7 +170,7 @@ export function ShortlistedPropertyCard({ property, onDelete, onUpdate }: {
                          <video
                             ref={videoRef}
                             src={`${property.video}#t=0.1`}
-                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110 rotate-180"
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110 transform rotate-180"
                             preload="metadata"
                             muted
                             loop

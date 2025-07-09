@@ -1,7 +1,7 @@
 
 'use client';
 import type { Property } from '@/lib/types';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
 import { formatIndianCurrency } from '@/lib/utils';
 import { Info, Pencil, CheckCircle2, Trash2, Loader2, PlayCircle, PauseCircle, MoreVertical, MapPin, AlertCircle } from 'lucide-react';
@@ -189,32 +189,32 @@ export function ShortlistedPropertyCard({ property, onDelete, onUpdate }: {
                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none" />
                 </div>
                 
-                <CardContent className="p-4 bg-black/30">
+                <CardContent className="p-4 bg-card">
                     <div className="space-y-2">
                          <div>
-                            <p className="text-sm capitalize text-white/70">For {property.price.type}</p>
+                            <p className="text-sm capitalize text-muted-foreground">For {property.price.type}</p>
                             <p className="text-xl font-bold text-primary -mt-0.5">{priceDisplay}</p>
                         </div>
                         <div>
-                            <h3 className="font-semibold leading-tight truncate text-white" title={property.title}>
+                            <h3 className="font-semibold leading-tight truncate text-card-foreground" title={property.title}>
                                 {property.title}
                             </h3>
-                            <p className="text-sm text-white/80 truncate flex items-center gap-1.5" title={property.location}>
+                            <p className="text-sm text-muted-foreground truncate flex items-center gap-1.5" title={property.location}>
                                 <MapPin className='w-4 h-4' /> 
                                 {property.location}
                             </p>
                         </div>
                     </div>
 
-                     <div className="w-full flex justify-between items-center pt-4 mt-4 border-t border-white/20">
-                        <Button variant="outline" size="sm" onClick={() => setIsDetailsOpen(true)} className="bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm">
+                     <div className="w-full flex justify-between items-center pt-4 mt-4 border-t border-border">
+                        <Button variant="ghost" size="sm" onClick={() => setIsDetailsOpen(true)}>
                             <Info className="mr-2 h-4 w-4" />
                             Details
                         </Button>
                         {isLister && (
                              <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" size="icon" disabled={isUpdating} className="h-8 w-8 bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm">
+                                    <Button variant="ghost" size="icon" disabled={isUpdating} className="h-8 w-8">
                                         {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreVertical className="h-4 w-4" />}
                                         <span className="sr-only">Manage Property</span>
                                     </Button>

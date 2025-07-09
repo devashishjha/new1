@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Property } from '@/lib/types';
@@ -402,6 +401,7 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
                 <Link href={`/view-profile/${property.lister.id}`} onClick={(e) => e.stopPropagation()} onMouseUp={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()}>
                     <InfoCard icon={UserCircle} label="Posted By" value={property.lister.name} />
                 </Link>
+                <InfoCard icon={UserCircle} label="Lister Type" value={<span className="capitalize">{property.lister.type}</span>} />
                 <InfoCard 
                     icon={IndianRupee} 
                     label={`For ${property.price.type}`} 

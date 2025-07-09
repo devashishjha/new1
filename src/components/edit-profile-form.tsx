@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -16,7 +15,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { updateProfile } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import type { UserProfile } from '@/lib/types';
+import type { UserProfile, DealerProfile, DeveloperProfile } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
 
 
@@ -53,7 +52,7 @@ export function EditProfileForm({ profile }: { profile: UserProfile }) {
         setIsSubmitting(true);
 
         try {
-            const dataToUpdate: Partial<UserProfile> & { name?: string, avatar?: string } = {
+            const dataToUpdate: Partial<UserProfile> = {
                 name: values.name,
                 phone: values.phone,
             };
@@ -67,10 +66,10 @@ export function EditProfileForm({ profile }: { profile: UserProfile }) {
             }
 
             if (profile.type === 'dealer' || profile.type === 'developer') {
-                dataToUpdate.companyName = values.companyName;
+                (dataToUpdate as Partial<DealerProfile | DeveloperProfile>).companyName = values.companyName;
             }
             if (profile.type === 'developer') {
-                dataToUpdate.reraId = values.reraId;
+                (dataToUpdate as Partial<DeveloperProfile>).reraId = values.reraId;
             }
 
             const userDocRef = doc(db, 'users', user.uid);

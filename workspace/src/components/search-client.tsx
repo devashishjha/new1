@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -120,7 +119,7 @@ export function SearchClient() {
                 const priceTypeMatch = filters.lookingTo === 'rent' ? p.price.type === 'rent' : p.price.type === 'sale';
                 const priceRangeMatch = p.price.amount >= filters.priceRange[0] && p.price.amount <= filters.priceRange[1];
                 const locationMatch = !filters.location || p.location.toLowerCase().includes(filters.location.toLowerCase());
-                const societyMatch = !filters.societyName || p.societyName.toLowerCase().includes(filters.societyName.toLowerCase());
+                const societyMatch = !filters.societyName || (p.societyName && p.societyName.toLowerCase().includes(filters.societyName.toLowerCase()));
                 const propertyTypeMatch = filters.propertyType.length === 0 || filters.propertyType.includes(p.propertyType);
                 const configMatch = filters.configuration.length === 0 || filters.configuration.includes(p.configuration);
                 const floorMatch = p.floorNo >= filters.floorRange[0] && p.floorNo <= filters.floorRange[1];

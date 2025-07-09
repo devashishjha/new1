@@ -140,7 +140,7 @@ export function AdminReviewClient() {
                                 key={prop.id} 
                                 property={prop}
                             />
-                        ))}
+                        ))}\
                     </div>
                 ) : (
                      <div className="text-center py-20 border border-dashed rounded-lg mt-10">
@@ -152,5 +152,3 @@ export function AdminReviewClient() {
         </main>
     )
 }
-
-    

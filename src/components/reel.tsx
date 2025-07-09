@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Property } from '@/lib/types';
@@ -425,3 +426,5 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
 }
 
 export const Reel = ReelComponent;
+
+    

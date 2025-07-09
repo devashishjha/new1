@@ -273,3 +273,5 @@ export function ShortlistedPropertyCard({ property, onDelete, onUpdate }: {
         </>
     );
 }
+
+    

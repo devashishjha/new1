@@ -38,6 +38,7 @@ import { Button } from './ui/button';
 import { db, storage } from '@/lib/firebase';
 import { doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { ref, deleteObject } from 'firebase/storage';
+import { cn } from '@/lib/utils';
 
 
 const InfoCard = ({ icon, label, value, children }: { icon: React.ElementType, label: string, value?: string | React.ReactNode, children?: React.ReactNode }) => (
@@ -316,8 +317,7 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
             muted 
             loop 
             playsInline 
-            className="absolute inset-0 w-full h-full object-cover" 
-            style={{ transform: 'rotate(180deg)' }}
+            className="absolute inset-0 w-full h-full object-cover rotate-180" 
           />
       ) : (
         property.image && (
@@ -427,3 +427,5 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
 }
 
 export const Reel = ReelComponent;
+
+    

@@ -316,7 +316,8 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
             muted 
             loop 
             playsInline 
-            className="absolute inset-0 w-full h-full object-cover transform rotate-180" 
+            className="absolute inset-0 w-full h-full object-cover" 
+            style={{ transform: 'rotate(180deg)' }}
           />
       ) : (
         property.image && (
@@ -426,5 +427,3 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
 }
 
 export const Reel = ReelComponent;
-
-    

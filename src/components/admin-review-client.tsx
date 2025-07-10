@@ -67,7 +67,8 @@ function AdminPropertyCard({ property }: { property: Property }) {
                         src={property.video}
                         controls
                         muted
-                        className="w-full rounded-md aspect-video bg-black rotate-180"
+                        className="w-full rounded-md aspect-video bg-black"
+                        style={{ transform: 'rotate(180deg) translateZ(0)' }}
                     />
                 )}
                 <div className="flex items-center gap-2 pt-4 border-t">

@@ -427,5 +427,3 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
 }
 
 export const Reel = ReelComponent;
-
-    

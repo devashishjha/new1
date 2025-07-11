@@ -167,7 +167,10 @@ export function ShortlistedPropertyCard({ property, onDelete, onUpdate }: {
                 >
                     <StatusBadge />
                     {property.video ? (
-                         <div className="w-full h-full" style={{ transform: 'rotate(180deg) translateZ(0)' }}>
+                         <div 
+                            className="w-full h-full" 
+                            style={{ transform: 'rotate(180deg) translateZ(0) !important' }}
+                        >
                              <video
                                 ref={videoRef}
                                 src={`${property.video}#t=0.1`}

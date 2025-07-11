@@ -310,7 +310,10 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
             </div>
       </div>
       {property.video ? (
-          <div className="absolute inset-0 w-full h-full" style={{ transform: 'rotate(180deg) translateZ(0)' }}>
+          <div 
+            className="absolute inset-0 w-full h-full" 
+            style={{ transform: 'rotate(180deg)' }}
+          >
               <video 
                 ref={videoRef}
                 src={property.video} 

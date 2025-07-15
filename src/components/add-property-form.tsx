@@ -31,7 +31,6 @@ const propertySchema = z.object({
     priceAmount: z.coerce.number().min(1, { message: 'Please enter a valid price.' }),
     location: z.string().min(3, { message: 'Location must be at least 3 characters.' }),
     video: z.any().optional(),
-    userType: z.enum(['owner', 'dealer', 'developer']).optional(),
 
     // Property Details
     propertyType: z.enum(['apartment', 'villa', 'row house', 'penthouse', 'independent house', 'builder floor']),
@@ -86,7 +85,6 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
             priceAmount: 0,
             location: '',
             video: null,
-            userType: 'owner',
             propertyType: 'apartment',
             configuration: '2bhk',
             floorNo: 0,
@@ -133,7 +131,6 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
             if (userDocSnap.exists()) {
                 const profileData = userDocSnap.data() as UserProfile;
                 setUserProfile(profileData);
-                form.setValue('userType', profileData.type);
             }
             setIsProfileLoading(false);
         };
@@ -234,6 +231,10 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
                 };
 
                 if (mode === 'edit' && property) {
+                    // Ensure db is not null before using it
+                    if (!db) {
+                        throw new Error("Firestore is not initialized.");
+                    }
                     const propertyDocRef = doc(db, 'properties', property.id);
                     await updateDoc(propertyDocRef, {
                         ...propertyDataForFirestore,
@@ -245,21 +246,20 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
                     });
                     router.push('/profile');
                 } else {
+                    // Ensure db is not null before using it
+                    if (!db) {
+                        throw new Error("Firestore is not initialized.");
+                    }
                     const userDocRef = doc(db, 'users', user.uid);
                     const userDoc = await getDoc(userDocRef);
                     let userProfileData: UserProfile;
 
                     if (userDoc.exists()) {
                         userProfileData = userDoc.data() as UserProfile;
-                        if (values.userType && userProfileData.type !== values.userType) {
-                            await updateDoc(userDocRef, { type: values.userType });
-                            userProfileData.type = values.userType;
-                        }
                     } else {
                         toast({ title: "Finalizing Account Setup", description: "We're creating your profile now." });
-                        const newProfileType = values.userType || 'owner';
                         const baseProfile = { id: user.uid, name: user.displayName || user.email?.split('@')[0] || 'New User', email: user.email!, phone: user.phoneNumber || '', avatar: user.photoURL || `https://placehold.co/100x100.png` };
-                        userProfileData = { ...baseProfile, type: newProfileType } as OwnerProfile | DealerProfile | DeveloperProfile;
+                        userProfileData = { ...baseProfile, type: 'owner' } as OwnerProfile; // Default to 'owner'
                         await setDoc(userDocRef, userProfileData);
                     }
 
@@ -342,25 +342,6 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
                  <Card>
                     <CardHeader><CardTitle>Basic Information</CardTitle></CardHeader>
                     <CardContent className="grid md:grid-cols-2 gap-6">
-                        {mode === 'add' && (
-                            isProfileLoading ? <Skeleton className="h-10 w-full md:col-span-2" /> : (
-                                <FormField control={form.control} name="userType" render={({ field }) => (
-                                    <FormItem className="md:col-span-2">
-                                        <FormLabel>You are listing as a...</FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value}>
-                                            <FormControl><SelectTrigger><SelectValue placeholder="Select your role for this listing" /></SelectTrigger></FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="owner">Property Owner</SelectItem>
-                                                <SelectItem value="dealer">Real Estate Dealer</SelectItem>
-                                                <SelectItem value="developer">Developer</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <FormDescription>Selecting a role will update your primary profile type if it's different.</FormDescription>
-                                        <FormMessage />
-                                    </FormItem>
-                                )} />
-                            )
-                        )}
                         <FormField control={form.control} name="priceType" render={({ field }) => ( <FormItem><FormLabel>Listing for</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="rent">Rent</SelectItem><SelectItem value="sale">Sale</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
                         <FormField control={form.control} name="priceAmount" render={({ field }) => ( <FormItem><FormLabel>Price Amount (₹)</FormLabel><FormControl><Input type="number" placeholder="5000000" {...field} /></FormControl><FormMessage /></FormItem> )} />
                         <FormField control={form.control} name="location" render={({ field }) => ( <FormItem className="md:col-span-2"><FormLabel>Pinpoint Location on Map</FormLabel><FormControl><MapLocationPicker value={field.value} onChange={field.onChange} /></FormControl><FormDescription>Search for a location and then drag the pin to the exact property spot.</FormDescription><FormMessage /></FormItem> )} />

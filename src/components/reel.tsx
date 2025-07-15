@@ -90,7 +90,7 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
     const currentRef = reelRef.current;
     if (currentRef) {
       observer.observe(currentRef);
-    }
+    };
 
     return () => {
       if (currentRef) {
@@ -312,7 +312,6 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
       {property.video ? (
           <div 
             className="absolute inset-0 w-full h-full" 
-            style={{ transform: 'rotate(180deg)' }}
           >
               <video 
                 ref={videoRef}

@@ -319,6 +319,16 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
             <Card className="text-center p-8">
                 <CardHeader>
                     <CardTitle className="text-2xl">{uploadProgress !== null ? 'Uploading Video...' : 'Finalizing Submission...'}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {uploadProgress !== null ? (
+                        <div className="space-y-4">
+                            <Progress value={uploadProgress} />
+                            <p className="text-sm text-muted-foreground">{Math.round(uploadProgress)}% complete</p>
+                        </div>
+                    ) : (
+                        <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+                    )}
                 </CardContent>
             </Card>
         );

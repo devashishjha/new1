@@ -169,7 +169,6 @@ export function ShortlistedPropertyCard({ property, onDelete, onUpdate }: {
                     {property.video ? (
                          <div 
                             className="w-full h-full" 
-                            style={{ transform: 'rotate(180deg) translateZ(0) !important' }}
                         >
                              <video
                                 ref={videoRef}

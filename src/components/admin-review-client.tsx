@@ -65,7 +65,6 @@ function AdminPropertyCard({ property }: { property: Property }) {
                 {property.video && (
                     <div 
                         className="w-full rounded-md aspect-video bg-black overflow-hidden" 
-                        style={{ transform: 'rotate(180deg) translateZ(0) !important' }}
                     >
                         <video
                             src={property.video}

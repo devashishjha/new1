@@ -18,7 +18,6 @@ import { dateToJSON } from '@/lib/utils';
 import Image from 'next/image';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/use-auth';
-import { dummyProperties } from '@/lib/dummy-data';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useChatNavigation } from '@/hooks/use-chat-navigation';
 import { PresenceDot } from './presence-dot';
@@ -52,29 +51,8 @@ export function ViewProfileClient() {
       setIsLoading(true);
 
       const handleFallback = () => {
-        const dummyLister = dummyProperties.find(p => p.lister.id === userId)?.lister;
-        if (dummyLister) {
-          const baseProfile = {
-            id: dummyLister.id,
-            name: dummyLister.name,
-            email: `${dummyLister.name.toLowerCase().replace(/\s/g, '.')}@example.com`,
-            phone: dummyLister.phone || '',
-            avatar: dummyLister.avatar || 'https://placehold.co/100x100.png',
-          };
-          let fullDummyProfile: UserProfile | null = null;
-          switch (dummyLister.type) {
-            case 'owner': fullDummyProfile = { ...baseProfile, type: 'owner' }; break;
-            case 'dealer': fullDummyProfile = { ...baseProfile, type: 'dealer', companyName: `${dummyLister.name}'s Realty`, reraId: '' } as DealerProfile; break;
-            case 'developer': fullDummyProfile = { ...baseProfile, type: 'developer', companyName: `${dummyLister.name} Corp`, reraId: 'DUMMY/RERA/12345' } as DeveloperProfile; break;
-          }
-          setProfile(fullDummyProfile);
-          if (fullDummyProfile) {
-            const propertiesByDummyLister = dummyProperties.filter(p => p.lister.id === userId);
-            setUserProperties(propertiesByDummyLister.map(p => dateToJSON(p)) as Property[]);
-          }
-        } else {
-          setProfile(null);
-        }
+        setProfile(null);
+        setUserProperties([]);
       };
 
       if (!db) {

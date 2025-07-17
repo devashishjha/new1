@@ -9,7 +9,6 @@ import { doc, getDoc, collection, onSnapshot, query, orderBy } from 'firebase/fi
 import { db } from '@/lib/firebase';
 import { Skeleton } from './ui/skeleton';
 import { dateToJSON } from '@/lib/utils';
-import { dummyProperties } from '@/lib/dummy-data';
 
 function ReelSkeleton() {
     return (
@@ -49,8 +48,8 @@ export function ReelsClient() {
             const defaultSearchCriteria = "A great property with good amenities in a nice neighborhood.";
 
             if (!db) {
-                console.warn("Firebase is not configured. Falling back to dummy data.");
-                setProperties(dummyProperties.filter(p => p.status === 'available').map(p => dateToJSON(p)) as Property[]);
+                console.warn("Firebase is not configured. App will not load properties.");
+                setProperties([]);
                 setUserSearchCriteria(defaultSearchCriteria);
                 setIsLoading(false);
                 return;
@@ -81,25 +80,19 @@ export function ReelsClient() {
                 
                 unsubscribe = onSnapshot(q, (snapshot) => {
                     const allProperties = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Property));
-                    let availableProperties = allProperties.filter(p => p.status === 'available');
-
-                    // If Firestore returns no available properties, use dummy data as a fallback.
-                    if (availableProperties.length === 0) {
-                        availableProperties = dummyProperties.filter(p => p.status === 'available');
-                    }
+                    const availableProperties = allProperties.filter(p => p.status === 'available');
                     
                     setProperties(availableProperties.map(p => dateToJSON(p)) as Property[]);
                     setIsLoading(false);
                 }, (error) => {
                     console.error("Error fetching real-time properties:", error);
-                    // Fallback to dummy data on error as well
-                    setProperties(dummyProperties.filter(p => p.status === 'available').map(p => dateToJSON(p)) as Property[]);
+                    setProperties([]);
                     setIsLoading(false);
                 });
 
             } catch (error) {
                 console.error("Error setting up data listeners:", error);
-                setProperties(dummyProperties.filter(p => p.status === 'available').map(p => dateToJSON(p)) as Property[]);
+                setProperties([]);
                 setIsLoading(false);
             }
         };

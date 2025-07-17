@@ -413,9 +413,9 @@ function ReelComponent({ property, userSearchCriteria, onDelete }: { property: P
                     label={`For ${property.price.type}`} 
                     value={priceDisplay} 
                 />
-                <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(property.location)}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} onMouseUp={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()}>
+                <Link href={`/map?address=${encodeURIComponent(property.location)}`} onClick={(e) => e.stopPropagation()} onMouseUp={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()}>
                     <InfoCard icon={MapPin} label="Location" value={property.location} />
-                </a>
+                </Link>
                 <InfoCard icon={BedDouble} label="Config" value={property.configuration.toUpperCase()} />
                 <InfoCard icon={Building} label="Type" value={<span className="capitalize">{property.propertyType}</span>} />
                 <InfoCard icon={AreaChart} label="Area" value={`${property.area.superBuiltUp} sqft`} />

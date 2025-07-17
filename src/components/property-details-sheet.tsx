@@ -65,9 +65,9 @@ export function PropertyDetailsSheet({ open, onOpenChange, property, variant = '
             <SheetHeader className="p-6 bg-cover bg-center text-left" style={{backgroundImage: `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url(${property.image})`}}>
               <SheetTitle className="text-3xl font-bold text-white">{property.title}</SheetTitle>
               <SheetDescription>
-                  <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(property.location)}`} target="_blank" rel="noopener noreferrer" className="text-white/80 hover:underline">
+                  <Link href={`/map?address=${encodeURIComponent(property.location)}`} className="text-white/80 hover:underline">
                       {property.location}
-                  </a>
+                  </Link>
               </SheetDescription>
               <div className="flex gap-2 pt-2 flex-wrap">
                   <Badge variant="secondary">{priceDisplay}</Badge>

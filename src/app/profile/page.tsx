@@ -205,30 +205,6 @@ export default function ProfilePage() {
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                    {userProfile.role === 'admin' && (
-                                        <DropdownMenuItem asChild>
-                                            <Link href="/admin">
-                                                <LayoutDashboard className="mr-2 h-4 w-4" /> Admin Panel
-                                            </Link>
-                                        </DropdownMenuItem>
-                                    )}
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <DropdownMenuItem disabled>
-                                                <Shield className="mr-2 h-4 w-4" /> Privacy Policy
-                                            </DropdownMenuItem>
-                                        </TooltipTrigger>
-                                        <TooltipContent side="left"><p>Coming soon!</p></TooltipContent>
-                                    </Tooltip>
-                                     <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <DropdownMenuItem disabled>
-                                                <FileText className="mr-2 h-4 w-4" /> Terms & Conditions
-                                            </DropdownMenuItem>
-                                        </TooltipTrigger>
-                                        <TooltipContent side="left"><p>Coming soon!</p></TooltipContent>
-                                    </Tooltip>
-                                    <DropdownMenuSeparator />
                                     <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive focus:bg-destructive/10">
                                         <LogOut className="mr-2 h-4 w-4" /> Log Out
                                     </DropdownMenuItem>
@@ -256,49 +232,81 @@ export default function ProfilePage() {
                             </div>
                             <h1 className="text-4xl font-bold tracking-tight">{userProfile.name}</h1>
                             
-                            <div className="flex items-center justify-center gap-4 mt-4">
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <a href={`mailto:${userProfile.email}`}>
-                                            <Button variant="outline" size="icon">
-                                                <Mail className="h-5 w-5" />
-                                                <span className="sr-only">Email</span>
-                                            </Button>
-                                        </a>
-                                    </TooltipTrigger>
-                                    <TooltipContent><p>{userProfile.email}</p></TooltipContent>
-                                </Tooltip>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        {userProfile.phone ? (
-                                            <a href={`tel:${userProfile.phone}`}>
+                            <div className="flex flex-col items-center justify-center gap-4 mt-4">
+                                <div className="flex items-center justify-center gap-4">
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <a href={`mailto:${userProfile.email}`}>
                                                 <Button variant="outline" size="icon">
+                                                    <Mail className="h-5 w-5" />
+                                                    <span className="sr-only">Email</span>
+                                                </Button>
+                                            </a>
+                                        </TooltipTrigger>
+                                        <TooltipContent><p>{userProfile.email}</p></TooltipContent>
+                                    </Tooltip>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            {userProfile.phone ? (
+                                                <a href={`tel:${userProfile.phone}`}>
+                                                    <Button variant="outline" size="icon">
+                                                        <Phone className="h-5 w-5" />
+                                                        <span className="sr-only">Call</span>
+                                                    </Button>
+                                                </a>
+                                            ) : (
+                                                <Button variant="outline" size="icon" disabled>
                                                     <Phone className="h-5 w-5" />
                                                     <span className="sr-only">Call</span>
                                                 </Button>
-                                            </a>
-                                        ) : (
-                                            <Button variant="outline" size="icon" disabled>
-                                                <Phone className="h-5 w-5" />
-                                                <span className="sr-only">Call</span>
-                                            </Button>
-                                        )}
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        {userProfile.phone ? <p>{userProfile.phone}</p> : <p>No phone number provided.</p>}
-                                    </TooltipContent>
-                                </Tooltip>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Link href="/chats">
-                                            <Button variant="outline" size="icon">
-                                                <MessagesSquare className="h-5 w-5" />
-                                                <span className="sr-only">Chat</span>
-                                            </Button>
-                                        </Link>
-                                    </TooltipTrigger>
-                                    <TooltipContent><p>Start a chat</p></TooltipContent>
-                                </Tooltip>
+                                            )}
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            {userProfile.phone ? <p>{userProfile.phone}</p> : <p>No phone number provided.</p>}
+                                        </TooltipContent>
+                                    </Tooltip>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Link href="/chats">
+                                                <Button variant="outline" size="icon">
+                                                    <MessagesSquare className="h-5 w-5" />
+                                                    <span className="sr-only">Chat</span>
+                                                </Button>
+                                            </Link>
+                                        </TooltipTrigger>
+                                        <TooltipContent><p>Start a chat</p></TooltipContent>
+                                    </Tooltip>
+                                </div>
+
+                                <div className="flex flex-wrap items-center justify-center gap-2 pt-4">
+                                    {userProfile.role === 'admin' && (
+                                        <Button asChild variant="outline" className="rounded-full">
+                                            <Link href="/admin">
+                                                <LayoutDashboard className="mr-2 h-4 w-4" /> Admin Panel
+                                            </Link>
+                                        </Button>
+                                    )}
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div>
+                                                <Button variant="outline" className="rounded-full" disabled>
+                                                    <Shield className="mr-2 h-4 w-4" /> Privacy Policy
+                                                </Button>
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent><p>Coming soon!</p></TooltipContent>
+                                    </Tooltip>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div>
+                                                <Button variant="outline" className="rounded-full" disabled>
+                                                    <FileText className="mr-2 h-4 w-4" /> Terms & Conditions
+                                                </Button>
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent><p>Coming soon!</p></TooltipContent>
+                                    </Tooltip>
+                                </div>
                             </div>
 
                             <Badge variant="secondary" className="capitalize mt-6">{userProfile.role === 'admin' ? 'Admin' : userProfile.type}</Badge>
@@ -479,3 +487,5 @@ export default function ProfilePage() {
         </>
     );
 }
+
+    

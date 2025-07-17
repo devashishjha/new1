@@ -11,6 +11,7 @@ import { Loader2 } from 'lucide-react';
 import { Header } from '@/components/header';
 import { BottomNavBar } from '@/components/bottom-nav-bar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AdminUserManagement } from '@/components/admin-user-management';
 
 export default function AdminPage() {
     const { user, loading: authLoading } = useAuth();
@@ -76,7 +77,10 @@ export default function AdminPage() {
     return (
         <>
             <Header />
-            <AdminReviewClient />
+            <div className="container mx-auto py-24 px-4 pb-24 space-y-12">
+                <AdminReviewClient />
+                <AdminUserManagement />
+            </div>
             <BottomNavBar />
         </>
     );

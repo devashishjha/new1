@@ -35,8 +35,8 @@ const searchSchema = z.object({
     location: z.string().optional(),
     propertyType: z.string().optional(),
     configuration: z.string().optional(),
-    floorRange: z.array(z.number()).default([0, 50]),
-    totalFloorRange: z.array(z.number()).default([0, 50]),
+    floorNo: z.coerce.number().optional(),
+    totalFloors: z.coerce.number().optional(),
     housesOnSameFloor: z.coerce.number().optional(),
     mainDoorDirection: z.string().optional(),
     openSides: z.string().optional(),
@@ -108,8 +108,6 @@ export function SearchClient() {
 
     const lookingTo = form.watch('lookingTo');
     const priceRange = form.watch('priceRange');
-    const floorRange = form.watch('floorRange');
-    const totalFloorRange = form.watch('totalFloorRange');
 
     const MAX_PRICE_BUY = 50000000; // 5 Cr
     const MAX_PRICE_RENT = 300000; // 3 Lakh
@@ -126,8 +124,8 @@ export function SearchClient() {
                 const locationMatch = !filters.location || p.location.toLowerCase().includes(filters.location.toLowerCase());
                 const propertyTypeMatch = !filters.propertyType || p.propertyType === filters.propertyType;
                 const configMatch = !filters.configuration || p.configuration === filters.configuration;
-                const floorMatch = p.floorNo >= filters.floorRange[0] && p.floorNo <= filters.floorRange[1];
-                const totalFloorMatch = p.totalFloors >= filters.totalFloorRange[0] && p.totalFloors <= filters.totalFloorRange[1];
+                const floorMatch = filters.floorNo === undefined || p.floorNo === filters.floorNo;
+                const totalFloorMatch = filters.totalFloors === undefined || p.totalFloors === filters.totalFloors;
                 const housesOnFloorMatch = !filters.housesOnSameFloor || p.features.housesOnSameFloor === filters.housesOnSameFloor;
                 const directionMatch = !filters.mainDoorDirection || p.mainDoorDirection === filters.mainDoorDirection;
                 const openSidesMatch = !filters.openSides || p.openSides === filters.openSides;
@@ -208,6 +206,8 @@ export function SearchClient() {
         setDateSort(direction);
     };
 
+    const floorOptions = Array.from({ length: 51 }, (_, i) => i);
+
     if (isLoading || authLoading) {
         return (
              <div>
@@ -263,38 +263,16 @@ export function SearchClient() {
                                             </FormItem>
                                         )} />
                                         
-                                        <div className="grid md:grid-cols-2 gap-6">
-                                        <FormField control={form.control} name="floorRange" render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Floor Number</FormLabel>
-                                                <FormControl>
-                                                    <Slider min={0} max={50} step={1} value={field.value} onValueChange={field.onChange} className="pt-2" />
-                                                </FormControl>
-                                                <div className="flex justify-between text-sm text-muted-foreground pt-2">
-                                                    <span>{floorRange[0]}</span>
-                                                    <span>{totalFloorRange[1]}</span>
-                                                </div>
-                                            </FormItem>
-                                        )} />
-                                        <FormField control={form.control} name="totalFloorRange" render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Total Floors in Building</FormLabel>
-                                                <FormControl>
-                                                    <Slider min={0} max={50} step={1} value={field.value} onValueChange={field.onChange} className="pt-2" />
-                                                </FormControl>
-                                                <div className="flex justify-between text-sm text-muted-foreground pt-2">
-                                                    <span>{totalFloorRange[0]}</span>
-                                                    <span>{totalFloorRange[1]}</span>
-                                                </div>
-                                            </FormItem>
-                                        )} />
-                                        </div>
-
                                         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                                             <FormField control={form.control} name="propertyType" render={({ field }) => ( <FormItem><FormLabel>Property Type</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Any" /></SelectTrigger></FormControl><SelectContent>{propertyTypes.map(item => <SelectItem key={item} value={item} className="capitalize">{item}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )} />
                                             <FormField control={form.control} name="configuration" render={({ field }) => ( <FormItem><FormLabel>Configuration</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Any" /></SelectTrigger></FormControl><SelectContent>{configurations.map(item => <SelectItem key={item} value={item} className="capitalize">{item.toUpperCase()}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )} />
                                             <FormField control={form.control} name="mainDoorDirection" render={({ field }) => ( <FormItem><FormLabel>Main Door Direction</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Any" /></SelectTrigger></FormControl><SelectContent>{mainDoorDirections.map(item => <SelectItem key={item} value={item} className="capitalize">{item.replace('-', ' ')}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )} />
                                             <FormField control={form.control} name="openSides" render={({ field }) => ( <FormItem><FormLabel>Open Sides</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Any" /></SelectTrigger></FormControl><SelectContent>{openSides.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )} />
+                                        </div>
+
+                                        <div className="grid md:grid-cols-2 gap-6">
+                                            <FormField control={form.control} name="floorNo" render={({ field }) => ( <FormItem><FormLabel>Floor Number</FormLabel><Select onValueChange={(value) => field.onChange(value ? parseInt(value, 10) : undefined)} value={field.value !== undefined ? String(field.value) : ''}><FormControl><SelectTrigger><SelectValue placeholder="Any" /></SelectTrigger></FormControl><SelectContent>{floorOptions.map(n => <SelectItem key={`floor-${n}`} value={String(n)}>{n === 0 ? 'Ground' : n}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )}/>
+                                            <FormField control={form.control} name="totalFloors" render={({ field }) => ( <FormItem><FormLabel>Total Floors in Building</FormLabel><Select onValueChange={(value) => field.onChange(value ? parseInt(value, 10) : undefined)} value={field.value !== undefined ? String(field.value) : ''}><FormControl><SelectTrigger><SelectValue placeholder="Any" /></SelectTrigger></FormControl><SelectContent>{floorOptions.map(n => <SelectItem key={`total-floor-${n}`} value={String(n)}>{n}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )}/>
                                         </div>
                                         
                                         <div>

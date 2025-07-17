@@ -42,6 +42,7 @@ const searchSchema = z.object({
     housesOnSameFloor: z.coerce.number().optional(),
     mainDoorDirection: z.string().optional(),
     openSides: z.string().optional(),
+    sunlightPercentageRange: z.array(z.number()).default([0, 100]),
     kitchenUtility: z.boolean().optional(),
     hasBalcony: z.boolean().optional(),
     sunlightEntersHome: z.boolean().optional(),
@@ -128,6 +129,7 @@ export function SearchClient() {
 
     const lookingTo = form.watch('lookingTo');
     const priceRange = form.watch('priceRange');
+    const sunlightPercentageRange = form.watch('sunlightPercentageRange');
 
     const MAX_PRICE_BUY = 50000000;
     const MAX_PRICE_RENT = 300000;
@@ -150,6 +152,8 @@ export function SearchClient() {
                 const directionMatch = !filters.mainDoorDirection || p.mainDoorDirection === filters.mainDoorDirection;
                 const openSidesMatch = !filters.openSides || p.openSides === filters.openSides;
 
+                const sunlightMatchCheck = p.amenities.sunlightPercentage >= filters.sunlightPercentageRange[0] && p.amenities.sunlightPercentage <= filters.sunlightPercentageRange[1];
+
                 const kitchenMatch = filters.kitchenUtility === undefined || filters.kitchenUtility === null || p.kitchenUtility === filters.kitchenUtility;
                 const balconyMatch = filters.hasBalcony === undefined || filters.hasBalcony === null || p.hasBalcony === filters.hasBalcony;
                 const sunlightMatch = filters.sunlightEntersHome === undefined || filters.sunlightEntersHome === null || p.features.sunlightEntersHome === filters.sunlightEntersHome;
@@ -165,7 +169,7 @@ export function SearchClient() {
                 const waterMeterMatch = filters.hasWaterMeter === undefined || filters.hasWaterMeter === null || p.amenities.hasWaterMeter === filters.hasWaterMeter;
                 const gasMatch = filters.hasGasPipeline === undefined || filters.hasGasPipeline === null || p.amenities.hasGasPipeline === filters.hasGasPipeline;
 
-                return priceTypeMatch && priceRangeMatch && locationMatch && propertyTypeMatch && configMatch && floorMatch && totalFloorMatch && housesOnFloorMatch && directionMatch && openSidesMatch && kitchenMatch && balconyMatch && sunlightMatch && parking2WMatch && parking4WMatch && liftMatch && playAreaMatch && clinicMatch && playSchoolMatch && marketMatch && pharmacyMatch && clubhouseMatch && waterMeterMatch && gasMatch;
+                return priceTypeMatch && priceRangeMatch && locationMatch && propertyTypeMatch && configMatch && floorMatch && totalFloorMatch && housesOnFloorMatch && directionMatch && openSidesMatch && sunlightMatchCheck && kitchenMatch && balconyMatch && sunlightMatch && parking2WMatch && parking4WMatch && liftMatch && playAreaMatch && clinicMatch && playSchoolMatch && marketMatch && pharmacyMatch && clubhouseMatch && waterMeterMatch && gasMatch;
             });
 
         const getDate = (p: Property) => p.postedOn instanceof Date ? p.postedOn.getTime() : new Date(p.postedOn as string).getTime();
@@ -303,6 +307,17 @@ export function SearchClient() {
                                                 <div className="flex justify-between text-sm text-muted-foreground pt-2">
                                                     <span>{formatIndianCurrency(priceRange[0])}</span>
                                                     <span>{formatIndianCurrency(priceRange[1])}</span>
+                                                </div>
+                                            </FormItem>
+                                        )} />
+                                        
+                                        <FormField control={form.control} name="sunlightPercentageRange" render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Sunlight Percentage in Rooms</FormLabel>
+                                                <FormControl><Slider min={0} max={100} step={5} value={field.value} onValueChange={field.onChange} className="pt-2" /></FormControl>
+                                                <div className="flex justify-between text-sm text-muted-foreground pt-2">
+                                                    <span>{sunlightPercentageRange[0]}%</span>
+                                                    <span>{sunlightPercentageRange[1]}%</span>
                                                 </div>
                                             </FormItem>
                                         )} />

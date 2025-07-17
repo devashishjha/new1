@@ -129,7 +129,7 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
 
     const configuration = form.watch('configuration');
     const totalRooms = React.useMemo(() => getTotalRooms(configuration), [configuration]);
-    const sunlightRoomOptions = Array.from({ length: totalRooms + 1 }, (_, i) => i);
+    const sunlightRoomOptions = Array.from({ length: 11 }, (_, i) => i);
     
     React.useEffect(() => {
         const fetchUserProfile = async () => {
@@ -398,7 +398,7 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
                                         {sunlightRoomOptions.map(n => <SelectItem key={`sunlight-${n}`} value={String(n)}>{n}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
-                                <FormDescription>Total rooms based on config: {totalRooms}</FormDescription>
+                                <FormDescription>Based on a configuration of {totalRooms} rooms.</FormDescription>
                                 <FormMessage />
                             </FormItem>
                         )} />
@@ -453,5 +453,3 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
         </Form>
     );
 }
-
-    

@@ -108,7 +108,7 @@ export function PropertyDetailsSheet({ open, onOpenChange, property, variant = '
                         <DetailItem label="Super Built-up Area" value={`${property.area.superBuiltUp} sqft`} />
                         <DetailItem label="Carpet Area" value={`${property.area.carpet} sqft`} />
                         <DetailItem label="Sunlight Enters" value={property.features.sunlightEntersHome ? 'Yes' : 'No'} icon={Sun} />
-                        <DetailItem label="Sunlight %" value={`${property.amenities.sunlightPercentage}%`} />
+                        <DetailItem label="Sunlight %" value={`${property.amenities.sunlightPercentage}% of rooms`} />
                     </CardContent>
                 </Card>
                 
@@ -168,5 +168,3 @@ export function PropertyDetailsSheet({ open, onOpenChange, property, variant = '
     </Sheet>
   );
 }
-
-    

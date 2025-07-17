@@ -33,13 +33,13 @@ const searchSchema = z.object({
     lookingTo: z.enum(['rent', 'sale']).default('sale'),
     priceRange: z.array(z.number()).default([0, 50000000]),
     location: z.string().optional(),
-    propertyType: z.array(z.string()).default([]),
-    configuration: z.array(z.string()).default([]),
+    propertyType: z.string().optional(),
+    configuration: z.string().optional(),
     floorRange: z.array(z.number()).default([0, 50]),
     totalFloorRange: z.array(z.number()).default([0, 50]),
     housesOnSameFloor: z.coerce.number().optional(),
-    mainDoorDirection: z.array(z.string()).default([]),
-    openSides: z.array(z.string()).default([]),
+    mainDoorDirection: z.string().optional(),
+    openSides: z.string().optional(),
     kitchenUtility: z.boolean().optional(),
     hasBalcony: z.boolean().optional(),
     sunlightEntersHome: z.boolean().optional(),
@@ -124,13 +124,13 @@ export function SearchClient() {
                 const priceTypeMatch = filters.lookingTo === 'rent' ? p.price.type === 'rent' : p.price.type === 'sale';
                 const priceRangeMatch = p.price.amount >= filters.priceRange[0] && p.price.amount <= filters.priceRange[1];
                 const locationMatch = !filters.location || p.location.toLowerCase().includes(filters.location.toLowerCase());
-                const propertyTypeMatch = filters.propertyType.length === 0 || filters.propertyType.includes(p.propertyType);
-                const configMatch = filters.configuration.length === 0 || filters.configuration.includes(p.configuration);
+                const propertyTypeMatch = !filters.propertyType || p.propertyType === filters.propertyType;
+                const configMatch = !filters.configuration || p.configuration === filters.configuration;
                 const floorMatch = p.floorNo >= filters.floorRange[0] && p.floorNo <= filters.floorRange[1];
                 const totalFloorMatch = p.totalFloors >= filters.totalFloorRange[0] && p.totalFloors <= filters.totalFloorRange[1];
                 const housesOnFloorMatch = !filters.housesOnSameFloor || p.features.housesOnSameFloor === filters.housesOnSameFloor;
-                const directionMatch = filters.mainDoorDirection.length === 0 || filters.mainDoorDirection.includes(p.mainDoorDirection);
-                const openSidesMatch = filters.openSides.length === 0 || filters.openSides.includes(p.openSides);
+                const directionMatch = !filters.mainDoorDirection || p.mainDoorDirection === filters.mainDoorDirection;
+                const openSidesMatch = !filters.openSides || p.openSides === filters.openSides;
 
                 const kitchenMatch = filters.kitchenUtility === undefined || filters.kitchenUtility === null || p.kitchenUtility === filters.kitchenUtility;
                 const balconyMatch = filters.hasBalcony === undefined || filters.hasBalcony === null || p.hasBalcony === filters.hasBalcony;
@@ -182,39 +182,6 @@ export function SearchClient() {
         setPriceSort('none');
         setDateSort('desc');
     }
-    
-    const renderCheckboxGroup = (name: "propertyType" | "configuration" | "mainDoorDirection" | "openSides", items: readonly string[]) => (
-         <FormField
-            control={form.control}
-            name={name}
-            render={({ field }) => (
-                <FormItem>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        {items.map((item) => (
-                            <FormItem key={item} className="flex flex-row items-start space-x-3 space-y-0">
-                                <FormControl>
-                                    <Checkbox
-                                        checked={field.value?.includes(item)}
-                                        onCheckedChange={(checked) => {
-                                            return checked
-                                                ? field.onChange([...field.value, item])
-                                                : field.onChange(
-                                                    field.value?.filter(
-                                                        (value) => value !== item
-                                                    )
-                                                );
-                                        }}
-                                    />
-                                </FormControl>
-                                <FormLabel className="font-normal capitalize">{item.replace('-', ' ')}</FormLabel>
-                            </FormItem>
-                        ))}
-                    </div>
-                    <FormMessage />
-                </FormItem>
-            )}
-        />
-    );
     
     const amenities: { [K in keyof z.infer<typeof searchSchema>]?: string } = {
         kitchenUtility: 'Kitchen Utility',
@@ -323,22 +290,13 @@ export function SearchClient() {
                                         )} />
                                         </div>
 
-                                        <div>
-                                            <h3 className="mb-4 text-lg font-medium">Property Type</h3>
-                                            {renderCheckboxGroup('propertyType', propertyTypes)}
+                                        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                            <FormField control={form.control} name="propertyType" render={({ field }) => ( <FormItem><FormLabel>Property Type</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Any" /></SelectTrigger></FormControl><SelectContent><SelectItem value="">Any</SelectItem>{propertyTypes.map(item => <SelectItem key={item} value={item} className="capitalize">{item}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )} />
+                                            <FormField control={form.control} name="configuration" render={({ field }) => ( <FormItem><FormLabel>Configuration</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Any" /></SelectTrigger></FormControl><SelectContent><SelectItem value="">Any</SelectItem>{configurations.map(item => <SelectItem key={item} value={item} className="capitalize">{item.toUpperCase()}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )} />
+                                            <FormField control={form.control} name="mainDoorDirection" render={({ field }) => ( <FormItem><FormLabel>Main Door Direction</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Any" /></SelectTrigger></FormControl><SelectContent><SelectItem value="">Any</SelectItem>{mainDoorDirections.map(item => <SelectItem key={item} value={item} className="capitalize">{item.replace('-', ' ')}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )} />
+                                            <FormField control={form.control} name="openSides" render={({ field }) => ( <FormItem><FormLabel>Open Sides</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Any" /></SelectTrigger></FormControl><SelectContent><SelectItem value="">Any</SelectItem>{openSides.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )} />
                                         </div>
-                                        <div>
-                                            <h3 className="mb-4 text-lg font-medium">Configuration</h3>
-                                            {renderCheckboxGroup('configuration', configurations)}
-                                        </div>
-                                        <div>
-                                            <h3 className="mb-4 text-lg font-medium">Main Door Direction</h3>
-                                            {renderCheckboxGroup('mainDoorDirection', mainDoorDirections)}
-                                        </div>
-                                        <div>
-                                            <h3 className="mb-4 text-lg font-medium">Open Sides</h3>
-                                            {renderCheckboxGroup('openSides', openSides)}
-                                        </div>
+                                        
                                         <div>
                                             <h3 className="mb-4 text-lg font-medium">Features & Amenities</h3>
                                             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">

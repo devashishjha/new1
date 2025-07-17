@@ -4,7 +4,7 @@ import type { Property } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import Image from 'next/image';
 import { formatIndianCurrency } from '@/lib/utils';
-import { Info, Pencil, CheckCircle2, Trash2, Loader2, PlayCircle, PauseCircle, MoreVertical, MapPin, AlertCircle, IndianRupee } from 'lucide-react';
+import { Info, Pencil, CheckCircle2, Trash2, Loader2, PlayCircle, PauseCircle, MoreVertical, MapPin, AlertCircle, IndianRupee, AreaChart } from 'lucide-react';
 import { PropertyDetailsSheet } from './property-details-sheet';
 import { useState, useRef } from 'react';
 import { Button } from './ui/button';
@@ -222,6 +222,16 @@ export function ShortlistedPropertyCard({ property, onDelete, onUpdate }: {
                                         <Link href={`/map?address=${encodeURIComponent(property.location)}`} className="hover:underline">
                                            {property.location}
                                         </Link>
+                                    </PopoverContent>
+                                </Popover>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 hover:text-white h-8 w-8">
+                                            <AreaChart className="h-4 w-4" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto text-sm p-2">
+                                        Carpet Area: {property.area.carpet} sqft
                                     </PopoverContent>
                                 </Popover>
                             </div>

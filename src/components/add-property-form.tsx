@@ -13,7 +13,6 @@ import { Checkbox } from './ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 import { useToast } from '@/hooks/use-toast';
-import { Slider } from './ui/slider';
 import { useAuth } from '@/hooks/use-auth';
 import { db, storage } from '@/lib/firebase';
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
@@ -45,7 +44,7 @@ const propertySchema = z.object({
     kitchenUtility: z.boolean().default(false),
     hasBalcony: z.boolean().default(false),
     sunlightEntersHome: z.boolean().default(false),
-    sunlightPercentage: z.number().min(0).max(100).default(50),
+    roomsWithSunlight: z.coerce.number().int().min(0).optional(),
     has2WheelerParking: z.boolean().default(false),
     has4WheelerParking: z.boolean().default(false),
     superBuiltUpArea: z.coerce.number().min(1),
@@ -68,6 +67,18 @@ const propertySchema = z.object({
     moveInCharges: z.coerce.number().nonnegative(),
     brokerage: z.coerce.number().nonnegative().optional(),
 });
+
+const getTotalRooms = (config: z.infer<typeof propertySchema>['configuration']): number => {
+    switch (config) {
+        case 'studio': return 1;
+        case '1bhk': return 2; // 1 Bedroom + 1 Hall
+        case '2bhk': return 3; // 2 Bedrooms + 1 Hall
+        case '3bhk': return 4;
+        case '4bhk': return 5;
+        case '5bhk+': return 6; // Assumption for 5BHK+
+        default: return 1;
+    }
+};
 
 export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'edit', property?: Property }) {
     const { toast } = useToast();
@@ -95,7 +106,7 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
             kitchenUtility: false,
             hasBalcony: false,
             sunlightEntersHome: false,
-            sunlightPercentage: 50,
+            roomsWithSunlight: 0,
             has2WheelerParking: false,
             has4WheelerParking: false,
             superBuiltUpArea: 0,
@@ -115,6 +126,10 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
             brokerage: 0,
         },
     });
+
+    const configuration = form.watch('configuration');
+    const totalRooms = React.useMemo(() => getTotalRooms(configuration), [configuration]);
+    const sunlightRoomOptions = Array.from({ length: totalRooms + 1 }, (_, i) => i);
     
     React.useEffect(() => {
         const fetchUserProfile = async () => {
@@ -139,6 +154,9 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
 
     React.useEffect(() => {
         if (mode === 'edit' && property) {
+            const totalRoomsForProperty = getTotalRooms(property.configuration);
+            const sunlightRooms = Math.round((property.amenities.sunlightPercentage / 100) * totalRoomsForProperty);
+
             form.reset({
                 priceType: property.price.type,
                 priceAmount: property.price.amount,
@@ -153,7 +171,7 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
                 kitchenUtility: property.kitchenUtility,
                 hasBalcony: property.hasBalcony,
                 sunlightEntersHome: property.features.sunlightEntersHome,
-                sunlightPercentage: property.amenities.sunlightPercentage,
+                roomsWithSunlight: sunlightRooms,
                 has2WheelerParking: property.parking.has2Wheeler,
                 has4WheelerParking: property.parking.has4Wheeler,
                 superBuiltUpArea: property.area.superBuiltUp,
@@ -193,6 +211,11 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
             try {
                 const autoDescription = `A ${values.configuration} ${values.propertyType}, available for ${values.priceType}. Located at ${values.location}.`;
 
+                const totalRoomsCount = getTotalRooms(values.configuration);
+                const sunlightPercentage = totalRoomsCount > 0 
+                    ? Math.round(((values.roomsWithSunlight || 0) / totalRoomsCount) * 100) 
+                    : 0;
+
                 const propertyDataForFirestore = {
                     title: `${values.configuration.toUpperCase()} in ${values.location}`,
                     description: autoDescription,
@@ -217,7 +240,7 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
                         hasSuperMarket: values.hasSuperMarket,
                         hasPharmacy: values.hasPharmacy,
                         hasClubhouse: values.hasClubhouse,
-                        sunlightPercentage: values.sunlightPercentage,
+                        sunlightPercentage: sunlightPercentage,
                         hasWaterMeter: values.hasWaterMeter,
                         hasGasPipeline: values.hasGasPipeline,
                     },
@@ -231,7 +254,6 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
                 };
 
                 if (mode === 'edit' && property) {
-                    // Ensure db is not null before using it
                     if (!db) {
                         throw new Error("Firestore is not initialized.");
                     }
@@ -246,7 +268,6 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
                     });
                     router.push('/profile');
                 } else {
-                    // Ensure db is not null before using it
                     if (!db) {
                         throw new Error("Firestore is not initialized.");
                     }
@@ -352,7 +373,7 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
                 <Accordion type="multiple" className="w-full space-y-4" defaultValue={['item-1', 'item-5']}>
                     <AccordionItem value="item-1" asChild><Card><AccordionTrigger className="p-6"><h3 className="text-2xl font-semibold leading-none tracking-tight">Property Details</h3></AccordionTrigger><AccordionContent className="p-6 pt-0 grid md:grid-cols-2 gap-6">
                         <FormField control={form.control} name="propertyType" render={({ field }) => ( <FormItem><FormLabel>Property Type</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="apartment">Apartment</SelectItem><SelectItem value="villa">Villa</SelectItem><SelectItem value="row house">Row House</SelectItem><SelectItem value="penthouse">Penthouse</SelectItem><SelectItem value="independent house">Independent House</SelectItem><SelectItem value="builder floor">Builder Floor</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
-                        <FormField control={form.control} name="configuration" render={({ field }) => ( <FormItem><FormLabel>Configuration</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="studio">Studio</SelectItem><SelectItem value="1bhk">1BHK</SelectItem><SelectItem value="2bhk">2BHK</SelectItem><SelectItem value="3bhk">3BHK</SelectItem><SelectItem value="4bhk">4BHK</SelectItem><SelectItem value="5bhk+">5BHK+</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
+                        <FormField control={form.control} name="configuration" render={({ field }) => ( <FormItem><FormLabel>Configuration</FormLabel><Select onValueChange={(value) => { field.onChange(value); form.setValue('roomsWithSunlight', 0); }} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="studio">Studio</SelectItem><SelectItem value="1bhk">1BHK</SelectItem><SelectItem value="2bhk">2BHK</SelectItem><SelectItem value="3bhk">3BHK</SelectItem><SelectItem value="4bhk">4BHK</SelectItem><SelectItem value="5bhk+">5BHK+</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
                         <FormField control={form.control} name="floorNo" render={({ field }) => ( <FormItem><FormLabel>Floor Number</FormLabel><Select onValueChange={(value) => field.onChange(parseInt(value, 10))} value={String(field.value)}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>{floorOptions.map(n => <SelectItem key={n} value={String(n)}>{n === 0 ? 'Ground' : n}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )}/>
                         <FormField control={form.control} name="totalFloors" render={({ field }) => ( <FormItem><FormLabel>Total Floors in Building</FormLabel><Select onValueChange={(value) => field.onChange(parseInt(value, 10))} value={String(field.value)}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>{floorOptions.map(n => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )}/>
                         <FormField control={form.control} name="mainDoorDirection" render={({ field }) => ( <FormItem><FormLabel>Main Door Direction</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent> {['north-east', 'north-west', 'south-east', 'south-west'].map(d => <SelectItem key={d} value={d} className='capitalize'>{d.replace('-', ' ')}</SelectItem>)} </SelectContent></Select><FormMessage /></FormItem> )}/>
@@ -368,7 +389,19 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
                         {renderCheckboxField('has4WheelerParking', '4-Wheeler Parking')}
                         <FormField control={form.control} name="superBuiltUpArea" render={({ field }) => ( <FormItem><FormLabel>Super Built-up Area (sqft)</FormLabel><FormControl><Input type="number" placeholder="1200" {...field} /></FormControl><FormMessage /></FormItem> )}/>
                         <FormField control={form.control} name="carpetArea" render={({ field }) => ( <FormItem><FormLabel>Carpet Area (sqft)</FormLabel><FormControl><Input type="number" placeholder="950" {...field} /></FormControl><FormMessage /></FormItem> )}/>
-                        <FormField control={form.control} name="sunlightPercentage" render={({ field }) => (<FormItem><FormLabel>Sunlight Percentage ({field.value}%)</FormLabel><FormControl><Slider min={0} max={100} step={5} value={[field.value]} onValueChange={(value) => field.onChange(value[0])}/></FormControl></FormItem>)} />
+                        <FormField control={form.control} name="roomsWithSunlight" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Rooms with Sunlight</FormLabel>
+                                <Select onValueChange={(value) => field.onChange(parseInt(value, 10))} value={String(field.value || 0)}>
+                                    <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                    <SelectContent>
+                                        {sunlightRoomOptions.map(n => <SelectItem key={`sunlight-${n}`} value={String(n)}>{n}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                                <FormDescription>Total rooms based on config: {totalRooms}</FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
                     </AccordionContent></Card></AccordionItem>
 
                      <AccordionItem value="item-3" asChild><Card><AccordionTrigger className="p-6"><h3 className="text-2xl font-semibold leading-none tracking-tight">Amenities</h3></AccordionTrigger><AccordionContent className="p-6 pt-0 grid md:grid-cols-2 gap-x-6 gap-y-4">
@@ -420,3 +453,5 @@ export function AddPropertyForm({ mode = 'add', property }: { mode?: 'add' | 'ed
         </Form>
     );
 }
+
+    

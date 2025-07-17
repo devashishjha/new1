@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import type { Property, UserProfile, SeekerProfile } from '@/lib/types';
+import type { Property, UserProfile, SeekerProfile, SearchHistoryItem } from '@/lib/types';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -17,7 +17,7 @@ import { Slider } from '@/components/ui/slider';
 import { cn, formatIndianCurrency, dateToJSON } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { collection, onSnapshot, query, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/use-auth';
 import { LocationAutocomplete } from './location-autocomplete';
@@ -71,7 +71,7 @@ const CardSkeleton = () => (
 export function SearchClient() {
     const { user, loading: authLoading } = useAuth();
     const [properties, setProperties] = useState<Property[]>([]);
-    const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+    const [userProfile, setUserProfile] = useState<SeekerProfile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isUpdatingHistory, setIsUpdatingHistory] = useState(false);
     const [filters, setFilters] = useState<z.infer<typeof searchSchema>>(defaultValues);
@@ -115,8 +115,8 @@ export function SearchClient() {
             if (user && db) {
                 const userDocRef = doc(db, 'users', user.uid);
                 const docSnap = await getDoc(userDocRef);
-                if (docSnap.exists()) {
-                    setUserProfile(docSnap.data() as UserProfile);
+                if (docSnap.exists() && docSnap.data().type === 'seeker') {
+                    setUserProfile(docSnap.data() as SeekerProfile);
                 }
             } else {
                 setUserProfile(null);
@@ -187,7 +187,8 @@ export function SearchClient() {
     }, [properties, filters, priceSort, dateSort]);
 
     async function onSubmit(values: z.infer<typeof searchSchema>) {
-        setFilters(searchSchema.parse(values));
+        const parsedValues = searchSchema.parse(values);
+        setFilters(parsedValues);
         
         if (user && db && userProfile?.type === 'seeker') {
             const searchParts = [
@@ -201,9 +202,13 @@ export function SearchClient() {
             if (searchParts.length > `Looking to ${values.lookingTo}, up to ${formatIndianCurrency(values.priceRange[1])}`.length) {
                 const userDocRef = doc(db, 'users', user.uid);
                 try {
-                    const newHistory = [searchParts, ...(userProfile.searchHistory || [])].slice(0, 5);
+                    const newHistoryItem: SearchHistoryItem = {
+                        display: searchParts,
+                        filters: parsedValues
+                    };
+                    const newHistory = [newHistoryItem, ...(userProfile.searchHistory || [])].slice(0, 5);
                     await updateDoc(userDocRef, { searchHistory: newHistory });
-                    setUserProfile(prev => prev ? ({ ...prev, searchHistory: newHistory } as SeekerProfile) : null);
+                    setUserProfile(prev => prev ? ({ ...prev, searchHistory: newHistory }) : null);
                 } catch (error) {
                     console.error("Error updating search history:", error);
                 }
@@ -224,7 +229,7 @@ export function SearchClient() {
             const userDocRef = doc(db, 'users', user.uid);
             try {
                 await updateDoc(userDocRef, { searchHistory: [] });
-                setUserProfile(prev => prev ? ({ ...prev, searchHistory: [] } as SeekerProfile) : null);
+                setUserProfile(prev => prev ? ({ ...prev, searchHistory: [] }) : null);
                 toast({ title: "Search history cleared." });
             } catch (error) {
                 console.error("Error clearing search history:", error);
@@ -235,6 +240,14 @@ export function SearchClient() {
         }
     }
     
+    const handleHistoryClick = (item: SearchHistoryItem) => {
+        // Zod parse is important here to ensure default values are applied
+        // for any fields that might be missing from the saved filter object.
+        const filtersToApply = searchSchema.parse(item.filters);
+        form.reset(filtersToApply);
+        onSubmit(filtersToApply);
+    };
+
     const amenities: { [K in keyof z.infer<typeof searchSchema>]?: string } = {
         kitchenUtility: 'Kitchen Utility', hasBalcony: 'Balcony', sunlightEntersHome: 'Sunlight',
         has2WheelerParking: '2-Wheeler Parking', has4WheelerParking: '4-Wheeler Parking', hasLift: 'Lift',
@@ -337,7 +350,7 @@ export function SearchClient() {
                 </form>
             </Form>
 
-            {userProfile?.type === 'seeker' && userProfile.searchHistory && userProfile.searchHistory.length > 0 && (
+            {userProfile?.searchHistory && userProfile.searchHistory.length > 0 && (
                 <Card className="mt-8">
                     <CardHeader className='flex-row items-center justify-between'>
                         <CardTitle className="flex items-center gap-2"><History className="w-5 h-5" /> Recent Searches</CardTitle>
@@ -348,8 +361,15 @@ export function SearchClient() {
                     </CardHeader>
                     <CardContent>
                         <div className="flex flex-wrap gap-2">
-                            {userProfile.searchHistory.map((search, index) => (
-                                <Badge key={index} variant="secondary" className="text-sm py-1 px-3">{search}</Badge>
+                            {userProfile.searchHistory.map((item, index) => (
+                                <Badge 
+                                    key={index} 
+                                    variant="secondary" 
+                                    className="text-sm py-1 px-3 cursor-pointer hover:bg-primary/20"
+                                    onClick={() => handleHistoryClick(item)}
+                                >
+                                    {item.display}
+                                </Badge>
                             ))}
                         </div>
                     </CardContent>

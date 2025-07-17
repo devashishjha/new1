@@ -1,4 +1,5 @@
 
+
 import type { Timestamp } from "firebase/firestore";
 
 export type Property = {
@@ -81,10 +82,15 @@ type BaseProfile = {
   role?: 'admin';
 };
 
+export type SearchHistoryItem = {
+    display: string;
+    filters: object; // Storing the raw filter object from search-client.tsx
+}
+
 export type SeekerProfile = BaseProfile & {
   type: 'seeker';
   searchCriteria: string;
-  searchHistory: string[];
+  searchHistory?: SearchHistoryItem[];
 };
 
 export type OwnerProfile = BaseProfile & {

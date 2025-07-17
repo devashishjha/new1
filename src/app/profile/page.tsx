@@ -19,11 +19,11 @@ import type { UserProfile, Property } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
-import { ProfilePropertyRow } from '@/components/profile-property-row';
 import { dateToJSON, cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { PresenceDot } from '@/components/presence-dot';
+import { ShortlistedPropertyCard } from '@/components/shortlisted-property-card';
 
 
 export default function ProfilePage() {
@@ -357,9 +357,9 @@ export default function ProfilePage() {
                                         </div>
                                     ) : userProperties.length > 0 ? (
                                         filteredProperties.length > 0 ? (
-                                            <div className="space-y-4">
+                                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                                 {filteredProperties.map(property => (
-                                                    <ProfilePropertyRow
+                                                    <ShortlistedPropertyCard
                                                         key={property.id}
                                                         property={property}
                                                         onDelete={handleDeleteProperty}

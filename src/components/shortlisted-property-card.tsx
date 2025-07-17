@@ -1,6 +1,6 @@
 'use client';
 import type { Property } from '@/lib/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import Image from 'next/image';
 import { formatIndianCurrency } from '@/lib/utils';
 import { Info, Pencil, CheckCircle2, Trash2, Loader2, PlayCircle, PauseCircle, MoreVertical, MapPin, AlertCircle } from 'lucide-react';
@@ -134,7 +134,7 @@ export function ShortlistedPropertyCard({ property, onDelete, onUpdate }: {
              return <Badge variant="default" className="absolute top-2 left-2 z-20 bg-yellow-500 text-black"><AlertCircle className="w-4 h-4 mr-1" />Pending Review</Badge>;
         }
         if (property.status === 'occupied') {
-             return <Badge variant="destructive" className="absolute top-2 left-2 z-20">{property.price.type === 'rent' ? 'Rented Out' : 'Sold Out'}</Badge>;
+             return <Badge variant="destructive" className="absolute top-2 left-2 z-20">Sold</Badge>;
         }
         if (property.status === 'on-hold') {
             return <Badge variant="secondary" className="absolute top-2 left-2 z-20 bg-accent text-accent-foreground">On Hold</Badge>;
@@ -160,7 +160,7 @@ export function ShortlistedPropertyCard({ property, onDelete, onUpdate }: {
         <>
             <Card className="overflow-hidden group relative">
                 <div 
-                    className="aspect-square w-full relative overflow-hidden rounded-t-lg"
+                    className="aspect-square w-full relative overflow-hidden rounded-lg"
                     onMouseEnter={handleMouseEnter}
                     onMouseLeave={handleMouseLeave}
                 >
@@ -190,87 +190,88 @@ export function ShortlistedPropertyCard({ property, onDelete, onUpdate }: {
                         />
                     )}
                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none" />
+
+                     <CardContent className="absolute bottom-0 left-0 right-0 p-4 bg-transparent text-white">
+                        <div className="space-y-2">
+                             <div>
+                                <p className="text-sm capitalize">For {property.price.type}</p>
+                                <p className="text-xl font-bold text-white -mt-0.5">{priceDisplay}</p>
+                            </div>
+                            <div>
+                                <h3 className="font-semibold leading-tight truncate" title={property.title}>
+                                    {property.title}
+                                </h3>
+                                <p className="text-sm opacity-80 truncate flex items-center gap-1.5" title={property.location}>
+                                    <MapPin className='w-4 h-4' /> 
+                                    {property.location}
+                                </p>
+                            </div>
+                        </div>
+
+                         <div className="w-full flex justify-between items-center pt-4 mt-4 border-t border-white/20">
+                            <Button variant="ghost" size="sm" onClick={() => setIsDetailsOpen(true)} className="text-white hover:bg-white/10 hover:text-white">
+                                <Info className="mr-2 h-4 w-4" />
+                                Details
+                            </Button>
+                            {isLister && (
+                                 <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" disabled={isUpdating} className="h-8 w-8 text-white hover:bg-white/10 hover:text-white">
+                                            {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreVertical className="h-4 w-4" />}
+                                            <span className="sr-only">Manage Property</span>
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-56">
+                                        <DropdownMenuItem onClick={() => handleStatusChange('available')} disabled={isUpdating || property.status === 'available' || property.status === 'pending-review'}>
+                                            <PlayCircle className="mr-2 h-4 w-4" /> Make Live
+                                        </DropdownMenuItem>
+                                         <DropdownMenuItem onClick={() => handleStatusChange('occupied')} disabled={isUpdating || property.status === 'occupied'}>
+                                            <CheckCircle2 className="mr-2 h-4 w-4" />Mark as Sold
+                                        </DropdownMenuItem>
+                                         <DropdownMenuItem onClick={() => handleStatusChange('on-hold')} disabled={isUpdating || property.status === 'on-hold'}>
+                                            <PauseCircle className="mr-2 h-4 w-4" /> Put on Hold
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem asChild>
+                                            <Link href={`/edit-property/${property.id}`}>
+                                                <Pencil className="mr-2 h-4 w-4" />
+                                                Edit Property
+                                            </Link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                                            <AlertDialogTrigger asChild>
+                                                <DropdownMenuItem
+                                                    onSelect={(e) => e.preventDefault()}
+                                                    className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                                                >
+                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                    Delete Property
+                                                </DropdownMenuItem>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This action cannot be undone. This will permanently delete your property listing.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={handleDeleteConfirm} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
+                                                        {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                                        Delete
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            )}
+                        </div>
+                    </CardContent>
                 </div>
                 
-                <CardContent className="p-4 bg-card">
-                    <div className="space-y-2">
-                         <div>
-                            <p className="text-sm capitalize text-muted-foreground">For {property.price.type}</p>
-                            <p className="text-xl font-bold text-primary -mt-0.5">{priceDisplay}</p>
-                        </div>
-                        <div>
-                            <h3 className="font-semibold leading-tight truncate text-card-foreground" title={property.title}>
-                                {property.title}
-                            </h3>
-                            <p className="text-sm text-muted-foreground truncate flex items-center gap-1.5" title={property.location}>
-                                <MapPin className='w-4 h-4' /> 
-                                {property.location}
-                            </p>
-                        </div>
-                    </div>
-
-                     <div className="w-full flex justify-between items-center pt-4 mt-4 border-t border-border">
-                        <Button variant="ghost" size="sm" onClick={() => setIsDetailsOpen(true)}>
-                            <Info className="mr-2 h-4 w-4" />
-                            Details
-                        </Button>
-                        {isLister && (
-                             <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" disabled={isUpdating} className="h-8 w-8">
-                                        {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreVertical className="h-4 w-4" />}
-                                        <span className="sr-only">Manage Property</span>
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-56">
-                                    <DropdownMenuItem onClick={() => handleStatusChange('available')} disabled={isUpdating || property.status === 'available' || property.status === 'pending-review'}>
-                                        <PlayCircle className="mr-2 h-4 w-4" /> Make Live
-                                    </DropdownMenuItem>
-                                     <DropdownMenuItem onClick={() => handleStatusChange('occupied')} disabled={isUpdating || property.status === 'occupied'}>
-                                        <CheckCircle2 className="mr-2 h-4 w-4" />Mark as Sold
-                                    </DropdownMenuItem>
-                                     <DropdownMenuItem onClick={() => handleStatusChange('on-hold')} disabled={isUpdating || property.status === 'on-hold'}>
-                                        <PauseCircle className="mr-2 h-4 w-4" /> Put on Hold
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem asChild>
-                                        <Link href={`/edit-property/${property.id}`}>
-                                            <Pencil className="mr-2 h-4 w-4" />
-                                            Edit Property
-                                        </Link>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                                        <AlertDialogTrigger asChild>
-                                            <DropdownMenuItem
-                                                onSelect={(e) => e.preventDefault()}
-                                                className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                                            >
-                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                Delete Property
-                                            </DropdownMenuItem>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                    This action cannot be undone. This will permanently delete your property listing.
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={handleDeleteConfirm} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
-                                                    {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                                    Delete
-                                                </AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        )}
-                    </div>
-                </CardContent>
             </Card>
             <PropertyDetailsSheet open={isDetailsOpen} onOpenChange={setIsDetailsOpen} property={property} />
         </>

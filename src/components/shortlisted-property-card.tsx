@@ -1,9 +1,10 @@
+
 'use client';
 import type { Property } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import Image from 'next/image';
 import { formatIndianCurrency } from '@/lib/utils';
-import { Info, Pencil, CheckCircle2, Trash2, Loader2, PlayCircle, PauseCircle, MoreVertical, MapPin, AlertCircle } from 'lucide-react';
+import { Info, Pencil, CheckCircle2, Trash2, Loader2, PlayCircle, PauseCircle, MoreVertical, MapPin, AlertCircle, IndianRupee } from 'lucide-react';
 import { PropertyDetailsSheet } from './property-details-sheet';
 import { useState, useRef } from 'react';
 import { Button } from './ui/button';
@@ -16,6 +17,7 @@ import { Badge } from './ui/badge';
 import { db, storage } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { ref, deleteObject } from 'firebase/storage';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 
 export function ShortlistedPropertyCard({ property, onDelete, onUpdate }: { 
@@ -36,7 +38,7 @@ export function ShortlistedPropertyCard({ property, onDelete, onUpdate }: {
 
     const priceDisplay = property.price.type === 'rent'
         ? `₹ ${property.price.amount.toLocaleString('en-IN')}/mo`
-        : formatIndianCurrency(property.price.amount);
+        : `₹ ${property.price.amount.toLocaleString('en-IN')}`;
         
     const handleStatusChange = async (newStatus: 'available' | 'occupied' | 'on-hold') => {
         if (!user) {
@@ -192,27 +194,37 @@ export function ShortlistedPropertyCard({ property, onDelete, onUpdate }: {
                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none" />
 
                      <CardContent className="absolute bottom-0 left-0 right-0 p-4 bg-transparent text-white">
-                        <div className="space-y-2">
-                             <div>
-                                <p className="text-sm capitalize">For {property.price.type}</p>
-                                <p className="text-xl font-bold text-white -mt-0.5">{priceDisplay}</p>
+                        <h3 className="font-semibold leading-tight truncate text-lg" title={property.title}>
+                            {property.title}
+                        </h3>
+                         <div className="w-full flex justify-between items-center pt-2 mt-2 border-t border-white/20">
+                            <div className="flex items-center gap-2">
+                                <Button variant="ghost" size="icon" onClick={() => setIsDetailsOpen(true)} className="text-white hover:bg-white/10 hover:text-white h-8 w-8">
+                                    <Info className="h-4 w-4" />
+                                </Button>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 hover:text-white h-8 w-8">
+                                            <IndianRupee className="h-4 w-4" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto text-sm p-2">
+                                        {priceDisplay}
+                                    </PopoverContent>
+                                </Popover>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 hover:text-white h-8 w-8">
+                                            <MapPin className="h-4 w-4" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-60 text-sm p-2">
+                                        <Link href={`/map?address=${encodeURIComponent(property.location)}`} className="hover:underline">
+                                           {property.location}
+                                        </Link>
+                                    </PopoverContent>
+                                </Popover>
                             </div>
-                            <div>
-                                <h3 className="font-semibold leading-tight truncate" title={property.title}>
-                                    {property.title}
-                                </h3>
-                                <p className="text-sm opacity-80 truncate flex items-center gap-1.5" title={property.location}>
-                                    <MapPin className='w-4 h-4' /> 
-                                    {property.location}
-                                </p>
-                            </div>
-                        </div>
-
-                         <div className="w-full flex justify-between items-center pt-4 mt-4 border-t border-white/20">
-                            <Button variant="ghost" size="sm" onClick={() => setIsDetailsOpen(true)} className="text-white hover:bg-white/10 hover:text-white">
-                                <Info className="mr-2 h-4 w-4" />
-                                Details
-                            </Button>
                             {isLister && (
                                  <DropdownMenu>
                                     <DropdownMenuTrigger asChild>

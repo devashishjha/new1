@@ -19,7 +19,7 @@ import type { UserProfile, Property } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
-import { ShortlistedPropertyCard } from '@/components/shortlisted-property-card';
+import { ProfilePropertyRow } from '@/components/profile-property-row';
 import { dateToJSON, cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -153,7 +153,7 @@ export default function ProfilePage() {
              <>
                 <Header />
                 <main className="container mx-auto py-24 px-4 pb-24">
-                    <div className="max-w-2xl mx-auto space-y-8">
+                    <div className="max-w-4xl mx-auto space-y-8">
                         <div className="flex flex-col items-center text-center mb-12">
                             <Skeleton className="h-32 w-32 rounded-full mb-4" />
                             <Skeleton className="h-10 w-48 mb-2" />
@@ -172,7 +172,7 @@ export default function ProfilePage() {
             <>
                 <Header />
                  <main className="container mx-auto py-24 px-4 pb-24">
-                    <div className="max-w-2xl mx-auto text-center">
+                    <div className="max-w-4xl mx-auto text-center">
                         <Card>
                             <CardHeader>
                                 <CardTitle>Error Loading Profile</CardTitle>
@@ -194,7 +194,7 @@ export default function ProfilePage() {
             <Header />
             <TooltipProvider>
                 <main className="container mx-auto py-24 px-4 pb-24">
-                    <div className="max-w-2xl mx-auto relative">
+                    <div className="max-w-4xl mx-auto relative">
 
                         <div className="absolute top-0 right-0 z-50">
                             <DropdownMenu>
@@ -357,9 +357,9 @@ export default function ProfilePage() {
                                         </div>
                                     ) : userProperties.length > 0 ? (
                                         filteredProperties.length > 0 ? (
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-4">
                                                 {filteredProperties.map(property => (
-                                                    <ShortlistedPropertyCard
+                                                    <ProfilePropertyRow
                                                         key={property.id}
                                                         property={property}
                                                         onDelete={handleDeleteProperty}

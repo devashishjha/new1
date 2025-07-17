@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import type { Property } from '@/lib/types';
+import type { Property, UserProfile, SeekerProfile } from '@/lib/types';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -17,10 +17,12 @@ import { Slider } from '@/components/ui/slider';
 import { cn, formatIndianCurrency, dateToJSON } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query } from 'firebase/firestore';
+import { collection, onSnapshot, query, doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/use-auth';
 import { LocationAutocomplete } from './location-autocomplete';
+import { History, Loader2, Trash2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 type SortDirection = 'asc' | 'desc';
 
@@ -69,10 +71,13 @@ const CardSkeleton = () => (
 export function SearchClient() {
     const { user, loading: authLoading } = useAuth();
     const [properties, setProperties] = useState<Property[]>([]);
+    const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isUpdatingHistory, setIsUpdatingHistory] = useState(false);
     const [filters, setFilters] = useState<z.infer<typeof searchSchema>>(defaultValues);
     const [priceSort, setPriceSort] = useState<'asc' | 'desc' | 'none'>('none');
-    const [dateSort, setDateSort] = useState<'asc' | 'desc'>('desc');
+    const [dateSort, setDateSort] = useState<'desc' | 'asc'>('desc');
+    const { toast } = useToast();
 
     const form = useForm<z.infer<typeof searchSchema>>({
         resolver: zodResolver(searchSchema),
@@ -80,7 +85,7 @@ export function SearchClient() {
     });
     
     useEffect(() => {
-        if (authLoading) return; // Wait for auth to resolve
+        if (authLoading) return;
         
         setIsLoading(true);
         if (!db) {
@@ -105,12 +110,27 @@ export function SearchClient() {
         return () => unsubscribe();
     }, [authLoading]);
 
+    useEffect(() => {
+        const fetchUserProfile = async () => {
+            if (user && db) {
+                const userDocRef = doc(db, 'users', user.uid);
+                const docSnap = await getDoc(userDocRef);
+                if (docSnap.exists()) {
+                    setUserProfile(docSnap.data() as UserProfile);
+                }
+            } else {
+                setUserProfile(null);
+            }
+        };
+        fetchUserProfile();
+    }, [user]);
+
 
     const lookingTo = form.watch('lookingTo');
     const priceRange = form.watch('priceRange');
 
-    const MAX_PRICE_BUY = 50000000; // 5 Cr
-    const MAX_PRICE_RENT = 300000; // 3 Lakh
+    const MAX_PRICE_BUY = 50000000;
+    const MAX_PRICE_RENT = 300000;
     const currentMaxPrice = lookingTo === 'rent' ? MAX_PRICE_RENT : MAX_PRICE_BUY;
     const priceStep = lookingTo === 'rent' ? 5000 : 100000;
 
@@ -151,17 +171,13 @@ export function SearchClient() {
         const getDate = (p: Property) => p.postedOn instanceof Date ? p.postedOn.getTime() : new Date(p.postedOn as string).getTime();
 
         filtered.sort((a, b) => {
-            // Primary Sort: Price
             if (priceSort !== 'none') {
                 const priceA = a.price.amount;
                 const priceB = b.price.amount;
                 const priceDiff = priceSort === 'asc' ? priceA - priceB : priceB - a.price.amount;
-                if (priceDiff !== 0) {
-                    return priceDiff;
-                }
+                if (priceDiff !== 0) return priceDiff;
             }
             
-            // Secondary Sort: Date (as tie-breaker or primary sort)
             const dateA = getDate(a);
             const dateB = getDate(b);
             return dateSort === 'asc' ? dateA - dateB : dateB - dateA;
@@ -170,8 +186,29 @@ export function SearchClient() {
         return filtered;
     }, [properties, filters, priceSort, dateSort]);
 
-    function onSubmit(values: z.infer<typeof searchSchema>) {
+    async function onSubmit(values: z.infer<typeof searchSchema>) {
         setFilters(searchSchema.parse(values));
+        
+        if (user && db && userProfile?.type === 'seeker') {
+            const searchParts = [
+                `Looking to ${values.lookingTo}`,
+                values.location ? `in ${values.location}` : '',
+                values.configuration ? `${values.configuration.toUpperCase()}` : '',
+                values.propertyType ? `${values.propertyType}` : '',
+                `up to ${formatIndianCurrency(values.priceRange[1])}`
+            ].filter(Boolean).join(', ');
+
+            if (searchParts.length > `Looking to ${values.lookingTo}, up to ${formatIndianCurrency(values.priceRange[1])}`.length) {
+                const userDocRef = doc(db, 'users', user.uid);
+                try {
+                    const newHistory = [searchParts, ...(userProfile.searchHistory || [])].slice(0, 5);
+                    await updateDoc(userDocRef, { searchHistory: newHistory });
+                    setUserProfile(prev => prev ? ({ ...prev, searchHistory: newHistory } as SeekerProfile) : null);
+                } catch (error) {
+                    console.error("Error updating search history:", error);
+                }
+            }
+        }
     }
 
     function handleReset() {
@@ -180,31 +217,34 @@ export function SearchClient() {
         setPriceSort('none');
         setDateSort('desc');
     }
+
+    const handleClearHistory = async () => {
+        if (user && db) {
+            setIsUpdatingHistory(true);
+            const userDocRef = doc(db, 'users', user.uid);
+            try {
+                await updateDoc(userDocRef, { searchHistory: [] });
+                setUserProfile(prev => prev ? ({ ...prev, searchHistory: [] } as SeekerProfile) : null);
+                toast({ title: "Search history cleared." });
+            } catch (error) {
+                console.error("Error clearing search history:", error);
+                toast({ variant: 'destructive', title: "Error", description: "Could not clear history." });
+            } finally {
+                setIsUpdatingHistory(false);
+            }
+        }
+    }
     
     const amenities: { [K in keyof z.infer<typeof searchSchema>]?: string } = {
-        kitchenUtility: 'Kitchen Utility',
-        hasBalcony: 'Balcony',
-        sunlightEntersHome: 'Sunlight',
-        has2WheelerParking: '2-Wheeler Parking',
-        has4WheelerParking: '4-Wheeler Parking',
-        hasLift: 'Lift',
-        hasChildrenPlayArea: "Play Area",
-        hasDoctorClinic: "Doctor's Clinic",
-        hasPlaySchool: 'Play School',
-        hasSuperMarket: 'Super Market',
-        hasPharmacy: 'Pharmacy',
-        hasClubhouse: 'Clubhouse',
-        hasWaterMeter: 'Water Meter',
-        hasGasPipeline: 'Gas Pipeline',
+        kitchenUtility: 'Kitchen Utility', hasBalcony: 'Balcony', sunlightEntersHome: 'Sunlight',
+        has2WheelerParking: '2-Wheeler Parking', has4WheelerParking: '4-Wheeler Parking', hasLift: 'Lift',
+        hasChildrenPlayArea: "Play Area", hasDoctorClinic: "Doctor's Clinic", hasPlaySchool: 'Play School',
+        hasSuperMarket: 'Super Market', hasPharmacy: 'Pharmacy', hasClubhouse: 'Clubhouse',
+        hasWaterMeter: 'Water Meter', hasGasPipeline: 'Gas Pipeline',
     };
 
-    const handlePriceSort = (direction: SortDirection) => {
-        setPriceSort(priceSort === direction ? 'none' : direction);
-    };
-
-    const handleDateSort = (direction: SortDirection) => {
-        setDateSort(direction);
-    };
+    const handlePriceSort = (direction: SortDirection) => setPriceSort(priceSort === direction ? 'none' : direction);
+    const handleDateSort = (direction: SortDirection) => setDateSort(direction);
 
     const floorOptions = Array.from({ length: 51 }, (_, i) => i);
 
@@ -246,16 +286,7 @@ export function SearchClient() {
                                         <FormField control={form.control} name="priceRange" render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Budget</FormLabel>
-                                                <FormControl>
-                                                    <Slider
-                                                        min={0}
-                                                        max={currentMaxPrice}
-                                                        step={priceStep}
-                                                        value={field.value}
-                                                        onValueChange={field.onChange}
-                                                        className="pt-2"
-                                                    />
-                                                </FormControl>
+                                                <FormControl><Slider min={0} max={currentMaxPrice} step={priceStep} value={field.value} onValueChange={field.onChange} className="pt-2" /></FormControl>
                                                 <div className="flex justify-between text-sm text-muted-foreground pt-2">
                                                     <span>{formatIndianCurrency(priceRange[0])}</span>
                                                     <span>{formatIndianCurrency(priceRange[1])}</span>
@@ -282,18 +313,10 @@ export function SearchClient() {
                                                     if (!label) return null;
                                                     const name = key as keyof z.infer<typeof searchSchema>;
                                                     return (
-                                                        <FormField
-                                                            key={name}
-                                                            control={form.control}
-                                                            name={name}
+                                                        <FormField key={name} control={form.control} name={name}
                                                             render={({ field }) => (
                                                                 <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                                                                    <FormControl>
-                                                                        <Checkbox
-                                                                            checked={!!field.value}
-                                                                            onCheckedChange={field.onChange}
-                                                                        />
-                                                                    </FormControl>
+                                                                    <FormControl><Checkbox checked={!!field.value} onCheckedChange={field.onChange} /></FormControl>
                                                                     <FormLabel className="font-normal">{label}</FormLabel>
                                                                 </FormItem>
                                                             )}
@@ -313,6 +336,25 @@ export function SearchClient() {
                     </div>
                 </form>
             </Form>
+
+            {userProfile?.type === 'seeker' && userProfile.searchHistory && userProfile.searchHistory.length > 0 && (
+                <Card className="mt-8">
+                    <CardHeader className='flex-row items-center justify-between'>
+                        <CardTitle className="flex items-center gap-2"><History className="w-5 h-5" /> Recent Searches</CardTitle>
+                        <Button variant="ghost" size="sm" onClick={handleClearHistory} disabled={isUpdatingHistory}>
+                            {isUpdatingHistory ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Trash2 className="w-4 h-4 mr-2" />}
+                            Clear History
+                        </Button>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex flex-wrap gap-2">
+                            {userProfile.searchHistory.map((search, index) => (
+                                <Badge key={index} variant="secondary" className="text-sm py-1 px-3">{search}</Badge>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             <div className="flex flex-col sm:flex-row gap-6 my-8">
                 <div className="flex items-center gap-3">

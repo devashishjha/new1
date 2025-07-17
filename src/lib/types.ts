@@ -84,7 +84,7 @@ type BaseProfile = {
 export type SeekerProfile = BaseProfile & {
   type: 'seeker';
   searchCriteria: string;
-  searchHistory?: string[];
+  searchHistory: string[];
 };
 
 export type OwnerProfile = BaseProfile & {

@@ -74,7 +74,7 @@ function MapView() {
             center={position}
             zoom={15}
             options={{
-                streetViewControl: false,
+                streetViewControl: true,
                 mapTypeControl: false,
                 fullscreenControl: false,
             }}

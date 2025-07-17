@@ -26,8 +26,8 @@ export function BottomNavBar() {
                         : pathname.startsWith(item.href);
                     return (
                         <Link key={item.href} href={item.href} className="flex flex-col items-center justify-center text-muted-foreground hover:text-primary transition-colors pt-1">
-                            <item.icon className={cn("h-6 w-6", isActive ? "text-primary" : "")} strokeWidth={2.5} />
-                            <span className={cn("text-xs mt-1 font-medium", isActive ? "text-primary font-bold" : "")}>{item.label}</span>
+                            <item.icon className={cn("h-6 w-6 transition-all", isActive ? "text-primary [filter:drop-shadow(0_0_8px_hsl(var(--primary)))]" : "")} strokeWidth={2.5} />
+                            <span className={cn("text-xs mt-1 font-medium transition-colors", isActive ? "text-primary font-bold" : "")}>{item.label}</span>
                         </Link>
                     );
                 })}

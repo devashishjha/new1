@@ -1,4 +1,3 @@
-
 'use client';
 import type { Property } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -226,6 +225,9 @@ export function ShortlistedPropertyCard({ property, onDelete, onUpdate }: {
                                 <DropdownMenuContent align="end" className="w-56">
                                     <DropdownMenuItem onClick={() => handleStatusChange('available')} disabled={isUpdating || property.status === 'available' || property.status === 'pending-review'}>
                                         <PlayCircle className="mr-2 h-4 w-4" /> Make Live
+                                    </DropdownMenuItem>
+                                     <DropdownMenuItem onClick={() => handleStatusChange('occupied')} disabled={isUpdating || property.status === 'occupied'}>
+                                        <CheckCircle2 className="mr-2 h-4 w-4" />Mark as Sold
                                     </DropdownMenuItem>
                                      <DropdownMenuItem onClick={() => handleStatusChange('on-hold')} disabled={isUpdating || property.status === 'on-hold'}>
                                         <PauseCircle className="mr-2 h-4 w-4" /> Put on Hold

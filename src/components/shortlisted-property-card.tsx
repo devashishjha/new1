@@ -4,7 +4,7 @@ import type { Property } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import Image from 'next/image';
 import { formatIndianCurrency } from '@/lib/utils';
-import { Info, Pencil, CheckCircle2, Trash2, Loader2, PlayCircle, PauseCircle, MoreVertical, MapPin, AlertCircle, IndianRupee, AreaChart } from 'lucide-react';
+import { Info, Pencil, CheckCircle2, Trash2, Loader2, PlayCircle, PauseCircle, MoreVertical, MapPin, AlertCircle, IndianRupee, AreaChart, Building } from 'lucide-react';
 import { PropertyDetailsSheet } from './property-details-sheet';
 import { useState, useRef } from 'react';
 import { Button } from './ui/button';
@@ -198,7 +198,7 @@ export function ShortlistedPropertyCard({ property, onDelete, onUpdate }: {
                             {property.title}
                         </h3>
                          <div className="w-full flex justify-between items-center pt-2 mt-2 border-t border-white/20">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
                                 <Button variant="ghost" size="icon" onClick={() => setIsDetailsOpen(true)} className="text-white hover:bg-white/10 hover:text-white h-8 w-8">
                                     <Info className="h-4 w-4" />
                                 </Button>
@@ -232,6 +232,16 @@ export function ShortlistedPropertyCard({ property, onDelete, onUpdate }: {
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto text-sm p-2">
                                         Carpet Area: {property.area.carpet} sqft
+                                    </PopoverContent>
+                                </Popover>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 hover:text-white h-8 w-8">
+                                            <Building className="h-4 w-4" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto text-sm p-2 capitalize">
+                                        {property.propertyType}
                                     </PopoverContent>
                                 </Popover>
                             </div>

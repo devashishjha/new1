@@ -47,7 +47,7 @@ export default function AdminPage() {
 
     if (isCheckingAuth || authLoading) {
         return (
-            <div className="flex flex-col h-dvh items-center justify-center bg-gradient-to-br from-black to-blue-950 text-white">
+            <div className="flex flex-col h-dvh items-center justify-center text-white">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
                 <p className="mt-4 text-muted-foreground">Verifying access...</p>
             </div>

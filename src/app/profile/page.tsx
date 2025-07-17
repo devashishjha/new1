@@ -8,7 +8,7 @@ import { Header } from '@/components/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Shield, FileText, LogOut, MessagesSquare, Loader2, Star, Handshake, Sparkles, KeyRound, ShoppingCart, Pencil, User as UserIcon, MoreVertical, ListVideo, Phone, Mail, Building2, CheckCircle2, LayoutDashboard, PlayCircle, PauseCircle } from 'lucide-react';
+import { Shield, FileText, LogOut, MessagesSquare, Loader2, Star, Handshake, Sparkles, KeyRound, ShoppingCart, Pencil, User as UserIcon, MoreVertical, ListVideo, Phone, Mail, Building2, CheckCircle2, LayoutDashboard, PlayCircle, PauseCircle, PhoneCall } from 'lucide-react';
 import { BottomNavBar } from '@/components/bottom-nav-bar';
 import { useToast } from '@/hooks/use-toast';
 import { signOut } from 'firebase/auth';
@@ -194,25 +194,9 @@ export default function ProfilePage() {
             <Header />
             <TooltipProvider>
                 <main className="container mx-auto py-24 px-4 pb-24">
-                    <div className="max-w-4xl mx-auto relative">
-
-                        <div className="absolute top-0 right-0 z-50">
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon">
-                                        <MoreVertical className="h-5 w-5" />
-                                        <span className="sr-only">Open menu</span>
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive focus:bg-destructive/10">
-                                        <LogOut className="mr-2 h-4 w-4" /> Log Out
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </div>
+                    <div className="max-w-4xl mx-auto relative space-y-8">
                         
-                        <div className="flex flex-col items-center text-center mb-12">
+                        <div className="flex flex-col items-center text-center">
                             <div className="relative mb-4">
                                 <Avatar className="h-32 w-32 border-4 border-primary/50">
                                     <AvatarImage src={userProfile.avatar} alt={userProfile.name} data-ai-hint="person portrait" />
@@ -278,35 +262,13 @@ export default function ProfilePage() {
                                     </Tooltip>
                                 </div>
 
-                                <div className="flex flex-wrap items-center justify-center gap-2 pt-4">
-                                    {userProfile.role === 'admin' && (
-                                        <Button asChild variant="outline" className="rounded-full">
-                                            <Link href="/admin">
-                                                <LayoutDashboard className="mr-2 h-4 w-4" /> Admin Panel
-                                            </Link>
-                                        </Button>
-                                    )}
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <div>
-                                                <Button variant="outline" className="rounded-full" disabled>
-                                                    <Shield className="mr-2 h-4 w-4" /> Privacy Policy
-                                                </Button>
-                                            </div>
-                                        </TooltipTrigger>
-                                        <TooltipContent><p>Coming soon!</p></TooltipContent>
-                                    </Tooltip>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <div>
-                                                <Button variant="outline" className="rounded-full" disabled>
-                                                    <FileText className="mr-2 h-4 w-4" /> Terms & Conditions
-                                                </Button>
-                                            </div>
-                                        </TooltipTrigger>
-                                        <TooltipContent><p>Coming soon!</p></TooltipContent>
-                                    </Tooltip>
-                                </div>
+                                {userProfile.role === 'admin' && (
+                                    <Button asChild variant="outline" className="rounded-full mt-4">
+                                        <Link href="/admin">
+                                            <LayoutDashboard className="mr-2 h-4 w-4" /> Admin Panel
+                                        </Link>
+                                    </Button>
+                                )}
                             </div>
 
                             <Badge variant="secondary" className="capitalize mt-6">{userProfile.role === 'admin' ? 'Admin' : userProfile.type}</Badge>
@@ -351,7 +313,7 @@ export default function ProfilePage() {
                         )}
 
                         {['owner', 'dealer', 'developer'].includes(userProfile.type) && (
-                            <Card className="mb-8">
+                            <Card>
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2">
                                         <ListVideo className="w-6 h-6 text-primary" />
@@ -395,7 +357,7 @@ export default function ProfilePage() {
                         )}
                         
                         {userProfile.type === 'seeker' && (
-                            <Card className="mt-8">
+                            <Card>
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2">
                                         <Star className="text-accent" /> Premium Features
@@ -480,6 +442,46 @@ export default function ProfilePage() {
                                 </CardContent>
                             </Card>
                         )}
+
+                        <Card>
+                            <CardContent className="p-4">
+                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                     <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div>
+                                                <Button variant="outline" className="w-full" disabled>
+                                                    <Shield className="mr-2 h-4 w-4" /> Privacy Policy
+                                                </Button>
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent><p>Coming soon!</p></TooltipContent>
+                                    </Tooltip>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div>
+                                                <Button variant="outline" className="w-full" disabled>
+                                                    <FileText className="mr-2 h-4 w-4" /> Terms
+                                                </Button>
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent><p>Coming soon!</p></TooltipContent>
+                                    </Tooltip>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div>
+                                                <Button variant="outline" className="w-full" disabled>
+                                                    <PhoneCall className="mr-2 h-4 w-4" /> Contact Us
+                                                </Button>
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent><p>Coming soon!</p></TooltipContent>
+                                    </Tooltip>
+                                    <Button variant="destructive" className="w-full" onClick={handleLogout}>
+                                        <LogOut className="mr-2 h-4 w-4" /> Log Out
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
                     </div>
                 </main>
             </TooltipProvider>

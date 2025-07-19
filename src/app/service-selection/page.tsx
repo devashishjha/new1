@@ -2,11 +2,14 @@
 'use client';
 
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowRight, Home, Tally4 } from "lucide-react";
+import { ArrowRight, Home, Shield } from "lucide-react";
 import Link from "next/link";
 import { Header } from "@/components/header";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function ServiceSelectionPage() {
+    const { isAdmin } = useAuth();
+
     return (
         <>
             <Header />
@@ -15,7 +18,7 @@ export default function ServiceSelectionPage() {
                     <h1 className="text-4xl font-bold tracking-tight">Choose a Service</h1>
                     <p className="text-muted-foreground mt-2">Select which service you'd like to use today.</p>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-6xl">
                     <Link href="/reels" className="group">
                         <Card className="hover:border-primary transition-all hover:scale-105 transform-gpu">
                             <CardHeader className="p-8">
@@ -44,6 +47,22 @@ export default function ServiceSelectionPage() {
                             </CardHeader>
                         </Card>
                     </Link>
+                    {isAdmin && (
+                        <Link href="/admin" className="group">
+                            <Card className="hover:border-accent transition-all hover:scale-105 transform-gpu bg-accent/10 border-accent/30">
+                                <CardHeader className="p-8">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <Shield className="w-12 h-12 text-accent mb-4" />
+                                            <CardTitle className="text-2xl">Admin Panel</CardTitle>
+                                            <CardDescription>Manage users and content.</CardDescription>
+                                        </div>
+                                        <ArrowRight className="w-8 h-8 text-muted-foreground group-hover:text-accent transition-colors" />
+                                    </div>
+                                </CardHeader>
+                            </Card>
+                        </Link>
+                    )}
                 </div>
             </main>
         </>

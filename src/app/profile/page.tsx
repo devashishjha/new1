@@ -28,7 +28,7 @@ import { ShortlistedPropertyCard } from '@/components/shortlisted-property-card'
 
 export default function ProfilePage() {
     const { toast } = useToast();
-    const { user } = useAuth();
+    const { user, isAdmin } = useAuth();
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [userProperties, setUserProperties] = useState<Property[]>([]);
@@ -261,14 +261,6 @@ export default function ProfilePage() {
                                         <TooltipContent><p>Start a chat</p></TooltipContent>
                                     </Tooltip>
                                 </div>
-
-                                {userProfile.role === 'admin' && (
-                                    <Button asChild variant="outline" className="rounded-full mt-4">
-                                        <Link href="/admin">
-                                            <LayoutDashboard className="mr-2 h-4 w-4" /> Admin Panel
-                                        </Link>
-                                    </Button>
-                                )}
                             </div>
 
                             <Badge variant="secondary" className="capitalize mt-6">{userProfile.role === 'admin' ? 'Admin' : userProfile.type}</Badge>

@@ -14,11 +14,13 @@ import type { UserProfile } from '@/lib/types';
 type AuthContextType = {
   user: User | null;
   loading: boolean;
+  isAdmin: boolean;
 };
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
+  isAdmin: false,
 });
 
 function FullScreenLoader() {
@@ -35,6 +37,7 @@ function FullScreenLoader() {
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -46,7 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
-      console.log("Auth State Changed: Current User =", currentUser ? currentUser.uid : "No user", "Email:", currentUser ? currentUser.email : "N/A");
+      setIsAdmin(false); // Reset on auth change
       
       if (currentUser) {
         // Presence Logic
@@ -65,69 +68,91 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             });
         }
         
-        // Admin Role Assignment Logic
-        // This check runs on login to automatically grant admin rights to the specified user.
+        // Admin Role Assignment & Check Logic
         const ADMIN_EMAIL = "jha.devashish@gmail.com"; 
         
-        if (db && currentUser.email === ADMIN_EMAIL) {
+        if (db) {
             const userDocRef = doc(db, 'users', currentUser.uid);
             try {
                 const docSnap = await getDoc(userDocRef);
+                let currentRole;
+
                 if (docSnap.exists()) {
                     const profile = docSnap.data() as UserProfile;
-                    if (profile.role !== 'admin') {
+                    currentRole = profile.role;
+                    
+                    // Auto-assign admin role if email matches and not already admin
+                    if (currentUser.email === ADMIN_EMAIL && currentRole !== 'admin') {
                         await updateDoc(userDocRef, { role: 'admin' });
+                        currentRole = 'admin'; // Assume success
                         console.log(`Admin role successfully granted to ${currentUser.email}.`);
                     }
+                } else if (currentUser.email === ADMIN_EMAIL) {
+                    // This handles first-time login for the admin user
+                    const newAdminProfile: UserProfile = {
+                        id: currentUser.uid,
+                        name: currentUser.displayName || 'Admin',
+                        email: currentUser.email,
+                        phone: '',
+                        type: 'owner',
+                        role: 'admin'
+                    };
+                    await setDoc(userDocRef, newAdminProfile);
+                    currentRole = 'admin';
+                    console.log(`Admin profile created and role granted for ${currentUser.email}.`);
                 }
+
+                if (currentRole === 'admin') {
+                    setIsAdmin(true);
+                }
+
             } catch (error) {
-                console.error("Error granting admin role:", error);
+                console.error("Error with admin role check/assignment:", error);
             }
         }
       }
 
       setLoading(false);
-      console.log("Auth Loading state set to false. Current user:", currentUser ? currentUser.uid : "null");
     });
 
     return () => unsubscribe();
   }, []);
 
   const isAuthPage = pathname === '/';
-  const isServiceSelectionPage = pathname === '/service-selection';
+  const isProtectedPage = !isAuthPage;
   const userIsLoggedIn = !!user;
 
   useEffect(() => {
-    // Don't run redirect logic until the initial auth state is resolved.
-    if (loading) {
-      return;
+    if (loading) return;
+
+    if (userIsLoggedIn) {
+        if (isAuthPage) {
+            // Logged in user is on the login page, redirect them.
+            if (isAdmin) {
+                router.replace('/admin');
+            } else {
+                router.replace('/service-selection');
+            }
+        }
+    } else {
+        // Not logged in, but trying to access a protected page.
+        if (isProtectedPage) {
+            router.replace('/');
+        }
     }
 
-    // If user is NOT logged in and is trying to access a protected page, redirect to login.
-    if (!userIsLoggedIn && !isAuthPage) {
-      router.replace('/');
-    }
-
-    // If user IS logged in and is trying to access the login page, redirect to the app's main page.
-    if (userIsLoggedIn && isAuthPage) {
-      router.replace('/service-selection');
-    }
-  }, [loading, userIsLoggedIn, isAuthPage, router]);
+  }, [loading, userIsLoggedIn, isAuthPage, isProtectedPage, isAdmin, router]);
 
 
-  // Determine if we should show a loader.
-  // We show a loader if:
-  // 1. We are still waiting for the initial auth state to be determined.
-  // 2. A redirect is needed and about to happen (to prevent a flash of incorrect content).
-  const shouldShowLoader = loading || (!userIsLoggedIn && !isAuthPage) || (userIsLoggedIn && isAuthPage);
-  
+  // Show a loader while authentication is in progress or a redirect is pending.
+  const shouldShowLoader = loading || (userIsLoggedIn && isAuthPage) || (!userIsLoggedIn && isProtectedPage);
+
   if (shouldShowLoader) {
     return <FullScreenLoader />;
   }
-
-  // If no loader is needed, it's safe to render the children.
+  
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, loading, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );

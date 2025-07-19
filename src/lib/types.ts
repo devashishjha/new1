@@ -148,6 +148,7 @@ export type IroningAddress = {
 };
 
 export type IroningProfile = {
+    name?: string;
     email?: string;
     phone?: string;
     address?: IroningAddress;

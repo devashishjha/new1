@@ -40,35 +40,6 @@ const clothesData = {
     kids: [ { name: 'Shirt', price: 8 }, { name: 'Frock', price: 15 }, { name: 'Shorts', price: 7 }, { name: 'Pants', price: 10 } ],
 };
 
-function ClothesCategory({ category, control, fields, update }: { category: string; control: any; fields: any[]; update: (index: number, value: any) => void; }) {
-    const handleQuantityChange = (index: number, change: 1 | -1) => {
-        const currentQuantity = fields[index].quantity;
-        const newQuantity = Math.max(0, currentQuantity + change);
-        update(index, { ...fields[index], quantity: newQuantity });
-    };
-
-    return (
-        <Card>
-            <CardHeader><CardTitle className="capitalize">{category}</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-                {fields.map((field, index) => (
-                    <div key={field.id} className="flex items-center justify-between p-2 rounded-lg bg-secondary/30">
-                        <div>
-                            <p className="font-medium">{field.name}</p>
-                            <p className="text-sm text-muted-foreground">{formatIndianCurrency(field.price)} / item</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Button type="button" size="icon" variant="outline" onClick={() => handleQuantityChange(index, -1)} disabled={field.quantity === 0}><Minus className="h-4 w-4" /></Button>
-                            <span className="font-bold text-lg w-10 text-center">{field.quantity}</span>
-                            <Button type="button" size="icon" variant="outline" onClick={() => handleQuantityChange(index, 1)}><Plus className="h-4 w-4" /></Button>
-                        </div>
-                    </div>
-                ))}
-            </CardContent>
-        </Card>
-    )
-}
-
 function FormSkeleton() {
     return (
         <div className="space-y-8">
@@ -110,9 +81,17 @@ export function IroningForm() {
     const { fields: itemsFields, update: updateItems, replace } = useFieldArray({ control: form.control, name: "items" });
     
     React.useEffect(() => {
+        const loadDefaultPrices = () => {
+            const allDefaultItems: IroningOrderItem[] = Object.values(clothesData)
+                .flat()
+                .map(item => ({ ...item, quantity: 0 }));
+            replace(allDefaultItems);
+        };
+        
         const fetchPrices = async () => {
             if (!db) {
-                toast({ variant: 'destructive', title: "Error", description: "Could not load pricing. Please try again later." });
+                toast({ title: "Using Default Prices", description: "Could not connect to the database." });
+                loadDefaultPrices();
                 setIsLoadingPrices(false);
                 return;
             };
@@ -122,17 +101,8 @@ export function IroningForm() {
                 const snapshot = await getDocs(clothesRef);
 
                 if (snapshot.empty) {
-                    console.log("Pricing not found, initializing with default data.");
-                    const batch = writeBatch(db);
-                    Object.entries(clothesData).forEach(([category, items]) => {
-                        const docRef = doc(db, 'clothes', category);
-                        batch.set(docRef, { items });
-                    });
-                    await batch.commit();
-
-                    const allDefaultItems: IroningOrderItem[] = Object.values(clothesData).flat().map(item => ({ ...item, quantity: 0 }));
-                    replace(allDefaultItems);
-                    
+                    console.log("Pricing not found in DB, using local defaults.");
+                    loadDefaultPrices();
                 } else {
                     const allItems: IroningOrderItem[] = [];
                     snapshot.forEach(doc => {
@@ -143,8 +113,9 @@ export function IroningForm() {
                 }
 
             } catch (error) {
-                 console.error("Error fetching or initializing prices:", error);
-                 toast({ variant: 'destructive', title: "Error", description: "Could not load pricing. Please try again later." });
+                 console.error("Error fetching prices, falling back to local defaults:", error);
+                 toast({ variant: 'destructive', title: "Error", description: "Could not fetch latest pricing. Using default rates." });
+                 loadDefaultPrices();
             } finally {
                 setIsLoadingPrices(false);
             }
@@ -194,7 +165,7 @@ export function IroningForm() {
                 transaction.set(counterRef, { currentId: newOrderId }, { merge: true });
                 
                 const orderItems = values.items.filter(item => item.quantity > 0);
-                const newOrderRef = doc(collection(db, "ironingOrders")); // Create a new document reference
+                const newOrderRef = doc(collection(db, "ironingOrders"));
                 
                 const userDocRef = doc(db, 'users', user.uid);
                 const userDocSnap = await transaction.get(userDocRef);

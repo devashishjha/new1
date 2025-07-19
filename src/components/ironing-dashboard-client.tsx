@@ -17,6 +17,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Input } from './ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const clothesData = {
     mens: [ { name: 'Shirt', price: 15 }, { name: 'T-Shirt', price: 10 }, { name: 'Trousers', price: 20 }, { name: 'Jeans', price: 20 }, { name: 'Kurta', price: 25 }, { name: 'Pyjama', price: 15 } ],
@@ -343,24 +344,30 @@ export function IroningDashboardClient() {
             <h1 className="text-4xl font-bold tracking-tight mb-2">Service Provider Dashboard</h1>
             <p className="text-muted-foreground mb-8">Manage pricing and all incoming ironing orders.</p>
 
-            <PriceManagementCard />
-
-            <div>
-                <h2 className="text-2xl font-bold tracking-tight mb-4">Live Orders</h2>
-                <div className="space-y-6">
-                    {orders.length > 0 ? (
-                        orders.map(order => <OrderCard key={order.id} order={order} />)
-                    ) : (
-                        <Card>
-                            <CardHeader className="text-center">
-                                <Package className="mx-auto h-12 w-12 text-muted-foreground" />
-                                <CardTitle>No Orders Yet</CardTitle>
-                                <CardDescription>As new orders are placed, they will appear here.</CardDescription>
-                            </CardHeader>
-                        </Card>
-                    )}
-                </div>
-            </div>
+            <Tabs defaultValue="orders" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="orders">Live Orders</TabsTrigger>
+                    <TabsTrigger value="pricing">Manage Pricing</TabsTrigger>
+                </TabsList>
+                <TabsContent value="orders" className="mt-6">
+                     <div className="space-y-6">
+                        {orders.length > 0 ? (
+                            orders.map(order => <OrderCard key={order.id} order={order} />)
+                        ) : (
+                            <Card>
+                                <CardHeader className="text-center">
+                                    <Package className="mx-auto h-12 w-12 text-muted-foreground" />
+                                    <CardTitle>No Orders Yet</CardTitle>
+                                    <CardDescription>As new orders are placed, they will appear here.</CardDescription>
+                                </CardHeader>
+                            </Card>
+                        )}
+                    </div>
+                </TabsContent>
+                <TabsContent value="pricing" className="mt-6">
+                    <PriceManagementCard />
+                </TabsContent>
+            </Tabs>
         </div>
     );
 }

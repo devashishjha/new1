@@ -89,19 +89,23 @@ export function IroningForm() {
         };
         
         const fetchPrices = async () => {
+            setIsLoadingPrices(true);
             if (!db) {
-                toast({ title: "Using Default Prices", description: "Could not connect to the database." });
+                console.warn("Firestore not available, using default prices.");
                 loadDefaultPrices();
                 setIsLoadingPrices(false);
                 return;
             };
-            setIsLoadingPrices(true);
+
             try {
                 const clothesRef = collection(db, 'clothes');
                 const snapshot = await getDocs(clothesRef);
 
                 if (snapshot.empty) {
-                    console.log("Pricing not found in DB, using local defaults.");
+                    // This can happen on first-ever load before dashboard is visited.
+                    // Silently load defaults for the user.
+                    // The service provider dashboard will create the documents in Firestore.
+                    console.log("Pricing not found in DB, using local defaults for this session.");
                     loadDefaultPrices();
                 } else {
                     const allItems: IroningOrderItem[] = [];
@@ -114,7 +118,7 @@ export function IroningForm() {
 
             } catch (error) {
                  console.error("Error fetching prices, falling back to local defaults:", error);
-                 toast({ variant: 'destructive', title: "Error", description: "Could not fetch latest pricing. Using default rates." });
+                 // Don't show a disruptive toast here, just log and fallback.
                  loadDefaultPrices();
             } finally {
                 setIsLoadingPrices(false);
@@ -122,7 +126,7 @@ export function IroningForm() {
         };
 
         fetchPrices();
-    }, [replace, toast]);
+    }, [replace]);
 
     const watchedValues = form.watch();
 

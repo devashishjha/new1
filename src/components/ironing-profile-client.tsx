@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import type { IroningOrder, IroningProfile, UserProfile } from '@/lib/types';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Mail, Phone, Home, Shirt, User as UserIcon } from 'lucide-react';
 import { dateToJSON, formatIndianCurrency } from '@/lib/utils';
@@ -23,11 +23,12 @@ export function IroningProfileClient() {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        if (authLoading) return;
-        if (!user) {
+        if (authLoading || !user) {
             setIsLoading(false);
             return;
         }
+
+        let unsubscribeFromOrders = () => {};
 
         const fetchData = async () => {
             if (!db) return;
@@ -48,21 +49,31 @@ export function IroningProfileClient() {
                     setProfile({ name: userName, email: user.email });
                 }
                 
-                // Fetch Orders
+                // Set up real-time listener for Orders
                 const ordersQuery = query(
                     collection(db, 'ironingOrders'), 
                     where("userId", "==", user.uid),
                     orderBy("placedAt", "desc")
                 );
-                const ordersSnap = await getDocs(ordersQuery);
-                const fetchedOrders = ordersSnap.docs.map(d => dateToJSON({ id: d.id, ...d.data() }) as IroningOrder);
-                setOrders(fetchedOrders);
+                
+                unsubscribeFromOrders = onSnapshot(ordersQuery, (snapshot) => {
+                    const fetchedOrders = snapshot.docs.map(d => dateToJSON({ id: d.id, ...d.data() }) as IroningOrder);
+                    setOrders(fetchedOrders);
+                    setIsLoading(false);
+                }, (error) => {
+                    console.error("Error fetching real-time orders:", error);
+                    setIsLoading(false);
+                });
+
             } catch (error) {
-                console.error("Error fetching data:", error);
+                console.error("Error fetching initial data:", error);
+                setIsLoading(false);
             }
-            setIsLoading(false);
         };
+
         fetchData();
+
+        return () => unsubscribeFromOrders(); // Cleanup listener on unmount
     }, [user, authLoading]);
 
     if (isLoading || authLoading) {

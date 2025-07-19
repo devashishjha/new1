@@ -3,20 +3,24 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import type { IroningOrder, IroningProfile, UserProfile } from '@/lib/types';
-import { db } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Mail, Phone, Home, Shirt, User as UserIcon } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Loader2, Mail, Phone, Home, Shirt, User as UserIcon, LogOut } from 'lucide-react';
 import { dateToJSON, formatIndianCurrency } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
 import { useSearchParams } from 'next/navigation';
+import { Button } from './ui/button';
+import { signOut } from 'firebase/auth';
+import { useToast } from '@/hooks/use-toast';
 
 export function IroningProfileClient() {
     const { user, loading: authLoading } = useAuth();
     const searchParams = useSearchParams();
     const currentView = searchParams.get('view') || 'profile';
+    const { toast } = useToast();
 
     const [profile, setProfile] = useState<IroningProfile | null>(null);
     const [orders, setOrders] = useState<IroningOrder[]>([]);
@@ -35,12 +39,10 @@ export function IroningProfileClient() {
             setIsLoading(true);
             
             try {
-                // Fetch main user profile for name
                 const userDocRef = doc(db, 'users', user.uid);
                 const userDocSnap = await getDoc(userDocRef);
                 const userName = userDocSnap.exists() ? (userDocSnap.data() as UserProfile).name : user.displayName;
 
-                // Fetch Ironing Profile
                 const profileDocRef = doc(db, 'ironingProfiles', user.uid);
                 const profileSnap = await getDoc(profileDocRef);
                 if (profileSnap.exists()) {
@@ -49,7 +51,6 @@ export function IroningProfileClient() {
                     setProfile({ name: userName, email: user.email });
                 }
                 
-                // Set up real-time listener for Orders
                 const ordersQuery = query(
                     collection(db, 'ironingOrders'), 
                     where("userId", "==", user.uid),
@@ -73,8 +74,14 @@ export function IroningProfileClient() {
 
         fetchData();
 
-        return () => unsubscribeFromOrders(); // Cleanup listener on unmount
+        return () => unsubscribeFromOrders();
     }, [user, authLoading]);
+
+    const handleLogout = async () => {
+        if (!auth) { return; }
+        await signOut(auth);
+        toast({ title: "Logged Out", description: "You have been successfully logged out." });
+    };
 
     if (isLoading || authLoading) {
         return (
@@ -96,48 +103,55 @@ export function IroningProfileClient() {
     }
 
     return (
-        <div className="w-full">
+        <div className="w-full space-y-8">
             {currentView === 'profile' && (
                  <>
                     <h1 className="text-4xl font-bold tracking-tight mb-8">Your Profile</h1>
                     {profile ? (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Your Details</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="flex items-center gap-4">
-                                    <UserIcon className="w-5 h-5 text-primary" />
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Name</p>
-                                        <p className="font-semibold">{profile.name || 'N/A'}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-4">
-                                    <Mail className="w-5 h-5 text-primary" />
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Email</p>
-                                        <p className="font-semibold">{profile.email || 'N/A'}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-4">
-                                    <Phone className="w-5 h-5 text-primary" />
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Mobile Number</p>
-                                        <p className="font-semibold">{profile.phone || 'N/A'}</p>
-                                    </div>
-                                </div>
-                                {profile.address && (
-                                    <div className="flex items-center gap-4 pt-4 border-t">
-                                        <Home className="w-5 h-5 text-primary" />
+                        <div className="space-y-6">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Your Details</CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="flex items-center gap-4">
+                                        <UserIcon className="w-5 h-5 text-primary" />
                                         <div>
-                                            <p className="text-sm text-muted-foreground">Saved Address</p>
-                                            <p className="font-semibold">{`${profile.address.flatNo}, Floor ${profile.address.floorNo}, Block ${profile.address.block}, ${profile.address.apartmentName}`}</p>
+                                            <p className="text-sm text-muted-foreground">Name</p>
+                                            <p className="font-semibold">{profile.name || 'N/A'}</p>
                                         </div>
                                     </div>
-                                )}
-                            </CardContent>
-                        </Card>
+                                    <div className="flex items-center gap-4">
+                                        <Mail className="w-5 h-5 text-primary" />
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Email</p>
+                                            <p className="font-semibold">{profile.email || 'N/A'}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        <Phone className="w-5 h-5 text-primary" />
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Mobile Number</p>
+                                            <p className="font-semibold">{profile.phone || 'N/A'}</p>
+                                        </div>
+                                    </div>
+                                    {profile.address && (
+                                        <div className="flex items-center gap-4 pt-4 border-t">
+                                            <Home className="w-5 h-5 text-primary" />
+                                            <div>
+                                                <p className="text-sm text-muted-foreground">Saved Address</p>
+                                                <p className="font-semibold">{`${profile.address.flatNo}, Floor ${profile.address.floorNo}, Block ${profile.address.block}, ${profile.address.apartmentName}`}</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                             <CardFooter>
+                                <Button variant="destructive" className="w-full" onClick={handleLogout}>
+                                    <LogOut className="mr-2 h-4 w-4" /> Log Out
+                                </Button>
+                            </CardFooter>
+                        </div>
                     ) : (
                         <Card>
                             <CardHeader><CardTitle>No Profile Data</CardTitle></CardHeader>

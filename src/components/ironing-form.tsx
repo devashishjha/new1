@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription }
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
-import { addDoc, collection, serverTimestamp, doc, getDoc, setDoc } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, doc, getDoc, setDoc, runTransaction } from 'firebase/firestore';
 import { Loader2, Plus, Minus, CheckCircle2 } from 'lucide-react';
 import { formatIndianCurrency } from '@/lib/utils';
 
@@ -94,7 +94,7 @@ export function IroningForm() {
     const totalCost = React.useMemo(() => {
         const mensCost = watchedValues.mens.reduce((acc, item) => acc + item.quantity * item.price, 0);
         const womensCost = watchedValues.womens.reduce((acc, item) => acc + item.quantity * item.price, 0);
-        const kidsCost = watchedValues.kids.reduce((acc, item) => acc + item.quantity * item.price, 0);
+        const kidsCost = watchedValues.kids.reduce((acc, item) => acc + item.quantity, 0);
         return mensCost + womensCost + kidsCost;
     }, [watchedValues]);
 
@@ -124,18 +124,36 @@ export function IroningForm() {
         if (!user || !db) return;
         setIsSubmitting(true);
         try {
-            const orderItems = [ ...values.mens, ...values.womens, ...values.kids ].filter(item => item.quantity > 0);
-            await addDoc(collection(db, "ironingOrders"), {
-                userId: user.uid, userEmail: user.email, items: orderItems,
-                totalCost, totalItems, status: 'placed', placedAt: serverTimestamp(),
-                address: { apartmentName: values.apartmentName, block: values.block, floorNo: values.floorNo, flatNo: values.flatNo }
+            await runTransaction(db, async (transaction) => {
+                const counterRef = doc(db, 'counters', 'ironingOrders');
+                const counterDoc = await transaction.get(counterRef);
+
+                let newOrderId = 1;
+                if (counterDoc.exists()) {
+                    newOrderId = counterDoc.data().currentId + 1;
+                }
+                
+                transaction.set(counterRef, { currentId: newOrderId }, { merge: true });
+                
+                const orderItems = [ ...values.mens, ...values.womens, ...values.kids ].filter(item => item.quantity > 0);
+                const newOrderRef = doc(collection(db, "ironingOrders")); // Create a new document reference
+                
+                transaction.set(newOrderRef, {
+                    orderId: newOrderId,
+                    userId: user.uid, userEmail: user.email, items: orderItems,
+                    totalCost, totalItems, status: 'placed', placedAt: serverTimestamp(),
+                    address: { apartmentName: values.apartmentName, block: values.block, floorNo: values.floorNo, flatNo: values.flatNo }
+                });
+
+                const userDocRef = doc(db, 'ironingProfiles', user.uid);
+                transaction.set(userDocRef, {
+                    email: user.email, phone: user.phoneNumber, 
+                    address: { apartmentName: values.apartmentName, block: values.block, floorNo: values.floorNo, flatNo: values.flatNo }
+                }, { merge: true });
             });
-            const userDocRef = doc(db, 'ironingProfiles', user.uid);
-            await setDoc(userDocRef, {
-                email: user.email, phone: user.phoneNumber, 
-                address: { apartmentName: values.apartmentName, block: values.block, floorNo: values.floorNo, flatNo: values.flatNo }
-            }, { merge: true });
+            
             setStep(4);
+
         } catch (error) {
             console.error("Error placing order:", error);
             toast({ variant: "destructive", title: "Order Failed", description: "There was an error placing your order." });

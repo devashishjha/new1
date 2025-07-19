@@ -161,7 +161,8 @@ export type IroningOrderItem = {
 };
 
 export type IroningOrder = {
-    id: string;
+    id: string; // Firestore document ID
+    orderId: number; // Sequential numeric ID
     userId: string;
     userEmail: string;
     items: IroningOrderItem[];

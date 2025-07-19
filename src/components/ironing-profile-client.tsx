@@ -163,7 +163,7 @@ export function IroningProfileClient() {
                                                         {format(new Date(order.placedAt as string), 'PPP')}
                                                     </p>
                                                     <p className="text-xs text-muted-foreground/80 font-mono mt-1">
-                                                        ID: {order.id.slice(0, 8)}...
+                                                        Order ID: {order.orderId}
                                                     </p>
                                                 </div>
                                                 <Badge variant="secondary" className="capitalize">{order.status}</Badge>

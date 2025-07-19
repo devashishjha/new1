@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutGrid, User } from 'lucide-react';
+import { LayoutGrid, History } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function IroningBottomNavBar() {
@@ -11,7 +11,7 @@ export function IroningBottomNavBar() {
 
     const navItems = [
         { href: '/service-selection', icon: LayoutGrid, label: 'Categories' },
-        { href: '/ironing/profile', icon: User, label: 'Profile' },
+        { href: '/ironing/profile', icon: History, label: 'Order History' },
     ];
 
     return (

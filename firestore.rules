@@ -1,31 +1,34 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Users can read anyone's profile, but only write to their own.
+    // Allow signed-in users to read and write to their own user profile
     match /users/{userId} {
-      allow read: if true;
-      allow create, update: if request.auth != null && request.auth.uid == userId;
+      allow read;
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
-    
-    // Properties can be read by anyone, but only created, updated, or deleted by the owner.
+
+    // Allow signed-in users to read properties, and only the lister to create/update/delete
     match /properties/{propertyId} {
-      // Allow public read access for both single documents and collection queries
-      allow read: if true;
-      
-      // Allow authenticated users to create a property, ensuring they are the lister
-      allow create: if request.auth != null && request.resource.data.lister.id == request.auth.uid;
-        
-      // Only the lister can update or delete their own property
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
       allow update, delete: if request.auth != null && resource.data.lister.id == request.auth.uid;
     }
     
-    // Chats can only be accessed by participants.
+    // Allow participants of a chat to read/write to it
     match /chats/{chatId} {
-      // A user can only read or write to a chat if their UID is in the participantIds array.
       allow read, write: if request.auth != null && request.auth.uid in resource.data.participantIds;
+    }
+    
+    // Allow signed-in users to manage their own ironing profiles and orders
+    match /ironingProfiles/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /ironingOrders/{orderId} {
+      allow read, create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false; // Disallow updates/deletes for now
     }
   }
 }

@@ -137,3 +137,36 @@ export type ChatConversation = {
   unreadCount: number;
   messages: ChatMessage[];
 };
+
+// --- Ironing Types ---
+
+export type IroningAddress = {
+    apartmentName: string;
+    block: string;
+    floorNo: string;
+    flatNo: string;
+};
+
+export type IroningProfile = {
+    email?: string;
+    phone?: string;
+    address?: IroningAddress;
+};
+
+export type IroningOrderItem = {
+    name: string;
+    price: number;
+    quantity: number;
+};
+
+export type IroningOrder = {
+    id: string;
+    userId: string;
+    userEmail: string;
+    items: IroningOrderItem[];
+    totalCost: number;
+    totalItems: number;
+    status: 'placed' | 'picked-up' | 'processing' | 'out-for-delivery' | 'completed';
+    placedAt: Timestamp | Date | string;
+    address: IroningAddress;
+};

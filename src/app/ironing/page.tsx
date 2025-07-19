@@ -1,6 +1,5 @@
 
 import { IroningForm } from "@/components/ironing-form";
-import { BottomNavBar } from "@/components/bottom-nav-bar";
 import { Header } from "@/components/header";
 
 export default function IroningPage() {
@@ -13,7 +12,6 @@ export default function IroningPage() {
             <IroningForm />
         </div>
       </main>
-      <BottomNavBar />
     </>
   );
 }

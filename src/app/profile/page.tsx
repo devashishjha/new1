@@ -273,6 +273,14 @@ export default function ProfilePage() {
 
                             <Badge variant="secondary" className="capitalize mt-6">{userProfile.role === 'admin' ? 'Admin' : userProfile.type}</Badge>
                         </div>
+                        
+                        <Card>
+                            <CardContent className="p-4">
+                                <Button variant="destructive" className="w-full" onClick={handleLogout}>
+                                    <LogOut className="mr-2 h-4 w-4" /> Log Out
+                                </Button>
+                            </CardContent>
+                        </Card>
 
                         {['owner', 'dealer', 'developer'].includes(userProfile.type) && (
                             <div className="mb-8 grid grid-cols-3 gap-4">
@@ -445,7 +453,7 @@ export default function ProfilePage() {
 
                         <Card>
                             <CardContent className="p-4">
-                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                                      <Tooltip>
                                         <TooltipTrigger asChild>
                                             <div>
@@ -476,9 +484,6 @@ export default function ProfilePage() {
                                         </TooltipTrigger>
                                         <TooltipContent><p>Coming soon!</p></TooltipContent>
                                     </Tooltip>
-                                    <Button variant="destructive" className="w-full" onClick={handleLogout}>
-                                        <LogOut className="mr-2 h-4 w-4" /> Log Out
-                                    </Button>
                                 </div>
                             </CardContent>
                         </Card>

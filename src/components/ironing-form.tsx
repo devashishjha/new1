@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription }
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
-import { addDoc, collection, serverTimestamp, doc, getDoc, runTransaction, getDocs } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, doc, getDoc, runTransaction, getDocs, writeBatch } from 'firebase/firestore';
 import { Loader2, Plus, Minus, CheckCircle2 } from 'lucide-react';
 import { formatIndianCurrency } from '@/lib/utils';
 import type { UserProfile, IroningOrderItem } from '@/lib/types';
@@ -33,6 +33,12 @@ const ironingOrderSchema = z.object({
 });
 
 type IroningOrder = z.infer<typeof ironingOrderSchema>;
+
+const clothesData = {
+    mens: [ { name: 'Shirt', price: 15 }, { name: 'T-Shirt', price: 10 }, { name: 'Trousers', price: 20 }, { name: 'Jeans', price: 20 }, { name: 'Kurta', price: 25 }, { name: 'Pyjama', price: 15 } ],
+    womens: [ { name: 'Top', price: 15 }, { name: 'Saree', price: 50 }, { name: 'Blouse', price: 10 }, { name: 'Kurti', price: 20 }, { name: 'Dress', price: 30 }, { name: 'Leggings', price: 10 } ],
+    kids: [ { name: 'Shirt', price: 8 }, { name: 'Frock', price: 15 }, { name: 'Shorts', price: 7 }, { name: 'Pants', price: 10 } ],
+};
 
 function ClothesCategory({ category, control, fields, update }: { category: string; control: any; fields: any[]; update: (index: number, value: any) => void; }) {
     const handleQuantityChange = (index: number, change: 1 | -1) => {
@@ -114,13 +120,30 @@ export function IroningForm() {
             try {
                 const clothesRef = collection(db, 'clothes');
                 const snapshot = await getDocs(clothesRef);
-                const allItems: IroningOrderItem[] = [];
-                snapshot.forEach(doc => {
-                    const categoryItems = doc.data().items as IroningOrderItem[];
-                    allItems.push(...categoryItems.map(item => ({...item, quantity: 0})));
-                });
-                replace(allItems);
+
+                if (snapshot.empty) {
+                    console.log("Pricing not found, initializing with default data.");
+                    const batch = writeBatch(db);
+                    Object.entries(clothesData).forEach(([category, items]) => {
+                        const docRef = doc(db, 'clothes', category);
+                        batch.set(docRef, { items });
+                    });
+                    await batch.commit();
+
+                    const allDefaultItems: IroningOrderItem[] = Object.values(clothesData).flat().map(item => ({ ...item, quantity: 0 }));
+                    replace(allDefaultItems);
+                    
+                } else {
+                    const allItems: IroningOrderItem[] = [];
+                    snapshot.forEach(doc => {
+                        const categoryItems = doc.data().items as IroningOrderItem[];
+                        allItems.push(...categoryItems.map(item => ({...item, quantity: 0})));
+                    });
+                    replace(allItems);
+                }
+
             } catch (error) {
+                 console.error("Error fetching or initializing prices:", error);
                  toast({ variant: 'destructive', title: "Error", description: "Could not load pricing. Please try again later." });
             } finally {
                 setIsLoadingPrices(false);

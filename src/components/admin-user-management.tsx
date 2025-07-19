@@ -22,8 +22,8 @@ function UserResultCard({ profile, onUpdate }: { profile: UserProfile, onUpdate:
     const isSelf = adminUser?.uid === profile.id;
 
     const handleRoleChange = async (roleToToggle: 'admin' | 'service-provider') => {
-        if (isSelf) {
-            toast({ variant: 'destructive', title: 'Action Not Allowed', description: 'You cannot change your own role.' });
+        if (roleToToggle === 'admin' && isSelf) {
+            toast({ variant: 'destructive', title: 'Action Not Allowed', description: 'You cannot change your own admin role.' });
             return;
         }
 
@@ -38,11 +38,11 @@ function UserResultCard({ profile, onUpdate }: { profile: UserProfile, onUpdate:
         }
         
         const userDocRef = doc(db, 'users', profile.id);
-        const newRole = profile.role === roleToToggle ? null : roleToToggle;
+        const newRole = profile.role === roleToToggle ? undefined : roleToToggle;
 
         try {
             await updateDoc(userDocRef, { role: newRole });
-            const updatedProfile = { ...profile, role: (newRole || undefined) as UserProfile['role'] };
+            const updatedProfile = { ...profile, role: newRole };
             onUpdate(updatedProfile);
             toast({ title: 'Success', description: `${profile.name}'s role has been updated.` });
         } catch (error) {
@@ -85,7 +85,7 @@ function UserResultCard({ profile, onUpdate }: { profile: UserProfile, onUpdate:
                     size="sm" 
                     variant={profile.role === 'service-provider' ? 'destructive' : 'outline'}
                     onClick={() => handleRoleChange('service-provider')}
-                    disabled={isProcessingAdmin || isProcessingServiceProvider || isSelf}
+                    disabled={isProcessingAdmin || isProcessingServiceProvider}
                     className="w-full"
                 >
                     {isProcessingServiceProvider ? <Loader2 className="animate-spin" /> : (

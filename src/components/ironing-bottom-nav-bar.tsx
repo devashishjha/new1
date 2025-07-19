@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutGrid, History, User } from 'lucide-react';
+import { LayoutGrid, History, User, PlusCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function IroningBottomNavBar() {
@@ -11,13 +11,14 @@ export function IroningBottomNavBar() {
 
     const navItems = [
         { href: '/service-selection', icon: LayoutGrid, label: 'Categories' },
+        { href: '/ironing', icon: PlusCircle, label: 'Place Order' },
         { href: '/ironing/profile', icon: History, label: 'History' },
         { href: '/ironing/profile', icon: User, label: 'Profile' },
     ];
 
     return (
         <nav className="fixed bottom-0 left-0 right-0 z-50 bg-transparent backdrop-blur-sm border-t border-border/20">
-            <div className="container mx-auto grid grid-cols-3 h-16">
+            <div className="container mx-auto grid grid-cols-4 h-16">
                 {navItems.map((item, index) => {
                     // Special handling for profile page to highlight both History and Profile icons
                     const isActive = item.label === 'History' || item.label === 'Profile'

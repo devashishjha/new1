@@ -68,7 +68,6 @@ export function IroningForm() {
     const { user } = useAuth();
     const [isSubmitting, setIsSubmitting] = React.useState(false);
     const [step, setStep] = React.useState(1); // 1: items, 2: address, 3: payment, 4: success
-    const [isLoadingPrices, setIsLoadingPrices] = React.useState(true);
     
     const form = useForm<IroningOrder>({
         resolver: zodResolver(ironingOrderSchema),
@@ -81,52 +80,48 @@ export function IroningForm() {
     const { fields: itemsFields, update: updateItems, replace } = useFieldArray({ control: form.control, name: "items" });
     
     React.useEffect(() => {
-        const loadDefaultPrices = () => {
-            const allDefaultItems: IroningOrderItem[] = Object.values(clothesData)
-                .flat()
-                .map(item => ({ ...item, quantity: 0 }));
-            replace(allDefaultItems);
-        };
-        
-        const fetchPrices = async () => {
-            setIsLoadingPrices(true);
+        // Immediately load default prices to prevent UI blocking
+        const allDefaultItems: IroningOrderItem[] = Object.values(clothesData)
+            .flat()
+            .map(item => ({ ...item, quantity: 0 }));
+        replace(allDefaultItems);
+
+        // Then, try to fetch custom prices from DB and update if available
+        const fetchAndUpdatePrices = async () => {
             if (!db) {
-                console.warn("Firestore not available, using default prices.");
-                loadDefaultPrices();
-                setIsLoadingPrices(false);
+                console.warn("Firestore not available. Using default prices.");
                 return;
-            };
+            }
 
             try {
                 const clothesRef = collection(db, 'clothes');
                 const snapshot = await getDocs(clothesRef);
 
-                if (snapshot.empty) {
-                    // This can happen on first-ever load before dashboard is visited.
-                    // Silently load defaults for the user.
-                    // The service provider dashboard will create the documents in Firestore.
-                    console.log("Pricing not found in DB, using local defaults for this session.");
-                    loadDefaultPrices();
-                } else {
-                    const allItems: IroningOrderItem[] = [];
+                if (!snapshot.empty) {
+                    const dbPrices: Record<string, number> = {};
                     snapshot.forEach(doc => {
                         const categoryItems = doc.data().items as IroningOrderItem[];
-                        allItems.push(...categoryItems.map(item => ({...item, quantity: 0})));
+                        categoryItems.forEach(item => {
+                            dbPrices[item.name] = item.price;
+                        });
                     });
-                    replace(allItems);
-                }
 
+                    // Update existing items with prices from the DB
+                    const updatedItems = allDefaultItems.map(item => ({
+                        ...item,
+                        price: dbPrices[item.name] !== undefined ? dbPrices[item.name] : item.price,
+                    }));
+                    replace(updatedItems);
+                }
             } catch (error) {
-                 console.error("Error fetching prices, falling back to local defaults:", error);
-                 // Don't show a disruptive toast here, just log and fallback.
-                 loadDefaultPrices();
-            } finally {
-                setIsLoadingPrices(false);
+                 console.error("Could not fetch custom prices, using local defaults:", error);
+                 // No toast needed, we silently fall back to the defaults already set.
             }
         };
 
-        fetchPrices();
+        fetchAndUpdatePrices();
     }, [replace]);
+
 
     const watchedValues = form.watch();
 
@@ -202,7 +197,8 @@ export function IroningForm() {
         }
     }
 
-    if (isLoadingPrices) {
+
+    if (itemsFields.length === 0) {
         return <FormSkeleton />;
     }
 

@@ -269,7 +269,7 @@ export function ViewProfileClient() {
                         {profile.searchHistory.slice(0, 5).map((search, index) => (
                             <div key={index} className="flex items-center gap-3 text-white/70 p-3 bg-secondary rounded-md">
                                 <Clock className="w-4 h-4 flex-shrink-0" />
-                                <span>{search}</span>
+                                <span>{search.display}</span>
                             </div>
                         ))}
                     </CardContent>

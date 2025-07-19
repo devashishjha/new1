@@ -98,29 +98,26 @@ function MapView() {
 
   return (
     <div className="relative w-screen h-dvh">
-      {streetViewAvailable ? (
-        <StreetViewPanorama
-          position={position}
-          visible={true}
+      <GoogleMap
+          mapContainerStyle={containerStyle}
+          center={position}
+          zoom={15}
           options={{
-            addressControl: true,
-            enableCloseButton: false,
+              streetViewControl: streetViewAvailable,
+              mapTypeControl: false,
+              fullscreenControl: false,
           }}
-        />
-      ) : (
-        <GoogleMap
-            mapContainerStyle={containerStyle}
-            center={position}
-            zoom={15}
-            options={{
-                streetViewControl: false, // No need for pegman if Street View isn't available
-                mapTypeControl: false,
-                fullscreenControl: false,
-            }}
-        >
-            <MarkerF position={position} />
-        </GoogleMap>
-      )}
+      >
+          {<MarkerF position={position} />}
+          {streetViewAvailable && (
+            <StreetViewPanorama
+              options={{
+                addressControl: true,
+                enableCloseButton: false,
+              }}
+            />
+          )}
+      </GoogleMap>
 
       <div className="absolute top-4 left-4 z-10">
           <Button size="icon" onClick={goBack}>

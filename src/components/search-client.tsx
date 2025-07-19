@@ -23,6 +23,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { LocationAutocomplete } from './location-autocomplete';
 import { History, Loader2, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
 
 type SortDirection = 'asc' | 'desc';
 

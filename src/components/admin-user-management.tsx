@@ -38,7 +38,7 @@ function UserResultCard({ profile, onUpdate }: { profile: UserProfile, onUpdate:
 
         try {
             await updateDoc(userDocRef, { role: newRole });
-            const updatedProfile = { ...profile, role: newRole || undefined };
+            const updatedProfile = { ...profile, role: (newRole || undefined) as UserProfile['role'] };
             onUpdate(updatedProfile);
             toast({ title: 'Success', description: `${profile.name}'s role has been updated.` });
         } catch (error) {

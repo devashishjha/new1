@@ -91,6 +91,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const isAuthPage = pathname === '/';
+  const isServiceSelectionPage = pathname === '/service-selection';
   const userIsLoggedIn = !!user;
 
   useEffect(() => {
@@ -106,7 +107,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // If user IS logged in and is trying to access the login page, redirect to the app's main page.
     if (userIsLoggedIn && isAuthPage) {
-      router.replace('/reels');
+      router.replace('/service-selection');
     }
   }, [loading, userIsLoggedIn, isAuthPage, router]);
 

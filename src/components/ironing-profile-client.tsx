@@ -156,11 +156,14 @@ export function IroningProfileClient() {
                                 <div className="space-y-6">
                                     {orders.map(order => (
                                         <div key={order.id} className="p-4 rounded-lg border">
-                                            <div className="flex justify-between items-center mb-4">
+                                            <div className="flex justify-between items-start mb-4">
                                                 <div>
                                                     <p className="font-semibold text-lg">{formatIndianCurrency(order.totalCost)}</p>
                                                     <p className="text-sm text-muted-foreground">
                                                         {format(new Date(order.placedAt as string), 'PPP')}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground/80 font-mono mt-1">
+                                                        ID: {order.id.slice(0, 8)}...
                                                     </p>
                                                 </div>
                                                 <Badge variant="secondary" className="capitalize">{order.status}</Badge>

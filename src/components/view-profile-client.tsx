@@ -43,49 +43,66 @@ export function ViewProfileClient() {
   const { navigateToChat, isNavigating: isStartingChat } = useChatNavigation();
 
   useEffect(() => {
+    console.log("ViewProfileClient useEffect: userId=", userId, "authLoading=", authLoading, "user=", user ? user.uid : "null");
+
     if (!userId || authLoading) {
+        console.log("ViewProfileClient: Skipping fetch due to missing userId or authLoading.");
         return;
     };
 
     const fetchData = async () => {
       setIsLoading(true);
+      console.log("ViewProfileClient: Attempting to fetch profile data.");
 
       const handleFallback = () => {
         setProfile(null);
         setUserProperties([]);
+        console.log("ViewProfileClient: Fallback handler executed.");
       };
 
       if (!db) {
         handleFallback();
         setIsLoading(false);
+        console.error("ViewProfileClient: Firebase Firestore (db) is not initialized.");
         return;
       }
       
-      const userDocRef = doc(db, 'users', userId);
-      const userDocSnap = await getDoc(userDocRef);
+      try {
+        const userDocRef = doc(db, 'users', userId);
+        console.log("ViewProfileClient: Fetching user document for ID:", userId);
+        const userDocSnap = await getDoc(userDocRef);
 
-      if (userDocSnap.exists()) {
-        const userProfile = { id: userDocSnap.id, ...userDocSnap.data() } as UserProfile;
-        setProfile(userProfile);
-        
-        if (['owner', 'developer', 'dealer'].includes(userProfile.type)) {
-          const q = query(collection(db, "properties"), where("lister.id", "==", userId));
-          const querySnapshot = await getDocs(q);
-          const properties = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Property));
-          setUserProperties(properties.map(p => dateToJSON(p)) as Property[]);
+        if (userDocSnap.exists()) {
+          const userProfile = { id: userDocSnap.id, ...userDocSnap.data() } as UserProfile;
+          setProfile(userProfile);
+          console.log("ViewProfileClient: User profile fetched:", userProfile);
+          
+          if (['owner', 'developer', 'dealer'].includes(userProfile.type)) {
+            console.log("ViewProfileClient: Fetching properties for lister ID:", userId);
+            const q = query(collection(db, "properties"), where("lister.id", "==", userId));
+            const querySnapshot = await getDocs(q);
+            const properties = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Property));
+            setUserProperties(properties.map(p => dateToJSON(p)) as Property[]);
+            console.log("ViewProfileClient: Properties fetched:", properties.length);
+          }
+        } else {
+          handleFallback();
+          console.warn("ViewProfileClient: User document not found for ID:", userId);
         }
-      } else {
-        handleFallback();
+      } catch (error) {
+          console.error("ViewProfileClient: Error fetching profile data: ", error);
+          setProfile(null);
       }
       setIsLoading(false);
+      console.log("ViewProfileClient: Finished fetching data. isLoading set to false.");
     };
 
     fetchData().catch(error => {
-        console.error("Error fetching profile data: ", error);
+        console.error("ViewProfileClient: Uncaught error in fetchData promise: ", error);
         setIsLoading(false);
         setProfile(null);
     });
-  }, [userId, authLoading]);
+  }, [userId, authLoading, user]); // Added 'user' to dependency array for clarity, though it's already covered by authLoading
 
   const handleUpdateProperty = (updatedProperty: Property) => {
     setUserProperties(prev => prev.map(p => p.id === updatedProperty.id ? updatedProperty : p));

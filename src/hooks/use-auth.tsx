@@ -41,10 +41,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!isFirebaseEnabled || !auth) {
       setLoading(false);
+      console.log("Firebase not enabled or auth not initialized in AuthProvider.");
       return;
     }
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
+      console.log("Auth State Changed: Current User =", currentUser ? currentUser.uid : "No user", "Email:", currentUser ? currentUser.email : "N/A");
       
       if (currentUser) {
         // Presence Logic
@@ -85,6 +87,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       setLoading(false);
+      console.log("Auth Loading state set to false. Current user:", currentUser ? currentUser.uid : "null");
     });
 
     return () => unsubscribe();

@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
@@ -19,34 +18,50 @@ export function IroningProfileClient() {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
+        console.log("IroningProfileClient useEffect: authLoading=", authLoading, "user=", user ? user.uid : "null");
         if (authLoading) return;
         if (!user) {
             setIsLoading(false);
+            console.log("IroningProfileClient: No user found, stopping fetch.");
             return;
         }
 
         const fetchData = async () => {
-            if (!db) return;
+            if (!db) {
+                console.error("IroningProfileClient: Firebase Firestore (db) is not initialized.");
+                return;
+            };
             setIsLoading(true);
+            console.log("IroningProfileClient: Attempting to fetch ironing profile and orders.");
             
-            // Fetch Profile
-            const profileDocRef = doc(db, 'ironingProfiles', user.uid);
-            const profileSnap = await getDoc(profileDocRef);
-            if (profileSnap.exists()) {
-                setProfile(profileSnap.data() as IroningProfile);
+            try {
+                // Fetch Profile
+                const profileDocRef = doc(db, 'ironingProfiles', user.uid);
+                console.log("IroningProfileClient: Fetching ironing profile for user ID:", user.uid);
+                const profileSnap = await getDoc(profileDocRef);
+                if (profileSnap.exists()) {
+                    setProfile(profileSnap.data() as IroningProfile);
+                    console.log("IroningProfileClient: Ironing profile fetched.", profileSnap.data());
+                } else {
+                    console.warn("IroningProfileClient: Ironing profile not found for user ID:", user.uid);
+                }
+                
+                // Fetch Orders
+                console.log("IroningProfileClient: Fetching ironing orders for user ID:", user.uid);
+                const ordersQuery = query(
+                    collection(db, 'ironingOrders'), 
+                    where("userId", "==", user.uid),
+                    orderBy("placedAt", "desc")
+                );
+                const ordersSnap = await getDocs(ordersQuery);
+                const fetchedOrders = ordersSnap.docs.map(d => dateToJSON({ id: d.id, ...d.data() }) as IroningOrder);
+                setOrders(fetchedOrders);
+                console.log("IroningProfileClient: Ironing orders fetched:", fetchedOrders.length);
+            } catch (error) {
+                console.error("IroningProfileClient: Error fetching data:", error);
             }
-            
-            // Fetch Orders
-            const ordersQuery = query(
-                collection(db, 'ironingOrders'), 
-                where("userId", "==", user.uid),
-                orderBy("placedAt", "desc")
-            );
-            const ordersSnap = await getDocs(ordersQuery);
-            const fetchedOrders = ordersSnap.docs.map(d => dateToJSON({ id: d.id, ...d.data() }) as IroningOrder);
-            setOrders(fetchedOrders);
-
             setIsLoading(false);
+            console.log("IroningProfileClient: Finished fetching data. isLoading set to false.");
         };
         fetchData();
     }, [user, authLoading]);
@@ -72,29 +87,9 @@ export function IroningProfileClient() {
 
     return (
         <div className="space-y-8">
-            <h1 className="text-4xl font-bold tracking-tight">Your Ironing Profile</h1>
-            <Card>
-                <CardHeader><CardTitle>Your Details</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="flex items-center gap-4"><Mail className="w-5 h-5 text-muted-foreground" /><p>{user.email}</p></div>
-                    {profile?.phone && <div className="flex items-center gap-4"><Phone className="w-5 h-5 text-muted-foreground" /><p>{profile.phone}</p></div>}
-                    {profile?.address && (
-                        <div className="flex items-start gap-4 pt-4 border-t">
-                            <Home className="w-5 h-5 text-muted-foreground mt-1" />
-                            <div>
-                                <p className="font-semibold">Default Address</p>
-                                <p>{profile.address.flatNo}, Floor {profile.address.floorNo}, Block {profile.address.block}</p>
-                                <p>{profile.address.apartmentName}</p>
-                            </div>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
-
             <Card>
                 <CardHeader>
                     <CardTitle>Order History</CardTitle>
-                    <CardDescription>Here are all the orders you've placed with us.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     {orders.length > 0 ? (

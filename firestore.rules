@@ -2,33 +2,35 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Allow signed-in users to read and write to their own user profile
+
+    // Users can read any profile, but only write to their own. Admins can write to any profile.
     match /users/{userId} {
-      allow read;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && (request.auth.uid == userId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
     }
 
-    // Allow signed-in users to read properties, and only the lister to create/update/delete
+    // Signed-in users can read properties. Only the original lister or an admin can update/delete.
     match /properties/{propertyId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null;
-      allow update, delete: if request.auth != null && resource.data.lister.id == request.auth.uid;
+      allow update: if request.auth != null && (resource.data.lister.id == request.auth.uid || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+      allow delete: if request.auth != null && (get(/databases/$(database)/documents/properties/$(propertyId)).data.lister.id == request.auth.uid || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
     }
-    
-    // Allow participants of a chat to read/write to it
+
+    // Chat participants can read and write to the conversation.
     match /chats/{chatId} {
       allow read, write: if request.auth != null && request.auth.uid in resource.data.participantIds;
     }
-    
-    // Allow signed-in users to manage their own ironing profiles and orders
+
+    // Users can manage their own ironing profiles.
     match /ironingProfiles/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
+    // Users can create and read their own ironing orders. No updates/deletes are allowed from the client.
     match /ironingOrders/{orderId} {
       allow read, create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if false; // Disallow updates/deletes for now
+      allow update, delete: if false;
     }
   }
 }

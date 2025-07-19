@@ -20,10 +20,17 @@ export function IroningBottomNavBar() {
         <nav className="fixed bottom-0 left-0 right-0 z-50 bg-transparent backdrop-blur-sm border-t border-border/20">
             <div className="container mx-auto grid grid-cols-4 h-16">
                 {navItems.map((item, index) => {
-                    // Special handling for profile page to highlight both History and Profile icons
-                    const isActive = item.label === 'History' || item.label === 'Profile'
-                        ? pathname.startsWith(item.href)
-                        : pathname === item.href;
+                    // Make active state logic more specific.
+                    // Only highlight the exact page for most, and group History/Profile together.
+                    const isProfilePage = pathname === '/ironing/profile';
+                    let isActive = pathname === item.href;
+
+                    if (isProfilePage && (item.label === 'History' || item.label === 'Profile')) {
+                        isActive = true;
+                    }
+                    if (!isProfilePage && (item.label === 'History' || item.label === 'Profile')) {
+                        isActive = false;
+                    }
                     
                     return (
                         <Link key={`${item.href}-${index}`} href={item.href} className="flex flex-col items-center justify-center text-muted-foreground hover:text-primary transition-colors pt-1">

@@ -15,6 +15,7 @@ import { db } from '@/lib/firebase';
 import { addDoc, collection, serverTimestamp, doc, getDoc, setDoc, runTransaction } from 'firebase/firestore';
 import { Loader2, Plus, Minus, CheckCircle2 } from 'lucide-react';
 import { formatIndianCurrency } from '@/lib/utils';
+import type { UserProfile } from '@/lib/types';
 
 const clothesItemSchema = z.object({
   name: z.string(),
@@ -138,15 +139,22 @@ export function IroningForm() {
                 const orderItems = [ ...values.mens, ...values.womens, ...values.kids ].filter(item => item.quantity > 0);
                 const newOrderRef = doc(collection(db, "ironingOrders")); // Create a new document reference
                 
+                const userDocRef = doc(db, 'users', user.uid);
+                const userDocSnap = await transaction.get(userDocRef);
+                const userProfile = userDocSnap.data() as UserProfile | undefined;
+
                 transaction.set(newOrderRef, {
                     orderId: newOrderId,
-                    userId: user.uid, userEmail: user.email, items: orderItems,
+                    userId: user.uid, userEmail: user.email,
+                    userName: userProfile?.name || 'N/A',
+                    userPhone: userProfile?.phone || 'N/A',
+                    items: orderItems,
                     totalCost, totalItems, status: 'placed', placedAt: serverTimestamp(),
                     address: { apartmentName: values.apartmentName, block: values.block, floorNo: values.floorNo, flatNo: values.flatNo }
                 });
 
-                const userDocRef = doc(db, 'ironingProfiles', user.uid);
-                transaction.set(userDocRef, {
+                const ironingProfileDocRef = doc(db, 'ironingProfiles', user.uid);
+                transaction.set(ironingProfileDocRef, {
                     email: user.email, phone: user.phoneNumber, 
                     address: { apartmentName: values.apartmentName, block: values.block, floorNo: values.floorNo, flatNo: values.flatNo }
                 }, { merge: true });

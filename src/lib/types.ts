@@ -79,7 +79,7 @@ type BaseProfile = {
   email: string;
   phone: string;
   avatar?: string;
-  role?: 'admin';
+  role?: 'admin' | 'service-provider';
 };
 
 export type SearchHistoryItem = {
@@ -160,15 +160,28 @@ export type IroningOrderItem = {
     quantity: number;
 };
 
+export type IroningOrderStatus = 'placed' | 'picked-up' | 'processing' | 'out-for-delivery' | 'completed';
+
+export type StatusUpdate = {
+  status: IroningOrderStatus;
+  timestamp: Timestamp | Date | string;
+  updatedBy: string; // userId of who updated it
+};
+
+
 export type IroningOrder = {
     id: string; // Firestore document ID
     orderId: number; // Sequential numeric ID
     userId: string;
     userEmail: string;
+    userName?: string;
+    userPhone?: string;
     items: IroningOrderItem[];
     totalCost: number;
     totalItems: number;
-    status: 'placed' | 'picked-up' | 'processing' | 'out-for-delivery' | 'completed';
+    status: IroningOrderStatus;
     placedAt: Timestamp | Date | string;
     address: IroningAddress;
+    statusHistory?: StatusUpdate[];
+    estimatedDelivery?: Timestamp | Date | string;
 };

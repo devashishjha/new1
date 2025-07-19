@@ -6,7 +6,7 @@ import { db } from '@/lib/firebase';
 import type { UserProfile } from '@/lib/types';
 import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Shield, ShieldCheck, User, Search, UserX } from 'lucide-react';
+import { Loader2, Shield, ShieldCheck, User, Search, UserX, Shirt } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -16,25 +16,29 @@ import { Input } from './ui/input';
 function UserResultCard({ profile, onUpdate }: { profile: UserProfile, onUpdate: (updatedProfile: UserProfile) => void }) {
     const { toast } = useToast();
     const { user: adminUser } = useAuth();
-    const [isProcessing, setIsProcessing] = useState(false);
+    const [isProcessingAdmin, setIsProcessingAdmin] = useState(false);
+    const [isProcessingServiceProvider, setIsProcessingServiceProvider] = useState(false);
     
     const isSelf = adminUser?.uid === profile.id;
 
-    const handleRoleChange = async () => {
+    const handleRoleChange = async (roleToToggle: 'admin' | 'service-provider') => {
         if (isSelf) {
             toast({ variant: 'destructive', title: 'Action Not Allowed', description: 'You cannot change your own role.' });
             return;
         }
 
-        setIsProcessing(true);
+        if (roleToToggle === 'admin') setIsProcessingAdmin(true);
+        if (roleToToggle === 'service-provider') setIsProcessingServiceProvider(true);
+        
         if (!db) {
             toast({ variant: 'destructive', title: 'Error', description: 'Database not available.' });
-            setIsProcessing(false);
+            if (roleToToggle === 'admin') setIsProcessingAdmin(false);
+            if (roleToToggle === 'service-provider') setIsProcessingServiceProvider(false);
             return;
         }
         
         const userDocRef = doc(db, 'users', profile.id);
-        const newRole = profile.role === 'admin' ? null : 'admin';
+        const newRole = profile.role === roleToToggle ? null : roleToToggle;
 
         try {
             await updateDoc(userDocRef, { role: newRole });
@@ -45,12 +49,13 @@ function UserResultCard({ profile, onUpdate }: { profile: UserProfile, onUpdate:
             console.error("Error updating role:", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not update user role.' });
         } finally {
-            setIsProcessing(false);
+            if (roleToToggle === 'admin') setIsProcessingAdmin(false);
+            if (roleToToggle === 'service-provider') setIsProcessingServiceProvider(false);
         }
     };
 
     return (
-        <div className="border rounded-lg p-4 flex items-center justify-between">
+        <div className="border rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
                  <Avatar className="h-12 w-12">
                     <AvatarImage src={profile.avatar} alt={profile.name} />
@@ -62,18 +67,34 @@ function UserResultCard({ profile, onUpdate }: { profile: UserProfile, onUpdate:
                     <p className="text-xs text-muted-foreground capitalize">{profile.type}</p>
                 </div>
             </div>
-             <Button 
-                size="sm" 
-                variant={profile.role === 'admin' ? 'destructive' : 'outline'}
-                onClick={handleRoleChange}
-                disabled={isProcessing || isSelf}
-            >
-                {isProcessing ? <Loader2 className="animate-spin" /> : (
-                    profile.role === 'admin' 
-                        ? <><ShieldCheck className="mr-2" /> Revoke Admin</>
-                        : <><Shield className="mr-2" /> Grant Admin</>
-                )}
-            </Button>
+             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                 <Button 
+                    size="sm" 
+                    variant={profile.role === 'admin' ? 'destructive' : 'outline'}
+                    onClick={() => handleRoleChange('admin')}
+                    disabled={isProcessingAdmin || isProcessingServiceProvider || isSelf}
+                    className="w-full"
+                >
+                    {isProcessingAdmin ? <Loader2 className="animate-spin" /> : (
+                        profile.role === 'admin' 
+                            ? <><ShieldCheck className="mr-2" /> Revoke Admin</>
+                            : <><Shield className="mr-2" /> Grant Admin</>
+                    )}
+                </Button>
+                <Button 
+                    size="sm" 
+                    variant={profile.role === 'service-provider' ? 'destructive' : 'outline'}
+                    onClick={() => handleRoleChange('service-provider')}
+                    disabled={isProcessingAdmin || isProcessingServiceProvider || isSelf}
+                    className="w-full"
+                >
+                    {isProcessingServiceProvider ? <Loader2 className="animate-spin" /> : (
+                        profile.role === 'service-provider' 
+                            ? <><Shirt className="mr-2" /> Revoke Service Provider</>
+                            : <><Shirt className="mr-2" /> Grant Service Provider</>
+                    )}
+                </Button>
+             </div>
         </div>
     );
 }
@@ -128,7 +149,7 @@ export function AdminUserManagement() {
         <Card>
             <CardHeader>
                 <CardTitle>User Management</CardTitle>
-                <CardDescription>Grant or revoke admin privileges for a specific user by email.</CardDescription>
+                <CardDescription>Grant or revoke user roles by searching for their email.</CardDescription>
             </CardHeader>
             <CardContent>
                 <form onSubmit={handleSearch} className="flex items-center gap-2 mb-6">

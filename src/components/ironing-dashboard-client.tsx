@@ -5,19 +5,135 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import type { IroningOrder, IroningOrderItem, IroningOrderStatus, UserProfile } from '@/lib/types';
 import { db } from '@/lib/firebase';
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, arrayUnion, serverTimestamp, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, updateDoc, arrayUnion, serverTimestamp, getDoc, writeBatch, getDocs } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Loader2, Package, User, Phone, Home, Calendar as CalendarIcon, Edit, Check } from 'lucide-react';
+import { Loader2, Package, User, Phone, Home, Calendar as CalendarIcon, Edit, Check, Tag } from 'lucide-react';
 import { format } from 'date-fns';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
 import { Button } from './ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from './ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+
+const clothesData = {
+    mens: [ { name: 'Shirt', price: 15 }, { name: 'T-Shirt', price: 10 }, { name: 'Trousers', price: 20 }, { name: 'Jeans', price: 20 }, { name: 'Kurta', price: 25 }, { name: 'Pyjama', price: 15 } ],
+    womens: [ { name: 'Top', price: 15 }, { name: 'Saree', price: 50 }, { name: 'Blouse', price: 10 }, { name: 'Kurti', price: 20 }, { name: 'Dress', price: 30 }, { name: 'Leggings', price: 10 } ],
+    kids: [ { name: 'Shirt', price: 8 }, { name: 'Frock', price: 15 }, { name: 'Shorts', price: 7 }, { name: 'Pants', price: 10 } ],
+};
+
+function PriceManagementCard() {
+    const { toast } = useToast();
+    const [prices, setPrices] = useState<Record<string, IroningOrderItem[]>>({ mens: [], womens: [], kids: [] });
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+
+    useEffect(() => {
+        const fetchPrices = async () => {
+            if (!db) return;
+            setIsLoading(true);
+            try {
+                const clothesRef = collection(db, 'clothes');
+                const snapshot = await getDocs(clothesRef);
+
+                if (snapshot.empty) {
+                    // First time setup: Populate Firestore with default prices
+                    const batch = writeBatch(db);
+                    Object.entries(clothesData).forEach(([category, items]) => {
+                        const docRef = doc(db, 'clothes', category);
+                        batch.set(docRef, { items });
+                    });
+                    await batch.commit();
+                    setPrices(clothesData);
+                    toast({ title: "Price list initialized", description: "Default prices have been set." });
+                } else {
+                    const fetchedPrices: Record<string, IroningOrderItem[]> = {};
+                    snapshot.forEach(doc => {
+                        fetchedPrices[doc.id] = doc.data().items;
+                    });
+                    setPrices(fetchedPrices);
+                }
+            } catch (error) {
+                console.error("Error fetching prices:", error);
+                toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch price list.' });
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchPrices();
+    }, [toast]);
+    
+    const handlePriceChange = (category: string, index: number, newPrice: number) => {
+        setPrices(prev => {
+            const updatedItems = [...prev[category]];
+            updatedItems[index] = { ...updatedItems[index], price: newPrice };
+            return { ...prev, [category]: updatedItems };
+        });
+    };
+
+    const handleSavePrices = async () => {
+        if (!db) return;
+        setIsSaving(true);
+        try {
+            const batch = writeBatch(db);
+            Object.entries(prices).forEach(([category, items]) => {
+                const docRef = doc(db, 'clothes', category);
+                batch.update(docRef, { items });
+            });
+            await batch.commit();
+            toast({ title: "Prices Updated", description: "The master price list has been saved." });
+        } catch (error) {
+            console.error("Error saving prices:", error);
+            toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not update prices.' });
+        } finally {
+            setIsSaving(false);
+        }
+    }
+
+    if (isLoading) {
+        return <Card><CardHeader><CardTitle>Loading Price List...</CardTitle></CardHeader><CardContent><Loader2 className="animate-spin" /></CardContent></Card>
+    }
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Tag className="text-primary"/> Manage Pricing</CardTitle>
+                <CardDescription>Set the default price for each item. This will apply to all new orders.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                {Object.entries(prices).map(([category, items]) => (
+                    <div key={category}>
+                        <h3 className="font-semibold capitalize text-lg mb-2">{category}</h3>
+                        <div className="space-y-2">
+                        {items.map((item, index) => (
+                             <div key={item.name} className="flex justify-between items-center text-sm p-2 rounded-lg bg-secondary/30">
+                                <p>{item.name}</p>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-muted-foreground">₹</span>
+                                    <Input
+                                        type="number"
+                                        value={item.price}
+                                        onChange={e => handlePriceChange(category, index, Number(e.target.value))}
+                                        className="h-8 w-20"
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                        </div>
+                    </div>
+                ))}
+            </CardContent>
+            <CardFooter>
+                <Button onClick={handleSavePrices} disabled={isSaving} className="w-full">
+                    {isSaving ? <Loader2 className="animate-spin mr-2" /> : <Check className="mr-2" />}
+                    Save All Prices
+                </Button>
+            </CardFooter>
+        </Card>
+    )
+}
 
 function OrderItemEditor({ item, onPriceChange }: { item: IroningOrderItem, onPriceChange: (newPrice: number) => void }) {
     const [isEditing, setIsEditing] = useState(false);
@@ -223,22 +339,27 @@ export function IroningDashboardClient() {
     }
 
     return (
-        <div>
-            <h1 className="text-4xl font-bold tracking-tight mb-2">Order Dashboard</h1>
-            <p className="text-muted-foreground mb-8">Manage all incoming ironing orders.</p>
+        <div className="space-y-8">
+            <h1 className="text-4xl font-bold tracking-tight mb-2">Service Provider Dashboard</h1>
+            <p className="text-muted-foreground mb-8">Manage pricing and all incoming ironing orders.</p>
 
-            <div className="space-y-6">
-                {orders.length > 0 ? (
-                    orders.map(order => <OrderCard key={order.id} order={order} />)
-                ) : (
-                    <Card>
-                        <CardHeader className="text-center">
-                            <Package className="mx-auto h-12 w-12 text-muted-foreground" />
-                            <CardTitle>No Orders Yet</CardTitle>
-                            <CardDescription>As new orders are placed, they will appear here.</CardDescription>
-                        </CardHeader>
-                    </Card>
-                )}
+            <PriceManagementCard />
+
+            <div>
+                <h2 className="text-2xl font-bold tracking-tight mb-4">Live Orders</h2>
+                <div className="space-y-6">
+                    {orders.length > 0 ? (
+                        orders.map(order => <OrderCard key={order.id} order={order} />)
+                    ) : (
+                        <Card>
+                            <CardHeader className="text-center">
+                                <Package className="mx-auto h-12 w-12 text-muted-foreground" />
+                                <CardTitle>No Orders Yet</CardTitle>
+                                <CardDescription>As new orders are placed, they will appear here.</CardDescription>
+                            </CardHeader>
+                        </Card>
+                    )}
+                </div>
             </div>
         </div>
     );

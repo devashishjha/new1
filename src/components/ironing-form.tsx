@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -12,10 +12,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription }
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
-import { addDoc, collection, serverTimestamp, doc, getDoc, setDoc, runTransaction } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, doc, getDoc, runTransaction, getDocs } from 'firebase/firestore';
 import { Loader2, Plus, Minus, CheckCircle2 } from 'lucide-react';
 import { formatIndianCurrency } from '@/lib/utils';
-import type { UserProfile } from '@/lib/types';
+import type { UserProfile, IroningOrderItem } from '@/lib/types';
+import { Skeleton } from './ui/skeleton';
 
 const clothesItemSchema = z.object({
   name: z.string(),
@@ -24,9 +25,7 @@ const clothesItemSchema = z.object({
 });
 
 const ironingOrderSchema = z.object({
-  mens: z.array(clothesItemSchema),
-  womens: z.array(clothesItemSchema),
-  kids: z.array(clothesItemSchema),
+  items: z.array(clothesItemSchema),
   apartmentName: z.string().min(1, 'Apartment name is required'),
   block: z.string().min(1, 'Block is required'),
   floorNo: z.string().min(1, 'Floor number is required'),
@@ -35,13 +34,7 @@ const ironingOrderSchema = z.object({
 
 type IroningOrder = z.infer<typeof ironingOrderSchema>;
 
-const clothesData = {
-    mens: [ { name: 'Shirt', price: 15 }, { name: 'T-Shirt', price: 10 }, { name: 'Trousers', price: 20 }, { name: 'Jeans', price: 20 }, { name: 'Kurta', price: 25 }, { name: 'Pyjama', price: 15 } ],
-    womens: [ { name: 'Top', price: 15 }, { name: 'Saree', price: 50 }, { name: 'Blouse', price: 10 }, { name: 'Kurti', price: 20 }, { name: 'Dress', price: 30 }, { name: 'Leggings', price: 10 } ],
-    kids: [ { name: 'Shirt', price: 8 }, { name: 'Frock', price: 15 }, { name: 'Shorts', price: 7 }, { name: 'Pants', price: 10 } ],
-};
-
-function ClothesCategory({ category, control, fields, update }: { category: 'mens' | 'womens' | 'kids'; control: any; fields: any[]; update: (index: number, value: any) => void; }) {
+function ClothesCategory({ category, control, fields, update }: { category: string; control: any; fields: any[]; update: (index: number, value: any) => void; }) {
     const handleQuantityChange = (index: number, change: 1 | -1) => {
         const currentQuantity = fields[index].quantity;
         const newQuantity = Math.max(0, currentQuantity + change);
@@ -70,40 +63,81 @@ function ClothesCategory({ category, control, fields, update }: { category: 'men
     )
 }
 
+function FormSkeleton() {
+    return (
+        <div className="space-y-8">
+            {[...Array(3)].map((_, i) => (
+                <Card key={i}>
+                    <CardHeader><Skeleton className="h-8 w-1/4" /></CardHeader>
+                    <CardContent className="space-y-4">
+                        {[...Array(4)].map((_, j) => (
+                            <div key={j} className="flex items-center justify-between p-2">
+                                <div>
+                                    <Skeleton className="h-6 w-24 mb-1" />
+                                    <Skeleton className="h-4 w-16" />
+                                </div>
+                                <Skeleton className="h-10 w-32" />
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+            ))}
+        </div>
+    )
+}
+
 export function IroningForm() {
     const { toast } = useToast();
     const { user } = useAuth();
     const [isSubmitting, setIsSubmitting] = React.useState(false);
     const [step, setStep] = React.useState(1); // 1: items, 2: address, 3: payment, 4: success
-
+    const [isLoadingPrices, setIsLoadingPrices] = React.useState(true);
+    
     const form = useForm<IroningOrder>({
         resolver: zodResolver(ironingOrderSchema),
         defaultValues: {
-            mens: clothesData.mens.map(item => ({ ...item, quantity: 0 })),
-            womens: clothesData.womens.map(item => ({ ...item, quantity: 0 })),
-            kids: clothesData.kids.map(item => ({ ...item, quantity: 0 })),
+            items: [],
             apartmentName: '', block: '', floorNo: '', flatNo: ''
         },
     });
 
-    const { fields: mensFields, update: updateMens } = useFieldArray({ control: form.control, name: "mens" });
-    const { fields: womensFields, update: updateWomens } = useFieldArray({ control: form.control, name: "womens" });
-    const { fields: kidsFields, update: updateKids } = useFieldArray({ control: form.control, name: "kids" });
+    const { fields: itemsFields, update: updateItems, replace } = useFieldArray({ control: form.control, name: "items" });
     
+    React.useEffect(() => {
+        const fetchPrices = async () => {
+            if (!db) {
+                toast({ variant: 'destructive', title: "Error", description: "Could not load pricing. Please try again later." });
+                setIsLoadingPrices(false);
+                return;
+            };
+            setIsLoadingPrices(true);
+            try {
+                const clothesRef = collection(db, 'clothes');
+                const snapshot = await getDocs(clothesRef);
+                const allItems: IroningOrderItem[] = [];
+                snapshot.forEach(doc => {
+                    const categoryItems = doc.data().items as IroningOrderItem[];
+                    allItems.push(...categoryItems.map(item => ({...item, quantity: 0})));
+                });
+                replace(allItems);
+            } catch (error) {
+                 toast({ variant: 'destructive', title: "Error", description: "Could not load pricing. Please try again later." });
+            } finally {
+                setIsLoadingPrices(false);
+            }
+        };
+
+        fetchPrices();
+    }, [replace, toast]);
+
     const watchedValues = form.watch();
 
     const totalCost = React.useMemo(() => {
-        const mensCost = watchedValues.mens.reduce((acc, item) => acc + item.quantity * item.price, 0);
-        const womensCost = watchedValues.womens.reduce((acc, item) => acc + item.quantity * item.price, 0);
-        const kidsCost = watchedValues.kids.reduce((acc, item) => acc + item.quantity, 0);
-        return mensCost + womensCost + kidsCost;
+        return watchedValues.items.reduce((acc, item) => acc + item.quantity * item.price, 0);
     }, [watchedValues]);
 
     const totalItems = React.useMemo(() => {
-        const mensItems = watchedValues.mens.reduce((acc, item) => acc + item.quantity, 0);
-        const womensItems = watchedValues.womens.reduce((acc, item) => acc + item.quantity, 0);
-        const kidsItems = watchedValues.kids.reduce((acc, item) => acc + item.quantity, 0);
-        return mensItems + womensItems + kidsItems;
+        return watchedValues.items.reduce((acc, item) => acc + item.quantity, 0);
     }, [watchedValues]);
 
     const handleNextStep = async () => {
@@ -136,7 +170,7 @@ export function IroningForm() {
                 
                 transaction.set(counterRef, { currentId: newOrderId }, { merge: true });
                 
-                const orderItems = [ ...values.mens, ...values.womens, ...values.kids ].filter(item => item.quantity > 0);
+                const orderItems = values.items.filter(item => item.quantity > 0);
                 const newOrderRef = doc(collection(db, "ironingOrders")); // Create a new document reference
                 
                 const userDocRef = doc(db, 'users', user.uid);
@@ -170,6 +204,10 @@ export function IroningForm() {
         }
     }
 
+    if (isLoadingPrices) {
+        return <FormSkeleton />;
+    }
+
     if (step === 4) {
         return (
             <Card className="text-center p-8">
@@ -189,11 +227,24 @@ export function IroningForm() {
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 {step === 1 && (
-                    <>
-                        <ClothesCategory category="mens" control={form.control} fields={mensFields} update={updateMens} />
-                        <ClothesCategory category="womens" control={form.control} fields={womensFields} update={updateWomens} />
-                        <ClothesCategory category="kids" control={form.control} fields={kidsFields} update={updateKids} />
-                    </>
+                     <Card>
+                        <CardHeader><CardTitle className="capitalize">Select Items</CardTitle></CardHeader>
+                        <CardContent className="space-y-4">
+                            {itemsFields.map((field, index) => (
+                                <div key={field.id} className="flex items-center justify-between p-2 rounded-lg bg-secondary/30">
+                                    <div>
+                                        <p className="font-medium">{field.name}</p>
+                                        <p className="text-sm text-muted-foreground">{formatIndianCurrency(field.price)} / item</p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Button type="button" size="icon" variant="outline" onClick={() => { const q = Math.max(0, field.quantity-1); updateItems(index, {...field, quantity: q}) }} disabled={field.quantity === 0}><Minus className="h-4 w-4" /></Button>
+                                        <span className="font-bold text-lg w-10 text-center">{field.quantity}</span>
+                                        <Button type="button" size="icon" variant="outline" onClick={() => { const q = field.quantity+1; updateItems(index, {...field, quantity: q}) }}><Plus className="h-4 w-4" /></Button>
+                                    </div>
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
                 )}
                 
                 {step === 2 && (

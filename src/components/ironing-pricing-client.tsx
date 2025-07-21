@@ -14,8 +14,6 @@ import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
-import type { IroningPriceItem } from '@/lib/types';
-import { Skeleton } from './ui/skeleton';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 import { useRouter } from 'next/navigation';
 
@@ -29,7 +27,7 @@ const pricingSchema = z.object({
   items: z.array(priceItemSchema),
 });
 
-type PricingForm = z.infer<typeof pricingSchema>;
+type PricingFormValues = z.infer<typeof pricingSchema>;
 
 const defaultClothesData: z.infer<typeof priceItemSchema>[] = [
     { name: 'Shirt', price: 15, category: 'men' },
@@ -50,38 +48,13 @@ const defaultClothesData: z.infer<typeof priceItemSchema>[] = [
     { name: 'Pants', price: 10, category: 'kids' },
 ];
 
-function PricingSkeleton() {
-    return (
-        <div className="space-y-8">
-            <Card>
-                <CardHeader>
-                    <Skeleton className="h-8 w-1/2" />
-                    <Skeleton className="h-4 w-3/4" />
-                </CardHeader>
-                <CardContent className="space-y-4">
-                     <Skeleton className="h-12 w-full" />
-                     <Skeleton className="h-12 w-full" />
-                     <Skeleton className="h-12 w-full" />
-                </CardContent>
-                <CardFooter>
-                    <Skeleton className="h-12 w-full" />
-                </CardFooter>
-            </Card>
-        </div>
-    )
-}
-
-export function IroningPricingClient() {
+function PricingForm({ initialData }: { initialData: PricingFormValues }) {
     const { toast } = useToast();
-    const { user, loading: authLoading } = useAuth();
-    const router = useRouter();
     const [isSubmitting, setIsSubmitting] = React.useState(false);
-    const [isLoading, setIsLoading] = React.useState(true);
-    const [initialPrices, setInitialPrices] = React.useState<PricingForm | null>(null);
-    
-    const form = useForm<PricingForm>({
+
+    const form = useForm<PricingFormValues>({
         resolver: zodResolver(pricingSchema),
-        defaultValues: { items: [] },
+        defaultValues: initialData,
     });
 
     const { fields } = useFieldArray({
@@ -89,62 +62,19 @@ export function IroningPricingClient() {
         name: "items",
     });
 
-    React.useEffect(() => {
-        if (authLoading) return;
-        if (!user) {
-            router.push('/ironing');
-            return;
-        }
+    const categories = React.useMemo(() => {
+        return fields.reduce((acc, field) => {
+            if (!acc.includes(field.category)) acc.push(field.category);
+            return acc;
+        }, [] as string[]);
+    }, [fields]);
 
-        const fetchOrInitializePrices = async () => {
-             setIsLoading(true);
-             if (!db) {
-                toast({ variant: 'destructive', title: 'Error', description: 'Database not available.' });
-                setIsLoading(false);
-                return;
-            }
-
-            try {
-                const pricesDocRef = doc(db, 'clothes', 'defaultPrices');
-                const docSnap = await getDoc(pricesDocRef);
-                
-                if (docSnap.exists()) {
-                    const priceData = docSnap.data().items as IroningPriceItem[];
-                    setInitialPrices({ items: priceData });
-                } else {
-                    toast({ title: 'Welcome!', description: 'Setting up your default price list.' });
-                    // Here we save the default data *without* the 'category' for consistency with IroningPriceItem
-                    const itemsToSave = defaultClothesData.map(({category, ...item}) => item);
-                    await setDoc(pricesDocRef, { items: itemsToSave });
-                    setInitialPrices({ items: defaultClothesData });
-                }
-            } catch (error) {
-                 console.error("Could not fetch or initialize prices:", error);
-                 toast({variant: 'destructive', title: 'Error', description: 'Could not load the pricing page.'});
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchOrInitializePrices();
-    }, [authLoading, user, router, toast]);
-
-    React.useEffect(() => {
-        if (initialPrices) {
-            form.reset(initialPrices);
-        }
-    }, [initialPrices, form]);
-
-
-    async function onSubmit(values: PricingForm) {
-        if (!user || !db) return;
+    async function onSubmit(values: PricingFormValues) {
         setIsSubmitting(true);
-        
         try {
+            if (!db) throw new Error("Database not initialized.");
             const pricesDocRef = doc(db, 'clothes', 'defaultPrices');
-            // When saving, we strip the category out as it's not part of the IroningPriceItem type
-            const itemsToSave = values.items.map(({category, ...item}) => item);
-            await setDoc(pricesDocRef, { items: itemsToSave });
+            await setDoc(pricesDocRef, values);
             toast({ title: "Prices Updated", description: "The new prices are now live for all customers." });
         } catch (error) {
             console.error("Error updating prices:", error);
@@ -152,19 +82,6 @@ export function IroningPricingClient() {
         } finally {
             setIsSubmitting(false);
         }
-    }
-    
-    const categories = React.useMemo(() => {
-        return fields.reduce((acc, field) => {
-            if (!acc.includes(field.category)) {
-                acc.push(field.category);
-            }
-            return acc;
-        }, [] as string[]);
-    }, [fields]);
-
-    if (isLoading || authLoading || !initialPrices) {
-        return <PricingSkeleton />;
     }
 
     return (
@@ -196,12 +113,11 @@ export function IroningPricingClient() {
                                                                 <div className="flex items-center gap-2">
                                                                     <span className="text-muted-foreground">₹</span>
                                                                     <FormControl>
-                                                                        <Input 
+                                                                        <Input
                                                                             type="number"
                                                                             id={`items.${index}.price`}
-                                                                            name={`items.${index}.price`}
-                                                                            className="w-24 h-9"
                                                                             {...priceField}
+                                                                            className="w-24 h-9"
                                                                         />
                                                                     </FormControl>
                                                                 </div>
@@ -225,5 +141,71 @@ export function IroningPricingClient() {
                 </Card>
             </form>
         </Form>
-    );
+    )
+}
+
+
+export function IroningPricingClient() {
+    const { user, loading: authLoading } = useAuth();
+    const router = useRouter();
+    const { toast } = useToast();
+    const [initialData, setInitialData] = React.useState<PricingFormValues | null>(null);
+    const [isLoading, setIsLoading] = React.useState(true);
+
+    React.useEffect(() => {
+        if (authLoading) return;
+        if (!user) {
+            router.push('/ironing');
+            return;
+        }
+
+        const fetchOrInitializePrices = async () => {
+             setIsLoading(true);
+             if (!db) {
+                toast({ variant: 'destructive', title: 'Error', description: 'Database not available.' });
+                setIsLoading(false);
+                return;
+            }
+
+            try {
+                const pricesDocRef = doc(db, 'clothes', 'defaultPrices');
+                const docSnap = await getDoc(pricesDocRef);
+
+                if (docSnap.exists()) {
+                    setInitialData(docSnap.data() as PricingFormValues);
+                } else {
+                    toast({ title: 'Welcome!', description: 'Setting up your default price list.' });
+                    const defaultData = { items: defaultClothesData };
+                    await setDoc(pricesDocRef, defaultData);
+                    setInitialData(defaultData);
+                }
+            } catch (error) {
+                 console.error("Could not fetch or initialize prices:", error);
+                 toast({variant: 'destructive', title: 'Error', description: 'Could not load the pricing page.'});
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchOrInitializePrices();
+    }, [authLoading, user, router, toast]);
+
+    if (isLoading || authLoading) {
+        return (
+            <div className="flex justify-center items-center py-20">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                <p className="ml-4">Loading pricing editor...</p>
+            </div>
+        )
+    }
+
+    if (!initialData) {
+        return (
+            <div className="flex justify-center items-center py-20">
+                <p className="text-destructive">Could not load pricing data. Please try again later.</p>
+            </div>
+        )
+    }
+
+    return <PricingForm initialData={initialData} />
 }

@@ -85,13 +85,12 @@ export function IroningForm() {
     const { fields: itemsFields, update: updateItems, replace } = useFieldArray({ control: form.control, name: "items" });
     
     React.useEffect(() => {
-        const defaultItems = Object.entries(clothesData).flatMap(([category, items]) => 
-            items.map(item => ({ ...item, quantity: 0, category }))
-        );
-
-        const fetchAndUpdatePrices = async () => {
+        const fetchOrInitializePrices = async () => {
             if (!db) {
                 console.warn("Firestore not available. Using default prices.");
+                const defaultItems = Object.entries(clothesData).flatMap(([category, items]) => 
+                    items.map(item => ({ ...item, quantity: 0, category }))
+                );
                 replace(defaultItems);
                 return;
             }
@@ -99,6 +98,7 @@ export function IroningForm() {
             try {
                 const clothesRef = collection(db, 'clothes');
                 const snapshot = await getDocs(clothesRef);
+                let loadedPrices: z.infer<typeof clothesItemSchema>[] = [];
                 
                 if (snapshot.empty) {
                     console.log("No custom prices found, initializing 'clothes' collection with default data.");
@@ -106,35 +106,34 @@ export function IroningForm() {
                     Object.entries(clothesData).forEach(([category, items]) => {
                         const docRef = doc(db, 'clothes', category);
                         batch.set(docRef, { items });
+                        items.forEach(item => {
+                            loadedPrices.push({ ...item, quantity: 0, category });
+                        });
                     });
                     await batch.commit();
-                    replace(defaultItems);
-                    return;
-                }
-
-                const dbPrices: Record<string, Record<string, number>> = {};
-                snapshot.forEach(doc => {
-                    const categoryItems = doc.data().items as IroningPriceItem[];
-                    dbPrices[doc.id] = {};
-                    categoryItems.forEach(item => {
-                        dbPrices[doc.id][item.name] = item.price;
+                } else {
+                    snapshot.forEach(doc => {
+                        const category = doc.id;
+                        const categoryItems = doc.data().items as IroningPriceItem[];
+                        categoryItems.forEach(item => {
+                             loadedPrices.push({ ...item, quantity: 0, category });
+                        });
                     });
-                });
+                }
+                replace(loadedPrices);
 
-                const updatedItems = defaultItems.map(item => ({
-                    ...item,
-                    price: dbPrices[item.category]?.[item.name] !== undefined ? dbPrices[item.category][item.name] : item.price,
-                }));
-
-                replace(updatedItems);
             } catch (error) {
                  console.error("Could not fetch or initialize custom prices, falling back to local defaults:", error);
+                 const defaultItems = Object.entries(clothesData).flatMap(([category, items]) => 
+                    items.map(item => ({ ...item, quantity: 0, category }))
+                 );
                  replace(defaultItems);
+                 toast({variant: 'destructive', title: 'Error', description: 'Could not fetch latest price list.'});
             }
         };
 
-        fetchAndUpdatePrices();
-    }, [replace]);
+        fetchOrInitializePrices();
+    }, [replace, toast]);
 
 
     const watchedValues = form.watch();

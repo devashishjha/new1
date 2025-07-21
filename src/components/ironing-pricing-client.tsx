@@ -73,15 +73,14 @@ export function IroningPricingClient() {
     });
 
     React.useEffect(() => {
-        if (authLoading) return;
-        if (!user) {
-            router.push('/ironing');
+        if (authLoading || !user) {
+            if (!authLoading && !user) router.push('/ironing');
             return;
         }
 
-        const fetchPrices = async () => {
+        const fetchOrInitializePrices = async () => {
              if (!db) {
-                console.warn("Firestore not available.");
+                toast({ variant: 'destructive', title: 'Error', description: 'Database not available.' });
                 return;
             }
 
@@ -89,16 +88,17 @@ export function IroningPricingClient() {
                 const clothesRef = collection(db, 'clothes');
                 const snapshot = await getDocs(clothesRef);
                 
-                let dbPrices: z.infer<typeof priceItemSchema>[] = [];
+                let loadedPrices: z.infer<typeof priceItemSchema>[] = [];
 
                 if (snapshot.empty) {
                     toast({ title: 'Welcome!', description: 'Setting up your default price list.' });
                     const batch = writeBatch(db);
                     Object.entries(clothesData).forEach(([category, items]) => {
                         const docRef = doc(db, 'clothes', category);
-                        batch.set(docRef, { items });
-                        items.forEach(item => {
-                            dbPrices.push({ ...item, category });
+                        const categoryData = { items };
+                        batch.set(docRef, categoryData);
+                        categoryData.items.forEach(item => {
+                            loadedPrices.push({ ...item, category });
                         });
                     });
                     await batch.commit();
@@ -107,12 +107,12 @@ export function IroningPricingClient() {
                         const category = doc.id;
                         const categoryItems = doc.data().items as IroningPriceItem[];
                         categoryItems.forEach(item => {
-                            dbPrices.push({ ...item, category });
+                            loadedPrices.push({ ...item, category });
                         });
                     });
                 }
                 
-                replace(dbPrices);
+                replace(loadedPrices);
 
             } catch (error) {
                  console.error("Could not fetch or initialize prices:", error);
@@ -120,7 +120,7 @@ export function IroningPricingClient() {
             }
         };
 
-        fetchPrices();
+        fetchOrInitializePrices();
     }, [replace, authLoading, user, router, toast]);
 
     async function onSubmit(values: PricingForm) {

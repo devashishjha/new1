@@ -380,7 +380,7 @@ export function IroningDashboardClient() {
 
             <Tabs defaultValue="orders" className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="orders">Order History</TabsTrigger>
+                    <TabsTrigger value="orders">Live Orders</TabsTrigger>
                     <TabsTrigger value="pricing">Manage Pricing</TabsTrigger>
                 </TabsList>
                 <TabsContent value="orders" className="mt-6">
@@ -416,5 +416,3 @@ export function IroningDashboardClient() {
         </div>
     );
 }
-
-    

@@ -55,6 +55,15 @@ function FormSkeleton() {
                     ))}
                 </CardContent>
             </Card>
+             <Card className="sticky bottom-20 z-10">
+                <CardHeader><Skeleton className="h-8 w-1/2" /></CardHeader>
+                <CardContent>
+                     <Skeleton className="h-6 w-full" />
+                </CardContent>
+                <CardFooter>
+                    <Skeleton className="h-12 w-full" />
+                </CardFooter>
+            </Card>
         </div>
     )
 }

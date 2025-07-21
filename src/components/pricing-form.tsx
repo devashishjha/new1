@@ -29,7 +29,7 @@ const pricingSchema = z.object({
 
 type PricingFormValues = z.infer<typeof pricingSchema>;
 
-export default function PricingForm({ initialValues }: { initialValues: { items: IroningPriceItem[] } }) {
+function PricingForm({ initialValues }: { initialValues: { items: IroningPriceItem[] } }) {
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -147,3 +147,5 @@ export default function PricingForm({ initialValues }: { initialValues: { items:
         </FormProvider>
     )
 }
+
+export default PricingForm;

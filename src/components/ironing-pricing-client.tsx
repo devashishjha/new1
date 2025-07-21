@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import PricingForm from "./pricing-form"; 
+import PricingForm from "@/components/pricing-form"; 
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";

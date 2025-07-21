@@ -1,6 +1,8 @@
 
+'use client';
+
 import { Header } from "@/components/header";
-import { IroningPricingClient } from "@/components/ironing-pricing-client";
+import IroningPricingClient from "@/components/ironing-pricing-client";
 
 export default function IroningPricingPage() {
   return (

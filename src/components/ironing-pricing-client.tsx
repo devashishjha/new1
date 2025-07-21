@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
-import { collection, doc, getDocs, writeBatch } from 'firebase/firestore';
+import { collection, doc, getDoc, setDoc } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import type { IroningPriceItem } from '@/lib/types';
 import { Skeleton } from './ui/skeleton';
@@ -30,11 +30,24 @@ const pricingSchema = z.object({
 
 type PricingForm = z.infer<typeof pricingSchema>;
 
-const clothesData: Record<string, IroningPriceItem[]> = {
-    men: [ { name: 'Shirt', price: 15 }, { name: 'T-Shirt', price: 10 }, { name: 'Trousers', price: 20 }, { name: 'Jeans', price: 20 }, { name: 'Kurta', price: 25 }, { name: 'Pyjama', price: 15 } ],
-    women: [ { name: 'Top', price: 15 }, { name: 'Saree', price: 50 }, { name: 'Blouse', price: 10 }, { name: 'Kurti', price: 20 }, { name: 'Dress', price: 30 }, { name: 'Leggings', price: 10 } ],
-    kids: [ { name: 'Shirt', price: 8 }, { name: 'Frock', price: 15 }, { name: 'Shorts', price: 7 }, { name: 'Pants', price: 10 } ],
-};
+const defaultClothesData: z.infer<typeof priceItemSchema>[] = [
+    { name: 'Shirt', price: 15, category: 'men' },
+    { name: 'T-Shirt', price: 10, category: 'men' },
+    { name: 'Trousers', price: 20, category: 'men' },
+    { name: 'Jeans', price: 20, category: 'men' },
+    { name: 'Kurta', price: 25, category: 'men' },
+    { name: 'Pyjama', price: 15, category: 'men' },
+    { name: 'Top', price: 15, category: 'women' },
+    { name: 'Saree', price: 50, category: 'women' },
+    { name: 'Blouse', price: 10, category: 'women' },
+    { name: 'Kurti', price: 20, category: 'women' },
+    { name: 'Dress', price: 30, category: 'women' },
+    { name: 'Leggings', price: 10, category: 'women' },
+    { name: 'Shirt', price: 8, category: 'kids' },
+    { name: 'Frock', price: 15, category: 'kids' },
+    { name: 'Shorts', price: 7, category: 'kids' },
+    { name: 'Pants', price: 10, category: 'kids' },
+];
 
 function PricingSkeleton() {
     return (
@@ -89,36 +102,18 @@ export function IroningPricingClient() {
             }
 
             try {
-                const clothesRef = collection(db, 'clothes');
-                const snapshot = await getDocs(clothesRef);
+                const pricesDocRef = doc(db, 'clothes', 'defaultPrices');
+                const docSnap = await getDoc(pricesDocRef);
                 
-                let loadedPrices: z.infer<typeof priceItemSchema>[] = [];
-                const defaultPrices = Object.entries(clothesData).flatMap(([category, items]) => 
-                    items.map(item => ({ ...item, category }))
-                );
-
-                if (snapshot.empty) {
-                    toast({ title: 'Welcome!', description: 'Setting up your default price list.' });
-                    const batch = writeBatch(db);
-                    Object.entries(clothesData).forEach(([category, items]) => {
-                        const docRef = doc(db, 'clothes', category);
-                        const categoryData = { items };
-                        batch.set(docRef, categoryData);
-                    });
-                    await batch.commit();
-                    loadedPrices = defaultPrices;
+                if (docSnap.exists()) {
+                    const priceData = docSnap.data().items as IroningPriceItem[];
+                    replace(priceData);
                 } else {
-                    snapshot.forEach(doc => {
-                        const category = doc.id;
-                        const categoryItems = doc.data().items as IroningPriceItem[];
-                        categoryItems.forEach(item => {
-                            loadedPrices.push({ ...item, category });
-                        });
-                    });
+                    toast({ title: 'Welcome!', description: 'Setting up your default price list.' });
+                    const itemsToStore = defaultClothesData.map(({category, ...item}) => item);
+                    await setDoc(pricesDocRef, { items: itemsToStore });
+                    replace(defaultClothesData);
                 }
-                
-                replace(loadedPrices);
-
             } catch (error) {
                  console.error("Could not fetch or initialize prices:", error);
                  toast({variant: 'destructive', title: 'Error', description: 'Could not load the pricing page.'});
@@ -135,25 +130,9 @@ export function IroningPricingClient() {
         setIsSubmitting(true);
         
         try {
-            const batch = writeBatch(db);
-            const categorizedItems: Record<string, IroningPriceItem[]> = {};
-
-            values.items.forEach(item => {
-                if (!categorizedItems[item.category]) {
-                    categorizedItems[item.category] = [];
-                }
-                categorizedItems[item.category].push({
-                    name: item.name,
-                    price: item.price,
-                });
-            });
-
-            for (const category in categorizedItems) {
-                const docRef = doc(db, 'clothes', category);
-                batch.set(docRef, { items: categorizedItems[category] });
-            }
-
-            await batch.commit();
+            const pricesDocRef = doc(db, 'clothes', 'defaultPrices');
+            const itemsToStore = values.items.map(({category, ...item}) => item);
+            await setDoc(pricesDocRef, { items: itemsToStore });
             toast({ title: "Prices Updated", description: "The new prices are now live for all customers." });
         } catch (error) {
             console.error("Error updating prices:", error);
@@ -236,3 +215,5 @@ export function IroningPricingClient() {
         </Form>
     );
 }
+
+    

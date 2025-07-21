@@ -12,10 +12,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription }
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
-import { addDoc, collection, serverTimestamp, doc, getDoc, runTransaction, getDocs, writeBatch } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, doc, getDoc, runTransaction, setDoc } from 'firebase/firestore';
 import { Loader2, Plus, Minus, CheckCircle2 } from 'lucide-react';
 import { formatIndianCurrency } from '@/lib/utils';
-import type { UserProfile, IroningOrderItem, IroningPriceItem } from '@/lib/types';
+import type { UserProfile, IroningPriceItem } from '@/lib/types';
 import { Skeleton } from './ui/skeleton';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 
@@ -36,11 +36,24 @@ const ironingOrderSchema = z.object({
 
 type IroningOrder = z.infer<typeof ironingOrderSchema>;
 
-const clothesData: Record<string, IroningPriceItem[]> = {
-    men: [ { name: 'Shirt', price: 15 }, { name: 'T-Shirt', price: 10 }, { name: 'Trousers', price: 20 }, { name: 'Jeans', price: 20 }, { name: 'Kurta', price: 25 }, { name: 'Pyjama', price: 15 } ],
-    women: [ { name: 'Top', price: 15 }, { name: 'Saree', price: 50 }, { name: 'Blouse', price: 10 }, { name: 'Kurti', price: 20 }, { name: 'Dress', price: 30 }, { name: 'Leggings', price: 10 } ],
-    kids: [ { name: 'Shirt', price: 8 }, { name: 'Frock', price: 15 }, { name: 'Shorts', price: 7 }, { name: 'Pants', price: 10 } ],
-};
+const defaultClothesData: z.infer<typeof clothesItemSchema>[] = [
+    { name: 'Shirt', price: 15, quantity: 0, category: 'men' },
+    { name: 'T-Shirt', price: 10, quantity: 0, category: 'men' },
+    { name: 'Trousers', price: 20, quantity: 0, category: 'men' },
+    { name: 'Jeans', price: 20, quantity: 0, category: 'men' },
+    { name: 'Kurta', price: 25, quantity: 0, category: 'men' },
+    { name: 'Pyjama', price: 15, quantity: 0, category: 'men' },
+    { name: 'Top', price: 15, quantity: 0, category: 'women' },
+    { name: 'Saree', price: 50, quantity: 0, category: 'women' },
+    { name: 'Blouse', price: 10, quantity: 0, category: 'women' },
+    { name: 'Kurti', price: 20, quantity: 0, category: 'women' },
+    { name: 'Dress', price: 30, quantity: 0, category: 'women' },
+    { name: 'Leggings', price: 10, quantity: 0, category: 'women' },
+    { name: 'Shirt', price: 8, quantity: 0, category: 'kids' },
+    { name: 'Frock', price: 15, quantity: 0, category: 'kids' },
+    { name: 'Shorts', price: 7, quantity: 0, category: 'kids' },
+    { name: 'Pants', price: 10, quantity: 0, category: 'kids' },
+];
 
 function FormSkeleton() {
     return (
@@ -88,44 +101,30 @@ export function IroningForm() {
     React.useEffect(() => {
         const fetchOrInitializePrices = async () => {
             setIsLoadingPrices(true);
-            const defaultItems = Object.entries(clothesData).flatMap(([category, items]) => 
-                items.map(item => ({ ...item, quantity: 0, category }))
-            );
-
+            
             if (!db) {
                 console.warn("Firestore not available. Using default prices.");
-                replace(defaultItems);
+                replace(defaultClothesData);
                 setIsLoadingPrices(false);
                 return;
             }
 
             try {
-                const clothesRef = collection(db, 'clothes');
-                const snapshot = await getDocs(clothesRef);
+                const pricesDocRef = doc(db, 'clothes', 'defaultPrices');
+                const docSnap = await getDoc(pricesDocRef);
                 
-                if (snapshot.empty) {
-                    console.log("No custom prices found, initializing 'clothes' collection with default data.");
-                    const batch = writeBatch(db);
-                    Object.entries(clothesData).forEach(([category, items]) => {
-                        const docRef = doc(db, 'clothes', category);
-                        batch.set(docRef, { items });
-                    });
-                    await batch.commit();
-                    replace(defaultItems);
+                if (docSnap.exists()) {
+                    const priceData = docSnap.data().items as IroningPriceItem[];
+                    const itemsWithQuantity = priceData.map(item => ({ ...item, quantity: 0 }));
+                    replace(itemsWithQuantity);
                 } else {
-                    let loadedPrices: z.infer<typeof clothesItemSchema>[] = [];
-                    snapshot.forEach(doc => {
-                        const category = doc.id;
-                        const categoryItems = doc.data().items as IroningPriceItem[];
-                        categoryItems.forEach(item => {
-                             loadedPrices.push({ ...item, quantity: 0, category });
-                        });
-                    });
-                    replace(loadedPrices);
+                    console.log("No price list found, creating one with default data.");
+                    await setDoc(pricesDocRef, { items: defaultClothesData.map(({quantity, category, ...item}) => item) });
+                    replace(defaultClothesData);
                 }
             } catch (error) {
-                 console.error("Could not fetch or initialize custom prices, falling back to local defaults:", error);
-                 replace(defaultItems);
+                 console.error("Could not fetch or initialize price list, falling back to local defaults:", error);
+                 replace(defaultClothesData);
                  toast({variant: 'destructive', title: 'Error', description: 'Could not fetch latest price list.'});
             } finally {
                 setIsLoadingPrices(false);
@@ -137,6 +136,15 @@ export function IroningForm() {
 
 
     const watchedValues = form.watch();
+    const categories = React.useMemo(() => {
+        return itemsFields.reduce((acc, field) => {
+            if (!acc.includes(field.category)) {
+                acc.push(field.category);
+            }
+            return acc;
+        }, [] as string[]);
+    }, [itemsFields]);
+
 
     const totalCost = React.useMemo(() => {
         return watchedValues.items.reduce((acc, item) => acc + item.quantity * item.price, 0);
@@ -238,7 +246,7 @@ export function IroningForm() {
                         <CardHeader><CardTitle className="capitalize">Select Items</CardTitle></CardHeader>
                         <CardContent>
                            <Accordion type="multiple" className="w-full" defaultValue={['men']}>
-                                {Object.keys(clothesData).map(category => (
+                                {categories.map(category => (
                                     <AccordionItem value={category} key={category}>
                                         <AccordionTrigger className="text-lg font-semibold capitalize">{category}</AccordionTrigger>
                                         <AccordionContent>
@@ -317,3 +325,5 @@ export function IroningForm() {
         </Form>
     );
 }
+
+    

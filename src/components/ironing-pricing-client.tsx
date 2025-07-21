@@ -194,12 +194,14 @@ export function IroningPricingClient() {
                                                         name={`items.${index}.price`}
                                                         render={({ field: priceField }) => (
                                                              <FormItem className="flex items-center justify-between p-2 rounded-lg bg-secondary/30">
-                                                                <FormLabel className="font-medium">{fields[index].name}</FormLabel>
+                                                                <FormLabel htmlFor={`items.${index}.price`} className="font-medium">{fields[index].name}</FormLabel>
                                                                 <div className="flex items-center gap-2">
                                                                     <span className="text-muted-foreground">₹</span>
                                                                     <FormControl>
                                                                         <Input 
                                                                             type="number"
+                                                                            id={`items.${index}.price`}
+                                                                            name={`items.${index}.price`}
                                                                             className="w-24 h-9"
                                                                             {...priceField}
                                                                         />

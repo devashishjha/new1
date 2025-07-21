@@ -292,7 +292,7 @@ export function IroningForm() {
                         {step === 2 && <Button type="button" size="lg" className="w-full" onClick={handleNextStep}>Next</Button>}
                         {step === 3 && <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>{isSubmitting ? <><Loader2 className="animate-spin mr-2" /> Placing Order...</> : 'Place Order'}</Button>}
                     </CardFooter>
-                </form>
+                </Card>
             </form>
         </Form>
     );

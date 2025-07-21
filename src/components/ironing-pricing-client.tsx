@@ -10,29 +10,30 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import type { IroningPriceItem } from "@/lib/types";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const defaultClothesData: IroningPriceItem[] = [
-    { name: 'Shirt', price: 15, category: 'men' },
-    { name: 'T-Shirt', price: 10, category: 'men' },
-    { name: 'Trousers', price: 20, category: 'men' },
-    { name: 'Jeans', price: 20, category: 'men' },
-    { name: 'Kurta', price: 25, category: 'men' },
-    { name: 'Pyjama', price: 15, category: 'men' },
-    { name: 'Top', price: 15, category: 'women' },
-    { name: 'Saree', price: 50, category: 'women' },
-    { name: 'Blouse', price: 10, category: 'women' },
-    { name: 'Kurti', price: 20, category: 'women' },
-    { name: 'Dress', price: 30, category: 'women' },
-    { name: 'Leggings', price: 10, category: 'women' },
-    { name: 'Shirt', price: 8, category: 'kids' },
-    { name: 'Frock', price: 15, category: 'kids' },
-    { name: 'Shorts', price: 7, category: 'kids' },
-    { name: 'Pants', price: 10, category: 'kids' },
+    { id: 'men_shirt', name: 'Shirt', price: 15, category: 'men' },
+    { id: 'men_tshirt', name: 'T-Shirt', price: 10, category: 'men' },
+    { id: 'men_trousers', name: 'Trousers', price: 20, category: 'men' },
+    { id: 'men_jeans', name: 'Jeans', price: 20, category: 'men' },
+    { id: 'men_kurta', name: 'Kurta', price: 25, category: 'men' },
+    { id: 'men_pyjama', name: 'Pyjama', price: 15, category: 'men' },
+    { id: 'women_top', name: 'Top', price: 15, category: 'women' },
+    { id: 'women_saree', name: 'Saree', price: 50, category: 'women' },
+    { id: 'women_blouse', name: 'Blouse', price: 10, category: 'women' },
+    { id: 'women_kurti', name: 'Kurti', price: 20, category: 'women' },
+    { id: 'women_dress', name: 'Dress', price: 30, category: 'women' },
+    { id: 'women_leggings', name: 'Leggings', price: 10, category: 'women' },
+    { id: 'kids_shirt', name: 'Shirt', price: 8, category: 'kids' },
+    { id: 'kids_frock', name: 'Frock', price: 15, category: 'kids' },
+    { id: 'kids_shorts', name: 'Shorts', price: 7, category: 'kids' },
+    { id: 'kids_pants', name: 'Pants', price: 10, category: 'kids' },
 ];
 
 
 export default function IroningPricingClient() {
-  const [initialValues, setInitialValues] = useState<{items: IroningPriceItem[]} | {error: boolean} | null>(null);
+  const [initialValues, setInitialValues] = useState<{items: IroningPriceItem[]} | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
@@ -49,7 +50,6 @@ export default function IroningPricingClient() {
       if (!db) {
           toast({ variant: 'destructive', title: 'Error', description: 'Database not available.' });
           setLoading(false);
-          setInitialValues({ error: true });
           return;
       }
       try {
@@ -66,7 +66,6 @@ export default function IroningPricingClient() {
         }
       } catch (error) {
         console.error("Error fetching prices:", error);
-        setInitialValues({ error: true });
         toast({variant: 'destructive', title: 'Error', description: 'Could not fetch price list.'});
       } finally {
         setLoading(false);
@@ -85,8 +84,17 @@ export default function IroningPricingClient() {
     );
   }
 
-  if (!initialValues || 'error' in initialValues) {
-    return <div className="py-20 text-center text-destructive">⚠️ Could not fetch price list. Please check console for errors and reload.</div>;
+  if (!initialValues) {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Error</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p className="py-20 text-center text-destructive">⚠️ Could not fetch price list. Please check console for errors and reload.</p>
+            </CardContent>
+        </Card>
+    );
   }
 
   return <PricingForm initialValues={initialValues} />;

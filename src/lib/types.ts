@@ -1,5 +1,6 @@
 
 
+
 import type { Timestamp } from "firebase/firestore";
 
 export type Property = {
@@ -155,6 +156,7 @@ export type IroningProfile = {
 };
 
 export type IroningPriceItem = {
+  id: string;
   name: string;
   price: number;
   category: string;

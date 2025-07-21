@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -12,14 +12,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
-import { Loader2 } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 import type { IroningPriceItem } from '@/lib/types';
 
 const priceItemSchema = z.object({
-  name: z.string(),
+  id: z.string(),
+  name: z.string().min(1, "Item name is required"),
   price: z.coerce.number().min(0, 'Price must be non-negative'),
-  category: z.string(),
+  category: z.string().min(1, "Category is required"),
 });
 
 const pricingSchema = z.object({
@@ -32,15 +33,24 @@ export default function PricingForm({ initialValues }: { initialValues: { items:
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-    const form = useForm<PricingFormValues>({
+    const methods = useForm<PricingFormValues>({
         resolver: zodResolver(pricingSchema),
-        defaultValues: initialValues,
+        defaultValues: { items: [] },
     });
 
-    const { fields } = useFieldArray({
-        control: form.control,
+    const { control, register, reset, handleSubmit } = methods;
+
+    const { fields, append, remove } = useFieldArray({
+        control,
         name: "items",
     });
+
+    React.useEffect(() => {
+        if (initialValues && initialValues.items) {
+          reset({ items: initialValues.items });
+        }
+    }, [initialValues, reset]);
+
 
     const categories = React.useMemo(() => {
         return fields.reduce((acc, field) => {
@@ -63,63 +73,77 @@ export default function PricingForm({ initialValues }: { initialValues: { items:
             setIsSubmitting(false);
         }
     }
+    
+    const handleAddItem = (category: string) => {
+        const newId = `${category}_${Date.now()}`;
+        append({ id: newId, category, name: 'New Item', price: 0 });
+    };
 
     return (
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Manage Ironing Prices</CardTitle>
-                        <CardDescription>
-                            Set the price for each item. Changes will be reflected for customers in real-time.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                         <Accordion type="multiple" className="w-full" defaultValue={categories}>
-                            {categories.map(category => (
-                                <AccordionItem value={category} key={category}>
-                                    <AccordionTrigger className="text-lg font-semibold capitalize">{category}</AccordionTrigger>
-                                    <AccordionContent>
-                                        <div className="space-y-4 pt-2">
-                                            {fields.map((field, index) => (
-                                                field.category === category && (
-                                                    <FormField
-                                                        key={field.id}
-                                                        control={form.control}
-                                                        name={`items.${index}.price`}
-                                                        render={({ field: priceField }) => (
-                                                             <FormItem className="flex items-center justify-between p-2 rounded-lg bg-secondary/30">
-                                                                <FormLabel htmlFor={`items.${index}.price`} className="font-medium">{field.name}</FormLabel>
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className="text-muted-foreground">₹</span>
-                                                                    <FormControl>
-                                                                        <Input
-                                                                            type="number"
-                                                                            id={`items.${index}.price`}
-                                                                            {...priceField}
-                                                                            className="w-24 h-9"
-                                                                        />
-                                                                    </FormControl>
-                                                                </div>
-                                                                <FormMessage />
-                                                            </FormItem>
-                                                        )}
-                                                    />
-                                                )
-                                            ))}
-                                        </div>
-                                    </AccordionContent>
-                                </AccordionItem>
-                            ))}
-                        </Accordion>
-                    </CardContent>
-                    <CardFooter>
-                        <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
-                            {isSubmitting ? <Loader2 className="animate-spin" /> : 'Save All Prices'}
-                        </Button>
-                    </CardFooter>
-                </Card>
-            </form>
-        </Form>
+        <FormProvider {...methods}>
+            <Form {...methods}>
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Manage Ironing Prices</CardTitle>
+                            <CardDescription>
+                                Set the price for each item. Changes will be reflected for customers in real-time.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                             <Accordion type="multiple" className="w-full" defaultValue={categories}>
+                                {categories.map(category => (
+                                    <AccordionItem value={category} key={category}>
+                                        <AccordionTrigger className="text-lg font-semibold capitalize">{category}</AccordionTrigger>
+                                        <AccordionContent>
+                                            <div className="space-y-4 pt-2">
+                                                {fields.map((field, index) => (
+                                                    field.category === category && (
+                                                        <div key={field.id} className="flex items-center gap-2 p-2 rounded-lg bg-secondary/30">
+                                                            <FormField
+                                                                control={control}
+                                                                name={`items.${index}.name`}
+                                                                render={({ field }) => (
+                                                                    <FormItem className="flex-grow">
+                                                                        <FormControl><Input placeholder="Item name" {...field} /></FormControl>
+                                                                    </FormItem>
+                                                                )}
+                                                            />
+                                                            <FormField
+                                                                control={control}
+                                                                name={`items.${index}.price`}
+                                                                render={({ field: priceField }) => (
+                                                                     <FormItem className="flex items-center gap-2">
+                                                                        <span className="text-muted-foreground">₹</span>
+                                                                        <FormControl>
+                                                                            <Input type="number" {...priceField} className="w-24 h-9" />
+                                                                        </FormControl>
+                                                                    </FormItem>
+                                                                )}
+                                                            />
+                                                            <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                                            </Button>
+                                                        </div>
+                                                    )
+                                                ))}
+                                                <Button type="button" variant="outline" size="sm" onClick={() => handleAddItem(category)}>
+                                                    <PlusCircle className="mr-2 h-4 w-4" /> Add Item to {category}
+                                                </Button>
+                                            </div>
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                ))}
+                            </Accordion>
+                        </CardContent>
+                        <CardFooter>
+                            <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+                                {isSubmitting ? <Loader2 className="animate-spin" /> : 'Save All Prices'}
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                </form>
+            </Form>
+        </FormProvider>
     )
 }

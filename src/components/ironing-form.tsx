@@ -80,16 +80,14 @@ export function IroningForm() {
     const { fields: itemsFields, update: updateItems, replace } = useFieldArray({ control: form.control, name: "items" });
     
     React.useEffect(() => {
-        // Immediately load default prices to prevent UI blocking
         const allDefaultItems: IroningOrderItem[] = Object.values(clothesData)
             .flat()
             .map(item => ({ ...item, quantity: 0 }));
-        replace(allDefaultItems);
 
-        // Then, try to fetch custom prices from DB and update if available
         const fetchAndUpdatePrices = async () => {
             if (!db) {
                 console.warn("Firestore not available. Using default prices.");
+                replace(allDefaultItems);
                 return;
             }
 
@@ -106,25 +104,24 @@ export function IroningForm() {
                         });
                     });
 
-                    // Update existing items with prices from the DB
                     const updatedItems = allDefaultItems.map(item => ({
                         ...item,
                         price: dbPrices[item.name] !== undefined ? dbPrices[item.name] : item.price,
                     }));
                     replace(updatedItems);
                 } else {
-                     // If 'clothes' collection is empty, create it with default data.
-                    console.log("Initializing 'clothes' collection with default prices.");
+                    console.log("No custom prices found, initializing 'clothes' collection with default data.");
                     const batch = writeBatch(db);
                     Object.entries(clothesData).forEach(([category, items]) => {
                         const docRef = doc(db, 'clothes', category);
                         batch.set(docRef, { items });
                     });
                     await batch.commit();
+                    replace(allDefaultItems);
                 }
             } catch (error) {
-                 console.error("Could not fetch or initialize custom prices, using local defaults:", error);
-                 // Silently fall back to the defaults already set.
+                 console.error("Could not fetch or initialize custom prices, falling back to local defaults:", error);
+                 replace(allDefaultItems);
             }
         };
 
@@ -295,12 +292,8 @@ export function IroningForm() {
                         {step === 2 && <Button type="button" size="lg" className="w-full" onClick={handleNextStep}>Next</Button>}
                         {step === 3 && <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>{isSubmitting ? <><Loader2 className="animate-spin mr-2" /> Placing Order...</> : 'Place Order'}</Button>}
                     </CardFooter>
-                </Card>
+                </form>
             </form>
         </Form>
     );
 }
-
-    
-
-    

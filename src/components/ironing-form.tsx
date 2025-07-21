@@ -15,7 +15,7 @@ import { db } from '@/lib/firebase';
 import { addDoc, collection, serverTimestamp, doc, getDoc, runTransaction, getDocs, writeBatch } from 'firebase/firestore';
 import { Loader2, Plus, Minus, CheckCircle2 } from 'lucide-react';
 import { formatIndianCurrency } from '@/lib/utils';
-import type { UserProfile, IroningOrderItem } from '@/lib/types';
+import type { UserProfile, IroningOrderItem, IroningPriceItem } from '@/lib/types';
 import { Skeleton } from './ui/skeleton';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 
@@ -36,7 +36,7 @@ const ironingOrderSchema = z.object({
 
 type IroningOrder = z.infer<typeof ironingOrderSchema>;
 
-const clothesData: Record<string, { name: string; price: number }[]> = {
+const clothesData: Record<string, IroningPriceItem[]> = {
     men: [ { name: 'Shirt', price: 15 }, { name: 'T-Shirt', price: 10 }, { name: 'Trousers', price: 20 }, { name: 'Jeans', price: 20 }, { name: 'Kurta', price: 25 }, { name: 'Pyjama', price: 15 } ],
     women: [ { name: 'Top', price: 15 }, { name: 'Saree', price: 50 }, { name: 'Blouse', price: 10 }, { name: 'Kurti', price: 20 }, { name: 'Dress', price: 30 }, { name: 'Leggings', price: 10 } ],
     kids: [ { name: 'Shirt', price: 8 }, { name: 'Frock', price: 15 }, { name: 'Shorts', price: 7 }, { name: 'Pants', price: 10 } ],
@@ -114,7 +114,7 @@ export function IroningForm() {
 
                 const dbPrices: Record<string, Record<string, number>> = {};
                 snapshot.forEach(doc => {
-                    const categoryItems = doc.data().items as {name: string, price: number}[];
+                    const categoryItems = doc.data().items as IroningPriceItem[];
                     dbPrices[doc.id] = {};
                     categoryItems.forEach(item => {
                         dbPrices[doc.id][item.name] = item.price;

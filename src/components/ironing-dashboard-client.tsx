@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import type { IroningOrder, IroningOrderItem, IroningOrderStatus, UserProfile } from '@/lib/types';
+import type { IroningOrder, IroningOrderItem, IroningOrderStatus, UserProfile, IroningPriceItem } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { collection, query, orderBy, onSnapshot, doc, updateDoc, arrayUnion, serverTimestamp, getDoc, writeBatch, getDocs, Timestamp } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -21,7 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 
-const clothesData: Record<string, { name: string; price: number }[]> = {
+const clothesData: Record<string, IroningPriceItem[]> = {
     men: [ { name: 'Shirt', price: 15 }, { name: 'T-Shirt', price: 10 }, { name: 'Trousers', price: 20 }, { name: 'Jeans', price: 20 }, { name: 'Kurta', price: 25 }, { name: 'Pyjama', price: 15 } ],
     women: [ { name: 'Top', price: 15 }, { name: 'Saree', price: 50 }, { name: 'Blouse', price: 10 }, { name: 'Kurti', price: 20 }, { name: 'Dress', price: 30 }, { name: 'Leggings', price: 10 } ],
     kids: [ { name: 'Shirt', price: 8 }, { name: 'Frock', price: 15 }, { name: 'Shorts', price: 7 }, { name: 'Pants', price: 10 } ],
@@ -29,7 +29,7 @@ const clothesData: Record<string, { name: string; price: number }[]> = {
 
 function PriceManagementCard() {
     const { toast } = useToast();
-    const [prices, setPrices] = useState<Record<string, IroningOrderItem[]>>(Object.keys(clothesData).reduce((acc, key) => ({...acc, [key]: []}), {}));
+    const [prices, setPrices] = useState<Record<string, IroningPriceItem[]>>(Object.keys(clothesData).reduce((acc, key) => ({...acc, [key]: []}), {}));
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -51,7 +51,7 @@ function PriceManagementCard() {
                     setPrices(clothesData);
                     toast({ title: "Price list initialized", description: "Default prices have been set." });
                 } else {
-                    const fetchedPrices: Record<string, IroningOrderItem[]> = {};
+                    const fetchedPrices: Record<string, IroningPriceItem[]> = {};
                     snapshot.forEach(doc => {
                         fetchedPrices[doc.id] = doc.data().items;
                     });

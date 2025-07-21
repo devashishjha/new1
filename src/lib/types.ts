@@ -154,6 +154,11 @@ export type IroningProfile = {
     address?: IroningAddress;
 };
 
+export type IroningPriceItem = {
+  name: string;
+  price: number;
+}
+
 export type IroningOrderItem = {
     name: string;
     price: number;

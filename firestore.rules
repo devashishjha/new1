@@ -32,5 +32,11 @@ service cloud.firestore {
       allow read, create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow update, delete: if false;
     }
+
+    // Price list for ironing service. Anyone can read, only service-providers can write.
+    match /clothes/{document=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'service-provider';
+    }
   }
 }

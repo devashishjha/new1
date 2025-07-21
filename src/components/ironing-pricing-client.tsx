@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
-import { collection, doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import type { IroningPriceItem } from '@/lib/types';
 import { Skeleton } from './ui/skeleton';
@@ -107,11 +107,14 @@ export function IroningPricingClient() {
                 
                 if (docSnap.exists()) {
                     const priceData = docSnap.data().items as IroningPriceItem[];
-                    replace(priceData);
+                    const itemsWithCategory = priceData.map(item => {
+                        const defaultItem = defaultClothesData.find(d => d.name === item.name);
+                        return { ...item, category: defaultItem?.category || 'unknown' };
+                    });
+                    replace(itemsWithCategory);
                 } else {
                     toast({ title: 'Welcome!', description: 'Setting up your default price list.' });
-                    const itemsToStore = defaultClothesData.map(({category, ...item}) => item);
-                    await setDoc(pricesDocRef, { items: itemsToStore });
+                    await setDoc(pricesDocRef, { items: defaultClothesData });
                     replace(defaultClothesData);
                 }
             } catch (error) {
@@ -131,8 +134,8 @@ export function IroningPricingClient() {
         
         try {
             const pricesDocRef = doc(db, 'clothes', 'defaultPrices');
-            const itemsToStore = values.items.map(({category, ...item}) => item);
-            await setDoc(pricesDocRef, { items: itemsToStore });
+            // The `values.items` from the form now correctly includes the category.
+            await setDoc(pricesDocRef, { items: values.items });
             toast({ title: "Prices Updated", description: "The new prices are now live for all customers." });
         } catch (error) {
             console.error("Error updating prices:", error);
@@ -215,5 +218,3 @@ export function IroningPricingClient() {
         </Form>
     );
 }
-
-    

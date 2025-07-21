@@ -6,9 +6,33 @@ import { ArrowRight, Home, Shield } from "lucide-react";
 import Link from "next/link";
 import { Header } from "@/components/header";
 import { useAuth } from "@/hooks/use-auth";
+import { useEffect, useState } from "react";
+import type { UserProfile } from "@/lib/types";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export default function ServiceSelectionPage() {
-    const { isAdmin } = useAuth();
+    const { user, isAdmin, loading: authLoading } = useAuth();
+    const [isServiceProvider, setIsServiceProvider] = useState(false);
+
+    useEffect(() => {
+        if (authLoading || !user) return;
+
+        const checkRole = async () => {
+            if (!db) return;
+            const userDocRef = doc(db, 'users', user.uid);
+            const docSnap = await getDoc(userDocRef);
+            if (docSnap.exists() && (docSnap.data() as UserProfile).role === 'service-provider') {
+                setIsServiceProvider(true);
+            } else {
+                setIsServiceProvider(false);
+            }
+        };
+
+        checkRole();
+    }, [user, authLoading]);
+
+    const ironingHref = isServiceProvider ? "/ironing/dashboard" : "/ironing";
 
     return (
         <>
@@ -33,7 +57,7 @@ export default function ServiceSelectionPage() {
                             </CardHeader>
                         </Card>
                     </Link>
-                    <Link href="/ironing" className="group">
+                    <Link href={ironingHref} className="group">
                         <Card className="hover:border-primary transition-all hover:scale-105 transform-gpu">
                             <CardHeader className="p-8">
                                 <div className="flex justify-between items-center">

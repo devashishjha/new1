@@ -160,7 +160,7 @@ export type IroningOrderItem = {
     quantity: number;
 };
 
-export type IroningOrderStatus = 'placed' | 'picked-up' | 'processing' | 'out-for-delivery' | 'completed';
+export type IroningOrderStatus = 'placed' | 'picked-up' | 'processing' | 'out-for-delivery' | 'completed' | 'cancelled';
 
 export type StatusUpdate = {
   status: IroningOrderStatus;

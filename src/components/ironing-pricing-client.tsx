@@ -17,8 +17,6 @@ import type { IroningPriceItem } from '@/lib/types';
 import { Skeleton } from './ui/skeleton';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 import { useRouter } from 'next/navigation';
-import { formatIndianCurrency } from '@/lib/utils';
-
 
 const priceItemSchema = z.object({
   name: z.string(),
@@ -32,6 +30,11 @@ const pricingSchema = z.object({
 
 type PricingForm = z.infer<typeof pricingSchema>;
 
+const clothesData: Record<string, IroningPriceItem[]> = {
+    men: [ { name: 'Shirt', price: 15 }, { name: 'T-Shirt', price: 10 }, { name: 'Trousers', price: 20 }, { name: 'Jeans', price: 20 }, { name: 'Kurta', price: 25 }, { name: 'Pyjama', price: 15 } ],
+    women: [ { name: 'Top', price: 15 }, { name: 'Saree', price: 50 }, { name: 'Blouse', price: 10 }, { name: 'Kurti', price: 20 }, { name: 'Dress', price: 30 }, { name: 'Leggings', price: 10 } ],
+    kids: [ { name: 'Shirt', price: 8 }, { name: 'Frock', price: 15 }, { name: 'Shorts', price: 7 }, { name: 'Pants', price: 10 } ],
+};
 
 function PricingSkeleton() {
     return (
@@ -86,24 +89,34 @@ export function IroningPricingClient() {
                 const clothesRef = collection(db, 'clothes');
                 const snapshot = await getDocs(clothesRef);
                 
-                if (snapshot.empty) {
-                    toast({variant: 'destructive', title: 'Error', description: 'Pricing data not found. Please contact support.'});
-                    return;
-                }
+                let dbPrices: z.infer<typeof priceItemSchema>[] = [];
 
-                const dbPrices: z.infer<typeof priceItemSchema>[] = [];
-                snapshot.forEach(doc => {
-                    const category = doc.id;
-                    const categoryItems = doc.data().items as IroningPriceItem[];
-                    categoryItems.forEach(item => {
-                        dbPrices.push({ ...item, category });
+                if (snapshot.empty) {
+                    toast({ title: 'Welcome!', description: 'Setting up your default price list.' });
+                    const batch = writeBatch(db);
+                    Object.entries(clothesData).forEach(([category, items]) => {
+                        const docRef = doc(db, 'clothes', category);
+                        batch.set(docRef, { items });
+                        items.forEach(item => {
+                            dbPrices.push({ ...item, category });
+                        });
                     });
-                });
+                    await batch.commit();
+                } else {
+                    snapshot.forEach(doc => {
+                        const category = doc.id;
+                        const categoryItems = doc.data().items as IroningPriceItem[];
+                        categoryItems.forEach(item => {
+                            dbPrices.push({ ...item, category });
+                        });
+                    });
+                }
+                
                 replace(dbPrices);
 
             } catch (error) {
-                 console.error("Could not fetch prices:", error);
-                 toast({variant: 'destructive', title: 'Error', description: 'Could not fetch latest prices.'});
+                 console.error("Could not fetch or initialize prices:", error);
+                 toast({variant: 'destructive', title: 'Error', description: 'Could not load the pricing page.'});
             }
         };
 

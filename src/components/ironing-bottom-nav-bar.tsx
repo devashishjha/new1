@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { LayoutGrid, History, User, PlusCircle, Package } from 'lucide-react';
+import { LayoutGrid, History, User, PlusCircle, Package, Tag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 import { useEffect, useState } from 'react';
@@ -66,11 +66,12 @@ export function IroningBottomNavBar() {
     const serviceProviderNavItems = [
         { href: '/service-selection', icon: LayoutGrid, label: 'Categories' },
         { href: '/ironing/dashboard', icon: Package, label: 'Dashboard' },
+        { href: '/ironing/pricing', icon: Tag, label: 'Pricing' },
         { href: '/ironing/profile?view=profile', icon: User, label: 'Profile', view: 'profile' },
     ];
 
     const navItems = isServiceProvider ? serviceProviderNavItems : regularNavItems;
-    const gridColsClass = isServiceProvider ? 'grid-cols-3' : 'grid-cols-4';
+    const gridColsClass = isServiceProvider ? 'grid-cols-4' : 'grid-cols-4';
 
     return (
         <nav className="fixed bottom-0 left-0 right-0 z-50 bg-transparent backdrop-blur-sm border-t border-border/20">

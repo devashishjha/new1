@@ -17,11 +17,13 @@ import { Loader2, Plus, Minus, CheckCircle2 } from 'lucide-react';
 import { formatIndianCurrency } from '@/lib/utils';
 import type { UserProfile, IroningOrderItem } from '@/lib/types';
 import { Skeleton } from './ui/skeleton';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 
 const clothesItemSchema = z.object({
   name: z.string(),
   price: z.number(),
   quantity: z.number().min(0).default(0),
+  category: z.string(),
 });
 
 const ironingOrderSchema = z.object({
@@ -34,31 +36,25 @@ const ironingOrderSchema = z.object({
 
 type IroningOrder = z.infer<typeof ironingOrderSchema>;
 
-const clothesData = {
-    mens: [ { name: 'Shirt', price: 15 }, { name: 'T-Shirt', price: 10 }, { name: 'Trousers', price: 20 }, { name: 'Jeans', price: 20 }, { name: 'Kurta', price: 25 }, { name: 'Pyjama', price: 15 } ],
-    womens: [ { name: 'Top', price: 15 }, { name: 'Saree', price: 50 }, { name: 'Blouse', price: 10 }, { name: 'Kurti', price: 20 }, { name: 'Dress', price: 30 }, { name: 'Leggings', price: 10 } ],
+const clothesData: Record<string, { name: string; price: number }[]> = {
+    men: [ { name: 'Shirt', price: 15 }, { name: 'T-Shirt', price: 10 }, { name: 'Trousers', price: 20 }, { name: 'Jeans', price: 20 }, { name: 'Kurta', price: 25 }, { name: 'Pyjama', price: 15 } ],
+    women: [ { name: 'Top', price: 15 }, { name: 'Saree', price: 50 }, { name: 'Blouse', price: 10 }, { name: 'Kurti', price: 20 }, { name: 'Dress', price: 30 }, { name: 'Leggings', price: 10 } ],
     kids: [ { name: 'Shirt', price: 8 }, { name: 'Frock', price: 15 }, { name: 'Shorts', price: 7 }, { name: 'Pants', price: 10 } ],
 };
 
 function FormSkeleton() {
     return (
         <div className="space-y-8">
-            {[...Array(3)].map((_, i) => (
-                <Card key={i}>
-                    <CardHeader><Skeleton className="h-8 w-1/4" /></CardHeader>
-                    <CardContent className="space-y-4">
-                        {[...Array(4)].map((_, j) => (
-                            <div key={j} className="flex items-center justify-between p-2">
-                                <div>
-                                    <Skeleton className="h-6 w-24 mb-1" />
-                                    <Skeleton className="h-4 w-16" />
-                                </div>
-                                <Skeleton className="h-10 w-32" />
-                            </div>
-                        ))}
-                    </CardContent>
-                </Card>
-            ))}
+            <Card>
+                <CardHeader><Skeleton className="h-8 w-1/4" /></CardHeader>
+                <CardContent className="space-y-4">
+                    {[...Array(3)].map((_, i) => (
+                        <div key={i}>
+                             <Skeleton className="h-10 w-full mb-2" />
+                        </div>
+                    ))}
+                </CardContent>
+            </Card>
         </div>
     )
 }
@@ -80,36 +76,22 @@ export function IroningForm() {
     const { fields: itemsFields, update: updateItems, replace } = useFieldArray({ control: form.control, name: "items" });
     
     React.useEffect(() => {
-        const allDefaultItems: IroningOrderItem[] = Object.values(clothesData)
-            .flat()
-            .map(item => ({ ...item, quantity: 0 }));
+        const defaultItems = Object.entries(clothesData).flatMap(([category, items]) => 
+            items.map(item => ({ ...item, quantity: 0, category }))
+        );
 
         const fetchAndUpdatePrices = async () => {
             if (!db) {
                 console.warn("Firestore not available. Using default prices.");
-                replace(allDefaultItems);
+                replace(defaultItems);
                 return;
             }
 
             try {
                 const clothesRef = collection(db, 'clothes');
                 const snapshot = await getDocs(clothesRef);
-
-                if (!snapshot.empty) {
-                    const dbPrices: Record<string, number> = {};
-                    snapshot.forEach(doc => {
-                        const categoryItems = doc.data().items as IroningOrderItem[];
-                        categoryItems.forEach(item => {
-                            dbPrices[item.name] = item.price;
-                        });
-                    });
-
-                    const updatedItems = allDefaultItems.map(item => ({
-                        ...item,
-                        price: dbPrices[item.name] !== undefined ? dbPrices[item.name] : item.price,
-                    }));
-                    replace(updatedItems);
-                } else {
+                
+                if (snapshot.empty) {
                     console.log("No custom prices found, initializing 'clothes' collection with default data.");
                     const batch = writeBatch(db);
                     Object.entries(clothesData).forEach(([category, items]) => {
@@ -117,11 +99,28 @@ export function IroningForm() {
                         batch.set(docRef, { items });
                     });
                     await batch.commit();
-                    replace(allDefaultItems);
+                    replace(defaultItems);
+                    return;
                 }
+
+                const dbPrices: Record<string, Record<string, number>> = {};
+                snapshot.forEach(doc => {
+                    const categoryItems = doc.data().items as {name: string, price: number}[];
+                    dbPrices[doc.id] = {};
+                    categoryItems.forEach(item => {
+                        dbPrices[doc.id][item.name] = item.price;
+                    });
+                });
+
+                const updatedItems = defaultItems.map(item => ({
+                    ...item,
+                    price: dbPrices[item.category]?.[item.name] !== undefined ? dbPrices[item.category][item.name] : item.price,
+                }));
+
+                replace(updatedItems);
             } catch (error) {
                  console.error("Could not fetch or initialize custom prices, falling back to local defaults:", error);
-                 replace(allDefaultItems);
+                 replace(defaultItems);
             }
         };
 
@@ -169,7 +168,7 @@ export function IroningForm() {
                 
                 transaction.set(counterRef, { currentId: newOrderId }, { merge: true });
                 
-                const orderItems = values.items.filter(item => item.quantity > 0);
+                const orderItems = values.items.filter(item => item.quantity > 0).map(({category, ...item}) => item);
                 const newOrderRef = doc(collection(db, "ironingOrders"));
                 
                 const userDocRef = doc(db, 'users', user.uid);
@@ -229,20 +228,33 @@ export function IroningForm() {
                 {step === 1 && (
                      <Card>
                         <CardHeader><CardTitle className="capitalize">Select Items</CardTitle></CardHeader>
-                        <CardContent className="space-y-4">
-                            {itemsFields.map((field, index) => (
-                                <div key={field.id} className="flex items-center justify-between p-2 rounded-lg bg-secondary/30">
-                                    <div>
-                                        <p className="font-medium">{field.name}</p>
-                                        <p className="text-sm text-muted-foreground">{formatIndianCurrency(field.price)} / item</p>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Button type="button" size="icon" variant="outline" onClick={() => { const q = Math.max(0, field.quantity-1); updateItems(index, {...field, quantity: q}) }} disabled={field.quantity === 0}><Minus className="h-4 w-4" /></Button>
-                                        <span className="font-bold text-lg w-10 text-center">{field.quantity}</span>
-                                        <Button type="button" size="icon" variant="outline" onClick={() => { const q = field.quantity+1; updateItems(index, {...field, quantity: q}) }}><Plus className="h-4 w-4" /></Button>
-                                    </div>
-                                </div>
-                            ))}
+                        <CardContent>
+                           <Accordion type="multiple" className="w-full" defaultValue={['men']}>
+                                {Object.keys(clothesData).map(category => (
+                                    <AccordionItem value={category} key={category}>
+                                        <AccordionTrigger className="text-lg font-semibold capitalize">{category}</AccordionTrigger>
+                                        <AccordionContent>
+                                            <div className="space-y-2 pt-2">
+                                            {itemsFields.map((field, index) => (
+                                                field.category === category && (
+                                                    <div key={field.id} className="flex items-center justify-between p-2 rounded-lg bg-secondary/30">
+                                                        <div>
+                                                            <p className="font-medium">{field.name}</p>
+                                                            <p className="text-sm text-muted-foreground">{formatIndianCurrency(field.price)} / item</p>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <Button type="button" size="icon" variant="outline" onClick={() => { const q = Math.max(0, field.quantity-1); updateItems(index, {...field, quantity: q}) }} disabled={field.quantity === 0}><Minus className="h-4 w-4" /></Button>
+                                                            <span className="font-bold text-lg w-10 text-center">{field.quantity}</span>
+                                                            <Button type="button" size="icon" variant="outline" onClick={() => { const q = field.quantity+1; updateItems(index, {...field, quantity: q}) }}><Plus className="h-4 w-4" /></Button>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            ))}
+                                            </div>
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                ))}
+                            </Accordion>
                         </CardContent>
                     </Card>
                 )}

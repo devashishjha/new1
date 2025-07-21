@@ -21,15 +21,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 
-const clothesData = {
-    mens: [ { name: 'Shirt', price: 15 }, { name: 'T-Shirt', price: 10 }, { name: 'Trousers', price: 20 }, { name: 'Jeans', price: 20 }, { name: 'Kurta', price: 25 }, { name: 'Pyjama', price: 15 } ],
-    womens: [ { name: 'Top', price: 15 }, { name: 'Saree', price: 50 }, { name: 'Blouse', price: 10 }, { name: 'Kurti', price: 20 }, { name: 'Dress', price: 30 }, { name: 'Leggings', price: 10 } ],
+const clothesData: Record<string, { name: string; price: number }[]> = {
+    men: [ { name: 'Shirt', price: 15 }, { name: 'T-Shirt', price: 10 }, { name: 'Trousers', price: 20 }, { name: 'Jeans', price: 20 }, { name: 'Kurta', price: 25 }, { name: 'Pyjama', price: 15 } ],
+    women: [ { name: 'Top', price: 15 }, { name: 'Saree', price: 50 }, { name: 'Blouse', price: 10 }, { name: 'Kurti', price: 20 }, { name: 'Dress', price: 30 }, { name: 'Leggings', price: 10 } ],
     kids: [ { name: 'Shirt', price: 8 }, { name: 'Frock', price: 15 }, { name: 'Shorts', price: 7 }, { name: 'Pants', price: 10 } ],
 };
 
 function PriceManagementCard() {
     const { toast } = useToast();
-    const [prices, setPrices] = useState<Record<string, IroningOrderItem[]>>({ mens: [], womens: [], kids: [] });
+    const [prices, setPrices] = useState<Record<string, IroningOrderItem[]>>(Object.keys(clothesData).reduce((acc, key) => ({...acc, [key]: []}), {}));
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -42,7 +42,6 @@ function PriceManagementCard() {
                 const snapshot = await getDocs(clothesRef);
 
                 if (snapshot.empty) {
-                    // First time setup: Populate Firestore with default prices
                     const batch = writeBatch(db);
                     Object.entries(clothesData).forEach(([category, items]) => {
                         const docRef = doc(db, 'clothes', category);
@@ -106,7 +105,7 @@ function PriceManagementCard() {
                 <CardDescription>Set the default price for each item. This will apply to all new orders.</CardDescription>
             </CardHeader>
             <CardContent>
-                <Accordion type="multiple" className="w-full" defaultValue={['mens', 'womens', 'kids']}>
+                <Accordion type="multiple" className="w-full" defaultValue={['men', 'women', 'kids']}>
                     {Object.entries(prices).map(([category, items]) => (
                         <AccordionItem value={category} key={category}>
                             <AccordionTrigger className="text-lg font-semibold capitalize">{category}</AccordionTrigger>

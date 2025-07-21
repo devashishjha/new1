@@ -3,6 +3,7 @@
 
 import * as React from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -76,12 +77,14 @@ export function IroningPricingClient() {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = React.useState(false);
     const [isLoading, setIsLoading] = React.useState(true);
+    const [initialPrices, setInitialPrices] = React.useState<PricingForm | null>(null);
     
     const form = useForm<PricingForm>({
+        resolver: zodResolver(pricingSchema),
         defaultValues: { items: [] },
     });
 
-    const { fields, replace } = useFieldArray({
+    const { fields } = useFieldArray({
         control: form.control,
         name: "items",
     });
@@ -107,15 +110,13 @@ export function IroningPricingClient() {
                 
                 if (docSnap.exists()) {
                     const priceData = docSnap.data().items as IroningPriceItem[];
-                    const itemsWithCategory = priceData.map(item => {
-                        const defaultItem = defaultClothesData.find(d => d.name === item.name);
-                        return { ...item, category: defaultItem?.category || 'unknown' };
-                    });
-                    replace(itemsWithCategory);
+                    setInitialPrices({ items: priceData });
                 } else {
                     toast({ title: 'Welcome!', description: 'Setting up your default price list.' });
-                    await setDoc(pricesDocRef, { items: defaultClothesData });
-                    replace(defaultClothesData);
+                    // Here we save the default data *without* the 'category' for consistency with IroningPriceItem
+                    const itemsToSave = defaultClothesData.map(({category, ...item}) => item);
+                    await setDoc(pricesDocRef, { items: itemsToSave });
+                    setInitialPrices({ items: defaultClothesData });
                 }
             } catch (error) {
                  console.error("Could not fetch or initialize prices:", error);
@@ -126,7 +127,14 @@ export function IroningPricingClient() {
         };
 
         fetchOrInitializePrices();
-    }, [replace, authLoading, user, router, toast]);
+    }, [authLoading, user, router, toast]);
+
+    React.useEffect(() => {
+        if (initialPrices) {
+            form.reset(initialPrices);
+        }
+    }, [initialPrices, form]);
+
 
     async function onSubmit(values: PricingForm) {
         if (!user || !db) return;
@@ -134,8 +142,9 @@ export function IroningPricingClient() {
         
         try {
             const pricesDocRef = doc(db, 'clothes', 'defaultPrices');
-            // The `values.items` from the form now correctly includes the category.
-            await setDoc(pricesDocRef, { items: values.items });
+            // When saving, we strip the category out as it's not part of the IroningPriceItem type
+            const itemsToSave = values.items.map(({category, ...item}) => item);
+            await setDoc(pricesDocRef, { items: itemsToSave });
             toast({ title: "Prices Updated", description: "The new prices are now live for all customers." });
         } catch (error) {
             console.error("Error updating prices:", error);
@@ -154,7 +163,7 @@ export function IroningPricingClient() {
         }, [] as string[]);
     }, [fields]);
 
-    if (isLoading || authLoading) {
+    if (isLoading || authLoading || !initialPrices) {
         return <PricingSkeleton />;
     }
 
@@ -183,7 +192,7 @@ export function IroningPricingClient() {
                                                         name={`items.${index}.price`}
                                                         render={({ field: priceField }) => (
                                                              <FormItem className="flex items-center justify-between p-2 rounded-lg bg-secondary/30">
-                                                                <FormLabel htmlFor={`items.${index}.price`} className="font-medium">{fields[index].name}</FormLabel>
+                                                                <FormLabel htmlFor={`items.${index}.price`} className="font-medium">{field.name}</FormLabel>
                                                                 <div className="flex items-center gap-2">
                                                                     <span className="text-muted-foreground">₹</span>
                                                                     <FormControl>

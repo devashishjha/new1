@@ -29,13 +29,13 @@ const pricingSchema = z.object({
 
 type PricingFormValues = z.infer<typeof pricingSchema>;
 
-function PricingForm({ initialValues }: { initialValues: { items: IroningPriceItem[] } }) {
+export default function PricingForm({ initialValues }: { initialValues: { items: IroningPriceItem[] } }) {
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = React.useState(false);
 
     const methods = useForm<PricingFormValues>({
         resolver: zodResolver(pricingSchema),
-        defaultValues: { items: [] },
+        defaultValues: { items: initialValues?.items || [] },
     });
 
     const { control, register, reset, handleSubmit } = methods;
@@ -147,5 +147,3 @@ function PricingForm({ initialValues }: { initialValues: { items: IroningPriceIt
         </FormProvider>
     )
 }
-
-export default PricingForm;

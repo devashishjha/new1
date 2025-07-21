@@ -83,14 +83,14 @@ function UserResultCard({ profile, onUpdate }: { profile: UserProfile, onUpdate:
                 </Button>
                 <Button 
                     size="sm" 
-                    variant={profile.role === 'service-provider' ? 'destructive' : 'outline'}
+                    variant={profile.role === 'service-provider' ? 'default' : 'outline'}
                     onClick={() => handleRoleChange('service-provider')}
-                    disabled={isProcessingAdmin || isProcessingServiceProvider}
+                    disabled={isProcessingAdmin || isProcessingServiceProvider || profile.role === 'service-provider'}
                     className="w-full"
                 >
                     {isProcessingServiceProvider ? <Loader2 className="animate-spin" /> : (
                         profile.role === 'service-provider' 
-                            ? <><Shirt className="mr-2" /> Revoke Service Provider</>
+                            ? <><Shirt className="mr-2" /> Service Provider</>
                             : <><Shirt className="mr-2" /> Grant Service Provider</>
                     )}
                 </Button>
@@ -187,5 +187,5 @@ export function AdminUserManagement() {
 
             </CardContent>
         </Card>
-    )
+    );
 }

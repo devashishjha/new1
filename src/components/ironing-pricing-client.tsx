@@ -62,6 +62,7 @@ export function IroningPricingClient() {
     const { user, loading: authLoading } = useAuth();
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = React.useState(false);
+    const [isLoading, setIsLoading] = React.useState(true);
     
     const form = useForm<PricingForm>({
         defaultValues: { items: [] },
@@ -73,14 +74,17 @@ export function IroningPricingClient() {
     });
 
     React.useEffect(() => {
-        if (authLoading || !user) {
-            if (!authLoading && !user) router.push('/ironing');
+        if (authLoading) return;
+        if (!user) {
+            router.push('/ironing');
             return;
         }
 
         const fetchOrInitializePrices = async () => {
+             setIsLoading(true);
              if (!db) {
                 toast({ variant: 'destructive', title: 'Error', description: 'Database not available.' });
+                setIsLoading(false);
                 return;
             }
 
@@ -89,6 +93,9 @@ export function IroningPricingClient() {
                 const snapshot = await getDocs(clothesRef);
                 
                 let loadedPrices: z.infer<typeof priceItemSchema>[] = [];
+                const defaultPrices = Object.entries(clothesData).flatMap(([category, items]) => 
+                    items.map(item => ({ ...item, category }))
+                );
 
                 if (snapshot.empty) {
                     toast({ title: 'Welcome!', description: 'Setting up your default price list.' });
@@ -97,11 +104,9 @@ export function IroningPricingClient() {
                         const docRef = doc(db, 'clothes', category);
                         const categoryData = { items };
                         batch.set(docRef, categoryData);
-                        categoryData.items.forEach(item => {
-                            loadedPrices.push({ ...item, category });
-                        });
                     });
                     await batch.commit();
+                    loadedPrices = defaultPrices;
                 } else {
                     snapshot.forEach(doc => {
                         const category = doc.id;
@@ -117,6 +122,8 @@ export function IroningPricingClient() {
             } catch (error) {
                  console.error("Could not fetch or initialize prices:", error);
                  toast({variant: 'destructive', title: 'Error', description: 'Could not load the pricing page.'});
+            } finally {
+                setIsLoading(false);
             }
         };
 
@@ -165,7 +172,7 @@ export function IroningPricingClient() {
         }, [] as string[]);
     }, [fields]);
 
-    if (fields.length === 0 || authLoading) {
+    if (isLoading || authLoading) {
         return <PricingSkeleton />;
     }
 

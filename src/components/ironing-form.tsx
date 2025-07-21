@@ -73,6 +73,7 @@ export function IroningForm() {
     const { user } = useAuth();
     const [isSubmitting, setIsSubmitting] = React.useState(false);
     const [step, setStep] = React.useState(1); // 1: items, 2: address, 3: payment, 4: success
+    const [isLoadingPrices, setIsLoadingPrices] = React.useState(true);
     
     const form = useForm<IroningOrder>({
         resolver: zodResolver(ironingOrderSchema),
@@ -86,19 +87,21 @@ export function IroningForm() {
     
     React.useEffect(() => {
         const fetchOrInitializePrices = async () => {
+            setIsLoadingPrices(true);
+            const defaultItems = Object.entries(clothesData).flatMap(([category, items]) => 
+                items.map(item => ({ ...item, quantity: 0, category }))
+            );
+
             if (!db) {
                 console.warn("Firestore not available. Using default prices.");
-                const defaultItems = Object.entries(clothesData).flatMap(([category, items]) => 
-                    items.map(item => ({ ...item, quantity: 0, category }))
-                );
                 replace(defaultItems);
+                setIsLoadingPrices(false);
                 return;
             }
 
             try {
                 const clothesRef = collection(db, 'clothes');
                 const snapshot = await getDocs(clothesRef);
-                let loadedPrices: z.infer<typeof clothesItemSchema>[] = [];
                 
                 if (snapshot.empty) {
                     console.log("No custom prices found, initializing 'clothes' collection with default data.");
@@ -106,12 +109,11 @@ export function IroningForm() {
                     Object.entries(clothesData).forEach(([category, items]) => {
                         const docRef = doc(db, 'clothes', category);
                         batch.set(docRef, { items });
-                        items.forEach(item => {
-                            loadedPrices.push({ ...item, quantity: 0, category });
-                        });
                     });
                     await batch.commit();
+                    replace(defaultItems);
                 } else {
+                    let loadedPrices: z.infer<typeof clothesItemSchema>[] = [];
                     snapshot.forEach(doc => {
                         const category = doc.id;
                         const categoryItems = doc.data().items as IroningPriceItem[];
@@ -119,16 +121,14 @@ export function IroningForm() {
                              loadedPrices.push({ ...item, quantity: 0, category });
                         });
                     });
+                    replace(loadedPrices);
                 }
-                replace(loadedPrices);
-
             } catch (error) {
                  console.error("Could not fetch or initialize custom prices, falling back to local defaults:", error);
-                 const defaultItems = Object.entries(clothesData).flatMap(([category, items]) => 
-                    items.map(item => ({ ...item, quantity: 0, category }))
-                 );
                  replace(defaultItems);
                  toast({variant: 'destructive', title: 'Error', description: 'Could not fetch latest price list.'});
+            } finally {
+                setIsLoadingPrices(false);
             }
         };
 
@@ -211,7 +211,7 @@ export function IroningForm() {
     }
 
 
-    if (itemsFields.length === 0) {
+    if (isLoadingPrices) {
         return <FormSkeleton />;
     }
 

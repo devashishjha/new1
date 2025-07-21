@@ -5,9 +5,9 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import type { IroningOrder, IroningOrderItem, IroningOrderStatus, UserProfile, IroningPriceItem } from '@/lib/types';
 import { db } from '@/lib/firebase';
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, arrayUnion, serverTimestamp, getDoc, writeBatch, getDocs, Timestamp } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, updateDoc, arrayUnion, serverTimestamp, getDoc, Timestamp } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Loader2, Package, User, Phone, Home, Calendar as CalendarIcon, Edit, Check, Tag, XCircle } from 'lucide-react';
+import { Loader2, Package, User, Phone, Home, Calendar as CalendarIcon, Edit, Check, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
@@ -17,129 +17,6 @@ import { Calendar } from '@/components/ui/calendar';
 import { Input } from './ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { cn } from '@/lib/utils';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
-
-const clothesData: Record<string, IroningPriceItem[]> = {
-    men: [ { name: 'Shirt', price: 15 }, { name: 'T-Shirt', price: 10 }, { name: 'Trousers', price: 20 }, { name: 'Jeans', price: 20 }, { name: 'Kurta', price: 25 }, { name: 'Pyjama', price: 15 } ],
-    women: [ { name: 'Top', price: 15 }, { name: 'Saree', price: 50 }, { name: 'Blouse', price: 10 }, { name: 'Kurti', price: 20 }, { name: 'Dress', price: 30 }, { name: 'Leggings', price: 10 } ],
-    kids: [ { name: 'Shirt', price: 8 }, { name: 'Frock', price: 15 }, { name: 'Shorts', price: 7 }, { name: 'Pants', price: 10 } ],
-};
-
-function PriceManagementCard() {
-    const { toast } = useToast();
-    const [prices, setPrices] = useState<Record<string, IroningPriceItem[]>>(Object.keys(clothesData).reduce((acc, key) => ({...acc, [key]: []}), {}));
-    const [isLoading, setIsLoading] = useState(true);
-    const [isSaving, setIsSaving] = useState(false);
-
-    useEffect(() => {
-        const fetchPrices = async () => {
-            if (!db) return;
-            setIsLoading(true);
-            try {
-                const clothesRef = collection(db, 'clothes');
-                const snapshot = await getDocs(clothesRef);
-
-                if (snapshot.empty) {
-                    const batch = writeBatch(db);
-                    Object.entries(clothesData).forEach(([category, items]) => {
-                        const docRef = doc(db, 'clothes', category);
-                        batch.set(docRef, { items });
-                    });
-                    await batch.commit();
-                    setPrices(clothesData);
-                    toast({ title: "Price list initialized", description: "Default prices have been set." });
-                } else {
-                    const fetchedPrices: Record<string, IroningPriceItem[]> = {};
-                    snapshot.forEach(doc => {
-                        fetchedPrices[doc.id] = doc.data().items;
-                    });
-                    setPrices(fetchedPrices);
-                }
-            } catch (error) {
-                console.error("Error fetching prices:", error);
-                toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch price list.' });
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchPrices();
-    }, [toast]);
-    
-    const handlePriceChange = (category: string, index: number, newPrice: number) => {
-        setPrices(prev => {
-            const updatedItems = [...prev[category]];
-            updatedItems[index] = { ...updatedItems[index], price: newPrice };
-            return { ...prev, [category]: updatedItems };
-        });
-    };
-
-    const handleSavePrices = async () => {
-        if (!db) return;
-        setIsSaving(true);
-        try {
-            const batch = writeBatch(db);
-            Object.entries(prices).forEach(([category, items]) => {
-                const docRef = doc(db, 'clothes', category);
-                batch.update(docRef, { items });
-            });
-            await batch.commit();
-            toast({ title: "Prices Updated", description: "The master price list has been saved." });
-        } catch (error) {
-            console.error("Error saving prices:", error);
-            toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not update prices.' });
-        } finally {
-            setIsSaving(false);
-        }
-    }
-
-    if (isLoading) {
-        return <Card><CardHeader><CardTitle>Loading Price List...</CardTitle></CardHeader><CardContent><Loader2 className="animate-spin" /></CardContent></Card>
-    }
-
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Tag className="text-primary"/> Manage Pricing</CardTitle>
-                <CardDescription>Set the default price for each item. This will apply to all new orders.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Accordion type="multiple" className="w-full" defaultValue={['men', 'women', 'kids']}>
-                    {Object.entries(prices).map(([category, items]) => (
-                        <AccordionItem value={category} key={category}>
-                            <AccordionTrigger className="text-lg font-semibold capitalize">{category}</AccordionTrigger>
-                            <AccordionContent>
-                                <div className="space-y-2 pt-2">
-                                    {items.map((item, index) => (
-                                        <div key={item.name} className="flex justify-between items-center text-sm p-2 rounded-lg bg-secondary/30">
-                                            <p>{item.name}</p>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-muted-foreground">₹</span>
-                                                <Input
-                                                    type="number"
-                                                    value={item.price}
-                                                    onChange={e => handlePriceChange(category, index, Number(e.target.value))}
-                                                    className="h-8 w-20"
-                                                />
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </AccordionContent>
-                        </AccordionItem>
-                    ))}
-                </Accordion>
-            </CardContent>
-            <CardFooter>
-                <Button onClick={handleSavePrices} disabled={isSaving} className="w-full">
-                    {isSaving ? <Loader2 className="animate-spin mr-2" /> : <Check className="mr-2" />}
-                    Save All Prices
-                </Button>
-            </CardFooter>
-        </Card>
-    )
-}
 
 function OrderItemEditor({ item, onPriceChange }: { item: IroningOrderItem, onPriceChange: (newPrice: number) => void }) {
     const [isEditing, setIsEditing] = useState(false);
@@ -376,43 +253,32 @@ export function IroningDashboardClient() {
     return (
         <div className="space-y-8">
             <h1 className="text-4xl font-bold tracking-tight mb-2">Service Provider Dashboard</h1>
-            <p className="text-muted-foreground mb-8">Manage pricing and all incoming ironing orders.</p>
+            <p className="text-muted-foreground mb-8">Manage all incoming ironing orders.</p>
 
-            <Tabs defaultValue="orders" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="orders">Live Orders</TabsTrigger>
-                    <TabsTrigger value="pricing">Manage Pricing</TabsTrigger>
-                </TabsList>
-                <TabsContent value="orders" className="mt-6">
-                    <div className="flex flex-wrap gap-2 mb-6">
-                        {statusFilters.map(filter => (
-                             <Button 
-                                key={filter.label}
-                                variant={activeFilter === filter.label ? 'default' : 'outline'}
-                                onClick={() => setActiveFilter(filter.label)}
-                            >
-                                {filter.label}
-                            </Button>
-                        ))}
-                    </div>
-                     <div className="space-y-6">
-                        {filteredOrders.length > 0 ? (
-                            filteredOrders.map(order => <OrderCard key={order.id} order={order} />)
-                        ) : (
-                            <Card>
-                                <CardHeader className="text-center">
-                                    <Package className="mx-auto h-12 w-12 text-muted-foreground" />
-                                    <CardTitle>No Orders Found</CardTitle>
-                                    <CardDescription>There are no orders with the status "{activeFilter}".</CardDescription>
-                                </CardHeader>
-                            </Card>
-                        )}
-                    </div>
-                </TabsContent>
-                <TabsContent value="pricing" className="mt-6">
-                    <PriceManagementCard />
-                </TabsContent>
-            </Tabs>
+            <div className="flex flex-wrap gap-2 mb-6">
+                {statusFilters.map(filter => (
+                     <Button 
+                        key={filter.label}
+                        variant={activeFilter === filter.label ? 'default' : 'outline'}
+                        onClick={() => setActiveFilter(filter.label)}
+                    >
+                        {filter.label}
+                    </Button>
+                ))}
+            </div>
+             <div className="space-y-6">
+                {filteredOrders.length > 0 ? (
+                    filteredOrders.map(order => <OrderCard key={order.id} order={order} />)
+                ) : (
+                    <Card>
+                        <CardHeader className="text-center">
+                            <Package className="mx-auto h-12 w-12 text-muted-foreground" />
+                            <CardTitle>No Orders Found</CardTitle>
+                            <CardDescription>There are no orders with the status "{activeFilter}".</CardDescription>
+                        </CardHeader>
+                    </Card>
+                )}
+            </div>
         </div>
     );
 }

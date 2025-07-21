@@ -112,10 +112,19 @@ export function IroningForm() {
                         price: dbPrices[item.name] !== undefined ? dbPrices[item.name] : item.price,
                     }));
                     replace(updatedItems);
+                } else {
+                     // If 'clothes' collection is empty, create it with default data.
+                    console.log("Initializing 'clothes' collection with default prices.");
+                    const batch = writeBatch(db);
+                    Object.entries(clothesData).forEach(([category, items]) => {
+                        const docRef = doc(db, 'clothes', category);
+                        batch.set(docRef, { items });
+                    });
+                    await batch.commit();
                 }
             } catch (error) {
-                 console.error("Could not fetch custom prices, using local defaults:", error);
-                 // No toast needed, we silently fall back to the defaults already set.
+                 console.error("Could not fetch or initialize custom prices, using local defaults:", error);
+                 // Silently fall back to the defaults already set.
             }
         };
 
@@ -291,3 +300,5 @@ export function IroningForm() {
         </Form>
     );
 }
+
+    

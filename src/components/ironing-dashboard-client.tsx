@@ -19,6 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 
 const clothesData = {
     mens: [ { name: 'Shirt', price: 15 }, { name: 'T-Shirt', price: 10 }, { name: 'Trousers', price: 20 }, { name: 'Jeans', price: 20 }, { name: 'Kurta', price: 25 }, { name: 'Pyjama', price: 15 } ],
@@ -104,28 +105,32 @@ function PriceManagementCard() {
                 <CardTitle className="flex items-center gap-2"><Tag className="text-primary"/> Manage Pricing</CardTitle>
                 <CardDescription>Set the default price for each item. This will apply to all new orders.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-                {Object.entries(prices).map(([category, items]) => (
-                    <div key={category}>
-                        <h3 className="font-semibold capitalize text-lg mb-2">{category}</h3>
-                        <div className="space-y-2">
-                        {items.map((item, index) => (
-                             <div key={item.name} className="flex justify-between items-center text-sm p-2 rounded-lg bg-secondary/30">
-                                <p>{item.name}</p>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-muted-foreground">₹</span>
-                                    <Input
-                                        type="number"
-                                        value={item.price}
-                                        onChange={e => handlePriceChange(category, index, Number(e.target.value))}
-                                        className="h-8 w-20"
-                                    />
+            <CardContent>
+                <Accordion type="multiple" className="w-full" defaultValue={['mens', 'womens', 'kids']}>
+                    {Object.entries(prices).map(([category, items]) => (
+                        <AccordionItem value={category} key={category}>
+                            <AccordionTrigger className="text-lg font-semibold capitalize">{category}</AccordionTrigger>
+                            <AccordionContent>
+                                <div className="space-y-2 pt-2">
+                                    {items.map((item, index) => (
+                                        <div key={item.name} className="flex justify-between items-center text-sm p-2 rounded-lg bg-secondary/30">
+                                            <p>{item.name}</p>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-muted-foreground">₹</span>
+                                                <Input
+                                                    type="number"
+                                                    value={item.price}
+                                                    onChange={e => handlePriceChange(category, index, Number(e.target.value))}
+                                                    className="h-8 w-20"
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                            </div>
-                        ))}
-                        </div>
-                    </div>
-                ))}
+                            </AccordionContent>
+                        </AccordionItem>
+                    ))}
+                </Accordion>
             </CardContent>
             <CardFooter>
                 <Button onClick={handleSavePrices} disabled={isSaving} className="w-full">

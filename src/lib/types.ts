@@ -157,6 +157,7 @@ export type IroningProfile = {
 export type IroningPriceItem = {
   name: string;
   price: number;
+  category: string;
 }
 
 export type IroningOrderItem = {
@@ -190,3 +191,4 @@ export type IroningOrder = {
     statusHistory?: StatusUpdate[];
     estimatedDelivery?: Timestamp | Date | string;
 };
+

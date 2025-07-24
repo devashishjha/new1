@@ -12,39 +12,21 @@ import { Header } from '@/components/header';
 import { BottomNavBar } from '@/components/bottom-nav-bar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AdminUserManagement } from '@/components/admin-user-management';
+import { useRouter } from 'next/navigation';
 
 export default function AdminPage() {
-    const { user, loading: authLoading } = useAuth();
-    const [isAdmin, setIsAdmin] = useState(false);
+    const { user, loading: authLoading, isAdmin } = useAuth();
     const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+    const router = useRouter();
 
     useEffect(() => {
-        if (authLoading) return;
-        if (!user) {
+        if (!authLoading) {
             setIsCheckingAuth(false);
-            setIsAdmin(false);
-            return;
+            if (!isAdmin) {
+                router.replace('/reels');
+            }
         }
-
-        const checkAdminStatus = async () => {
-            if (!db) {
-                setIsAdmin(false);
-                setIsCheckingAuth(false);
-                return;
-            }
-            const userDocRef = doc(db, 'users', user.uid);
-            const docSnap = await getDoc(userDocRef);
-            if (docSnap.exists()) {
-                const profile = docSnap.data() as UserProfile;
-                if (profile.role === 'admin') {
-                    setIsAdmin(true);
-                }
-            }
-            setIsCheckingAuth(false);
-        };
-        checkAdminStatus();
-
-    }, [user, authLoading]);
+    }, [authLoading, isAdmin, router]);
 
     if (isCheckingAuth || authLoading) {
         return (
@@ -65,7 +47,7 @@ export default function AdminPage() {
                             <CardTitle>Access Denied</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p>You do not have permission to view this page.</p>
+                            <p>You do not have permission to view this page. Redirecting...</p>
                         </CardContent>
                     </Card>
                 </main>

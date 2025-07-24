@@ -127,8 +127,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     if (userIsLoggedIn) {
         if (isAuthPage) {
-            // Logged in user is on the login page, redirect them to the main app page.
-            router.replace('/reels');
+            // Logged in user is on the login page, redirect them.
+            // Admin goes to /admin, others go to /reels.
+            router.replace(isAdmin ? '/admin' : '/reels');
         }
     } else {
         // Not logged in, but trying to access a protected page.

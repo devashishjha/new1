@@ -1,23 +1,25 @@
 
 import { AuthForm } from '@/components/auth-form';
-import { isFirebaseEnabled } from '@/lib/firebase';
+import { isFirebaseEnabled, areAllSecretsConfigured } from '@/lib/firebase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
 
 function FirebaseWarning() {
-    const requiredSecrets = [
-        "GOOGLE_API_KEY",
-        "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY",
-        "NEXT_PUBLIC_FIREBASE_API_KEY",
-        "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
-        "NEXT_PUBLIC_FIREBASE_PROJECT_ID",
-        "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET",
-        "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID",
-        "NEXT_PUBLIC_FIREBASE_APP_ID",
-    ];
-
-    // This logic runs on the server and checks the actual environment.
-    const missingSecrets = requiredSecrets.filter(secret => !process.env[secret]);
+    // Check which specific secrets are missing for debugging
+    const secretChecks = {
+        "GOOGLE_API_KEY": !!process.env.GOOGLE_API_KEY,
+        "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY": !!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
+        "NEXT_PUBLIC_FIREBASE_API_KEY": !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+        "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN": !!process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+        "NEXT_PUBLIC_FIREBASE_PROJECT_ID": !!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+        "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET": !!process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+        "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": !!process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+        "NEXT_PUBLIC_FIREBASE_APP_ID": !!process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+    };
+    
+    const missingSecrets = Object.entries(secretChecks)
+        .filter(([_, isPresent]) => !isPresent)
+        .map(([secretName]) => secretName);
 
     return (
         <Card className="w-full max-w-2xl shadow-2xl bg-black/20 backdrop-blur-lg border border-destructive/50">
@@ -55,9 +57,11 @@ function FirebaseWarning() {
 
 
 export default function LoginPage() {
+  const allSecretsConfigured = areAllSecretsConfigured();
+  
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8">
-      {isFirebaseEnabled ? <AuthForm /> : <FirebaseWarning />}
+      {isFirebaseEnabled && allSecretsConfigured ? <AuthForm /> : <FirebaseWarning />}
     </main>
   );
 }

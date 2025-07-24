@@ -30,6 +30,26 @@ export const isFirebaseEnabled =
   !!firebaseConfig.messagingSenderId &&
   !!firebaseConfig.appId;
 
+// Server-side check for all required secrets (including GOOGLE_API_KEY)
+export const areAllSecretsConfigured = () => {
+  // This should only run on the server side
+  if (typeof window !== 'undefined') {
+    return true; // On client side, assume secrets are configured
+  }
+  
+  const requiredSecrets = [
+    process.env.GOOGLE_API_KEY,
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
+    process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+    process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+    process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+    process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  ];
+  
+  return requiredSecrets.every(secret => !!secret);
+};
 if (isFirebaseEnabled) {
   // Initialize Firebase only if all keys are present.
   app = !getApps().length ? initializeApp(firebaseConfig) : getApp();

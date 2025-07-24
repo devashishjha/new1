@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 
 const regularNavItems = [
-    { href: '/service-selection', icon: LayoutGrid, label: 'Categories' },
+    { href: '/reels', icon: LayoutGrid, label: 'Reels' },
     { href: '/search', icon: Search, label: 'Search' },
     { href: '/add-property', icon: PlusCircle, label: 'Add' },
     { href: '/shortlisted', icon: Bookmark, label: 'Shortlisted' },
@@ -16,7 +16,7 @@ const regularNavItems = [
 ];
 
 const adminNavItems = [
-    { href: '/service-selection', icon: LayoutGrid, label: 'Categories' },
+    { href: '/reels', icon: LayoutGrid, label: 'Reels' },
     { href: '/admin', icon: Users, label: 'Users' },
     { href: '/profile', icon: User, label: 'Profile' },
 ]
@@ -25,14 +25,7 @@ export function BottomNavBar() {
     const pathname = usePathname();
     const { isAdmin } = useAuth();
 
-    const housingPaths = ['/reels', '/search', '/add-property', '/shortlisted', '/profile', '/view-profile', '/edit-property', '/chats', '/admin', '/service-selection'];
-    const isHousingFlow = housingPaths.some(p => pathname.startsWith(p));
-    
-    if (!isHousingFlow) {
-        return null;
-    }
-
-    const navItems = isAdmin && pathname.startsWith('/admin') ? adminNavItems : regularNavItems;
+    const navItems = isAdmin && (pathname.startsWith('/admin') || pathname.startsWith('/profile')) ? adminNavItems : regularNavItems;
     const gridColsClass = navItems.length === 3 ? 'grid-cols-3' : 'grid-cols-5';
 
     return (

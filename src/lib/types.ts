@@ -1,6 +1,5 @@
 
 
-
 import type { Timestamp } from "firebase/firestore";
 
 export type Property = {
@@ -138,59 +137,3 @@ export type ChatConversation = {
   unreadCount: number;
   messages: ChatMessage[];
 };
-
-// --- Ironing Types ---
-
-export type IroningAddress = {
-    apartmentName: string;
-    block: string;
-    floorNo: string;
-    flatNo: string;
-};
-
-export type IroningProfile = {
-    name?: string;
-    email?: string;
-    phone?: string;
-    address?: IroningAddress;
-};
-
-export type IroningPriceItem = {
-  id: string;
-  name: string;
-  price: number;
-  category: string;
-}
-
-export type IroningOrderItem = {
-    name: string;
-    price: number;
-    quantity: number;
-};
-
-export type IroningOrderStatus = 'placed' | 'picked-up' | 'processing' | 'out-for-delivery' | 'completed' | 'cancelled';
-
-export type StatusUpdate = {
-  status: IroningOrderStatus;
-  timestamp: Timestamp | Date | string;
-  updatedBy: string; // userId of who updated it
-};
-
-
-export type IroningOrder = {
-    id: string; // Firestore document ID
-    orderId: number; // Sequential numeric ID
-    userId: string;
-    userEmail: string;
-    userName?: string;
-    userPhone?: string;
-    items: IroningOrderItem[];
-    totalCost: number;
-    totalItems: number;
-    status: IroningOrderStatus;
-    placedAt: Timestamp | Date | string;
-    address: IroningAddress;
-    statusHistory?: StatusUpdate[];
-    estimatedDelivery?: Timestamp | Date | string;
-};
-

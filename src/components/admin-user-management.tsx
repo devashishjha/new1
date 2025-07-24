@@ -6,7 +6,7 @@ import { db } from '@/lib/firebase';
 import type { UserProfile } from '@/lib/types';
 import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Shield, ShieldCheck, User, Search, UserX, Shirt } from 'lucide-react';
+import { Loader2, Shield, ShieldCheck, User, Search, UserX } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -17,23 +17,20 @@ function UserResultCard({ profile, onUpdate }: { profile: UserProfile, onUpdate:
     const { toast } = useToast();
     const { user: adminUser } = useAuth();
     const [isProcessingAdmin, setIsProcessingAdmin] = useState(false);
-    const [isProcessingServiceProvider, setIsProcessingServiceProvider] = useState(false);
     
     const isSelf = adminUser?.uid === profile.id;
 
-    const handleRoleChange = async (roleToToggle: 'admin' | 'service-provider') => {
+    const handleRoleChange = async (roleToToggle: 'admin') => {
         if (roleToToggle === 'admin' && isSelf) {
             toast({ variant: 'destructive', title: 'Action Not Allowed', description: 'You cannot change your own admin role.' });
             return;
         }
 
         if (roleToToggle === 'admin') setIsProcessingAdmin(true);
-        if (roleToToggle === 'service-provider') setIsProcessingServiceProvider(true);
         
         if (!db) {
             toast({ variant: 'destructive', title: 'Error', description: 'Database not available.' });
             if (roleToToggle === 'admin') setIsProcessingAdmin(false);
-            if (roleToToggle === 'service-provider') setIsProcessingServiceProvider(false);
             return;
         }
         
@@ -50,7 +47,6 @@ function UserResultCard({ profile, onUpdate }: { profile: UserProfile, onUpdate:
             toast({ variant: 'destructive', title: 'Error', description: 'Could not update user role.' });
         } finally {
             if (roleToToggle === 'admin') setIsProcessingAdmin(false);
-            if (roleToToggle === 'service-provider') setIsProcessingServiceProvider(false);
         }
     };
 
@@ -72,26 +68,13 @@ function UserResultCard({ profile, onUpdate }: { profile: UserProfile, onUpdate:
                     size="sm" 
                     variant={profile.role === 'admin' ? 'destructive' : 'outline'}
                     onClick={() => handleRoleChange('admin')}
-                    disabled={isProcessingAdmin || isProcessingServiceProvider || isSelf}
+                    disabled={isProcessingAdmin || isSelf}
                     className="w-full"
                 >
                     {isProcessingAdmin ? <Loader2 className="animate-spin" /> : (
                         profile.role === 'admin' 
                             ? <><ShieldCheck className="mr-2" /> Revoke Admin</>
                             : <><Shield className="mr-2" /> Grant Admin</>
-                    )}
-                </Button>
-                <Button 
-                    size="sm" 
-                    variant={profile.role === 'service-provider' ? 'default' : 'outline'}
-                    onClick={() => handleRoleChange('service-provider')}
-                    disabled={isProcessingAdmin || isProcessingServiceProvider || profile.role === 'service-provider'}
-                    className="w-full"
-                >
-                    {isProcessingServiceProvider ? <Loader2 className="animate-spin" /> : (
-                        profile.role === 'service-provider' 
-                            ? <><Shirt className="mr-2" /> Service Provider</>
-                            : <><Shirt className="mr-2" /> Grant Service Provider</>
                     )}
                 </Button>
              </div>

@@ -7,7 +7,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth, isFirebaseEnabled, rtdb, db } from '@/lib/firebase';
 import { useRouter, usePathname } from 'next/navigation';
 import { ref, onValue, set, onDisconnect, serverTimestamp } from 'firebase/database';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import type { UserProfile } from '@/lib/types';
 
 
@@ -131,7 +131,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (isAdmin) {
                 router.replace('/admin');
             } else {
-                router.replace('/service-selection');
+                router.replace('/reels');
             }
         }
     } else {
